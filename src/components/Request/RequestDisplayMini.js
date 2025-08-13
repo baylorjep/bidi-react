@@ -588,7 +588,10 @@ function RequestDisplayMini({
                         touchAction: 'manipulation',
                         flex: isMobile ? '1' : 'none'
                     }}
-                    onClick={(e) => e.stopPropagation()}
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onViewMore && onViewMore(request.id);
+                    }}
                     onMouseEnter={(e) => e.target.style.opacity = '0.9'}
                     onMouseLeave={(e) => e.target.style.opacity = '1'}
                     >

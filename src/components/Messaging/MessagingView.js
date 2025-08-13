@@ -1,14 +1,18 @@
-// src/components/MessagingView.js
+// src/components/Messaging/MessagingView.js
 
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { socket } from "../../socket";
 import { supabase } from "../../supabaseClient";
 import "../../styles/chat.css";
-import { FaArrowLeft, FaCreditCard, FaPlus, FaTrash } from "react-icons/fa";
+import { FaArrowLeft, FaCreditCard, FaPlus, FaTrash, FaImage, FaCheckCircle, FaTimes } from "react-icons/fa";
 import { useNavigate, useLocation } from "react-router-dom";
 import { formatMessageText } from "../../utils/formatMessageText";
 import { formatBusinessName } from '../../utils/formatBusinessName';
+import { formatTimestamp, isToday } from "../../utils/dateTimeUtils";
 import PaymentCard from './PaymentCard';
+import BidDetailModal from '../Bid/BidDetailModal';
+import SlidingBidModal from '../Request/SlidingBidModal';
+import { toast } from 'react-toastify';
 
 // Skeleton components for loading states
 const MessageSkeleton = ({ isSent }) => (
@@ -51,8 +55,7 @@ export default function MessagingView({
   const [isBusinessProfile, setIsBusinessProfile] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const [previewImageUrl, setPreviewImageUrl] = useState(null);
-  const [pendingFile, setPendingFile] = useState(null);
+
   const [showImageModal, setShowImageModal] = useState(false);
   const [modalImageSrc, setModalImageSrc] = useState("");
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -60,10 +63,26 @@ export default function MessagingView({
   const [isCurrentUserBusiness, setIsCurrentUserBusiness] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [stripeAccountId, setStripeAccountId] = useState(null);
-  const [modalLineItems, setModalLineItems] = useState([
-    { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
-  ]);
-  const [modalTaxRate, setModalTaxRate] = useState(0);
+  
+  // New state for enhanced menu system
+  const [showMenu, setShowMenu] = useState(false);
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const [previewImageUrls, setPreviewImageUrls] = useState([]);
+  const [showBidInvitationModal, setShowBidInvitationModal] = useState(false);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  
+  // Combined image preview modal state
+  const [showImagePreviewModal, setShowImagePreviewModal] = useState(false);
+  
+  // Bid detail modal state
+  const [showBidDetailModal, setShowBidDetailModal] = useState(false);
+  
+  // Edit bid modal state
+  const [showEditBidModal, setShowEditBidModal] = useState(false);
+  
+  // Approval modal state
+  const [showApprovalModal, setShowApprovalModal] = useState(false);
+  const [selectedBidForApproval, setSelectedBidForApproval] = useState(null);
 
   // Memoize the loading skeletons at the top level to avoid conditional hook calls
   const loadingSkeletons = useMemo(() => (
@@ -115,6 +134,40 @@ export default function MessagingView({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Add click outside handler for menu
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showMenu && !event.target.closest('.chat-plus-menu-container')) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
+  // Cleanup URL objects when component unmounts
+  useEffect(() => {
+    return () => {
+      previewImageUrls.forEach(url => URL.revokeObjectURL(url));
+    };
+  }, [previewImageUrls]);
+
+  // Debug payment modal state changes
+  useEffect(() => {
+    console.log('showPaymentModal state changed to:', showPaymentModal);
+    
+    // If modal was unexpectedly closed, log additional info
+    if (!showPaymentModal) {
+      console.log('Payment modal was closed. Stack trace:', new Error().stack);
+    }
+  }, [showPaymentModal]);
 
   // Get profile image from navigation state
   useEffect(() => {
@@ -321,127 +374,162 @@ export default function MessagingView({
     chatEndRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }, [messages, isTyping]);
 
-  // Add new useEffect to fetch bid information
-  useEffect(() => {
-    const fetchBidInfo = async () => {
-      console.log('Starting bid fetch with:', { currentUserId, businessId });
-      
-      if (!currentUserId || !businessId) {
-        console.log('Missing required IDs:', { currentUserId, businessId });
-        return;
-      }
+  // Function to fetch bid information
+  const fetchBidInfo = async () => {
+    console.log('Starting bid fetch with:', { currentUserId, businessId });
+    
+    if (!currentUserId || !businessId) {
+      console.log('Missing required IDs:', { currentUserId, businessId });
+      return;
+    }
 
-      try {
-        // First determine if current user is a business or individual
-        console.log('Checking if current user is a business...');
-        const { data: businessData, error: businessError } = await supabase
-          .from('business_profiles')
-          .select('id')
-          .eq('id', currentUserId)
-          .single();
+    try {
+      // First determine if current user is a business or individual
+      console.log('Checking if current user is a business...');
+      const { data: businessData, error: businessError } = await supabase
+        .from('business_profiles')
+        .select('id, stripe_account_id')
+        .eq('id', currentUserId)
+        .single();
 
-        console.log('Business check result:', { businessData, businessError });
-        const isCurrentUserBusiness = !businessError && businessData;
-        console.log('Is current user a business?', isCurrentUserBusiness);
+      console.log('Business check result:', { businessData, businessError });
+      const isCurrentUserBusiness = !businessError && businessData;
+      console.log('Is current user a business?', isCurrentUserBusiness);
 
-        // Get all request IDs from various request tables
-        const requestTables = [
-          'beauty_requests',
-          'catering_requests',
-          'dj_requests',
-          'florist_requests',
-          'photography_requests',
-          'videography_requests',
-          'wedding_planning_requests'
-        ];
+      // Get all request IDs from various request tables
+      const requestTables = [
+        'beauty_requests',
+        'catering_requests',
+        'dj_requests',
+        'florist_requests',
+        'photography_requests',
+        'videography_requests',
+        'wedding_planning_requests'
+      ];
 
-        let allRequestIds = [];
+      let allRequestIds = [];
 
-        // If current user is a business, get requests they've bid on
-        if (isCurrentUserBusiness) {
-          console.log('Fetching bids for business user...');
-          const { data: bids, error: bidsError } = await supabase
-            .from('bids')
-            .select('request_id')
-            .eq('user_id', currentUserId);
+      // If current user is a business, get requests they've bid on
+      if (isCurrentUserBusiness) {
+        console.log('Fetching bids for business user...');
+        const { data: bids, error: bidsError } = await supabase
+          .from('bids')
+          .select('request_id, bid_amount, status, created_at, business_profile:business_profiles(id, business_name)')
+          .eq('user_id', currentUserId);
 
-          console.log('Business bids result:', { bids, bidsError });
-          if (!bidsError && bids) {
-            allRequestIds = bids.map(bid => bid.request_id);
-            console.log('Request IDs from business bids:', allRequestIds);
-          }
-        } else {
-          // If current user is an individual, get their requests
-          console.log('Fetching requests for individual user...');
-          for (const table of requestTables) {
-            console.log(`Checking ${table}...`);
-            try {
-              // Special handling for photography_requests which uses profile_id instead of user_id
-              const columnName = table === 'photography_requests' ? 'profile_id' : 'user_id';
-              
-              const { data: requests, error: requestsError } = await supabase
+        console.log('Business bids result:', { bids, bidsError });
+        if (!bidsError && bids) {
+          allRequestIds = bids.map(bid => bid.request_id);
+          console.log('Request IDs from business bids:', allRequestIds);
+        }
+      } else {
+        // If current user is an individual, get their requests
+        console.log('Fetching requests for individual user...');
+        for (const table of requestTables) {
+          console.log(`Checking ${table}...`);
+          try {
+            // Special handling for photography_requests which uses profile_id instead of user_id
+            const columnName = table === 'photography_requests' ? 'profile_id' : 'user_id';
+           
+            const { data: requests, error: requestsError } = await supabase
+              .from(table)
+              .select('id')
+              .eq(columnName, currentUserId)
+              .limit(1);  // Add limit to optimize query
+
+            if (requestsError) {
+              console.error(`Error querying ${table}:`, requestsError);
+              continue;  // Skip this table if there's an error
+            }
+
+            console.log(`${table} result:`, { requests, requestsError });
+            if (requests && requests.length > 0) {
+              // If we found at least one request, get all of them
+              const { data: allRequests, error: allRequestsError } = await supabase
                 .from(table)
                 .select('id')
-                .eq(columnName, currentUserId)
-                .limit(1);  // Add limit to optimize query
+                .eq(columnName, currentUserId);
 
-              if (requestsError) {
-                console.error(`Error querying ${table}:`, requestsError);
-                continue;  // Skip this table if there's an error
+              if (!allRequestsError && allRequests) {
+                allRequestIds = [...allRequestIds, ...allRequests.map(req => req.id)];
               }
-
-              console.log(`${table} result:`, { requests, requestsError });
-              if (requests && requests.length > 0) {
-                // If we found at least one request, get all of them
-                const { data: allRequests, error: allRequestsError } = await supabase
-                  .from(table)
-                  .select('id')
-                  .eq(columnName, currentUserId);
-
-                if (!allRequestsError && allRequests) {
-                  allRequestIds = [...allRequestIds, ...allRequests.map(req => req.id)];
-                }
-              }
-            } catch (error) {
-              console.error(`Error fetching ${table}:`, error);
-            }
-          }
-          console.log('All request IDs from individual:', allRequestIds);
-        }
-
-        if (allRequestIds.length > 0) {
-          console.log('Fetching most recent bid for request IDs:', allRequestIds);
-          try {
-            // Get the most recent bid
-            const { data: bids, error: bidsError } = await supabase
-              .from('bids')
-              .select('*')
-              .in('request_id', allRequestIds)
-              .eq('user_id', isCurrentUserBusiness ? currentUserId : businessId)
-              .order('created_at', { ascending: false })
-              .limit(1);
-
-            console.log('Final bids query result:', { bids, bidsError });
-            if (!bidsError && bids && bids.length > 0) {
-              console.log('Setting bid info:', bids[0]);
-              setBidInfo(bids[0]);
-            } else {
-              console.log('No bids found or error occurred');
-              setBidInfo(null);
             }
           } catch (error) {
-            console.error('Error fetching bids:', error);
+            console.error(`Error fetching ${table}:`, error);
+          }
+        }
+        console.log('All request IDs from individual:', allRequestIds);
+      }
+
+      if (allRequestIds.length > 0) {
+        console.log('Fetching most recent bid for request IDs:', allRequestIds);
+        try {
+          // Get the most recent bid with business profile data and photo
+          const { data: bids, error: bidsError } = await supabase
+            .from('bids')
+            .select(`
+              *,
+              business_profiles (
+                id,
+                business_name,
+                is_verified,
+                stripe_account_id
+              )
+            `)
+            .in('request_id', allRequestIds)
+            .eq('user_id', isCurrentUserBusiness ? currentUserId : businessId)
+            .order('created_at', { ascending: false })
+            .limit(1);
+
+          // If we found a bid, get the business profile photo
+          if (!bidsError && bids && bids.length > 0) {
+            const bid = bids[0];
+            if (bid.business_profiles) {
+              const businessId = bid.business_profiles.id;
+              
+              // Fetch the profile photo for this business
+              const { data: photoData, error: photoError } = await supabase
+                .from('profile_photos')
+                .select('photo_url')
+                .eq('user_id', businessId)
+                .eq('photo_type', 'profile')
+                .single();
+
+              if (!photoError && photoData) {
+                // Add the profile photo to the bid data
+                bid.business_profiles.profile_image = photoData.photo_url;
+              }
+            }
+          }
+
+          console.log('Final bids query result:', { bids, bidsError });
+          if (!bidsError && bids && bids.length > 0) {
+            console.log('Setting bid info:', bids[0]);
+            setBidInfo(bids[0]);
+          } else {
+            console.log('No bids found or error occurred');
             setBidInfo(null);
           }
-        } else {
-          console.log('No request IDs found to check for bids');
+        } catch (error) {
+          console.error('Error fetching bids:', error);
           setBidInfo(null);
         }
-      } catch (error) {
-        console.error('Error in fetchBidInfo:', error);
+      } else {
+        console.log('No request IDs found to check for bids');
+        setBidInfo(null);
       }
-    };
+    } catch (error) {
+      console.error('Error in fetchBidInfo:', error);
+    }
+  };
 
+  // Function to refresh bid info
+  const refreshBidInfo = async () => {
+    await fetchBidInfo();
+  };
+
+  // Add new useEffect to fetch bid information
+  useEffect(() => {
     fetchBidInfo();
   }, [currentUserId, businessId]);
 
@@ -473,94 +561,23 @@ export default function MessagingView({
   }
 
   const sendMessage = async () => {
-    if (!pendingFile && !newMessage.trim()) return;
+    if (!newMessage.trim()) return;
   
-    let imageUrl = null;
-  
-    if (pendingFile && previewImageUrl) {
-      try {
-        const cleanFileName = pendingFile.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
-        const fileName = `${Date.now()}_${cleanFileName}`;
-        const { error: uploadError } = await supabase.storage
-          .from('chat-images')
-          .upload(fileName, pendingFile);
-  
-        if (uploadError) {
-          console.error("Image upload failed:", uploadError);
-          return;
-        }
-  
-        const { publicUrl } = supabase
-          .storage
-          .from('chat-images')
-          .getPublicUrl(fileName).data;
-  
-        imageUrl = publicUrl;
-      } catch (err) {
-        console.error("Image send failed:", err);
-        return;
-      }
-    }
-  
-    if (imageUrl) {
-      socket.emit("send_message", {
-        senderId: currentUserId,
-        receiverId: businessId,
-        message: imageUrl,
-        type: "image",
-        seen: false,
-      });
-    }
-  
-    if (newMessage.trim()) {
-      socket.emit("send_message", {
-        senderId: currentUserId,
-        receiverId: businessId,
-        message: newMessage.trim(),
-        type: "text",
-        seen: false,
-      });
-    }
+    // Send text message
+    socket.emit("send_message", {
+      senderId: currentUserId,
+      receiverId: businessId,
+      message: newMessage.trim(),
+      type: "text",
+      seen: false,
+    });
   
     // Cleanup
     setNewMessage("");
-    setPreviewImageUrl(null);
-    setPendingFile(null);
     socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
   };
 
-  /*
-   commented out til we have a better solution
-  const sendMessage = async () => {
-    let payload;
-  
-    if (previewImageUrl) {
-      payload = {
-        senderId: currentUserId,
-        receiverId: businessId,
-        message: previewImageUrl,
-        type: 'image',
-        seen: false
-      };
-      setPreviewImageUrl(null);
-    } else if (newMessage.trim()) {
-      payload = {
-        senderId: currentUserId,
-        receiverId: businessId,
-        message: newMessage.trim(),
-        type: 'text',
-        seen: false
-      };
-      setNewMessage("");
-    } else {
-      return;  // Nothing to send
-    }
-  
-    // Just emit to server; let it handle DB and return
-    socket.emit('send_message', payload);
-    socket.emit("stop_typing", { senderId: currentUserId, receiverId: businessId });
-  };
-*/
+
   // 4) Handle typing
   const handleTyping = (e) => {
     setNewMessage(e.target.value);
@@ -587,44 +604,101 @@ export default function MessagingView({
     }
   };
 
-  /* // commented out to preserve old functionality until we can upload and sendmessages locally
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-  
-    try {
-      const fileName = `${Date.now()}_${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from('chat-images')
-        .upload(fileName, file);
-  
-      if (uploadError) {
-        console.error("Error uploading image:", uploadError);
-        return;
-      }
-  
-      const { publicUrl } = supabase
-        .storage
-        .from('chat-images')
-        .getPublicUrl(fileName).data;
-  
-      setPreviewImageUrl(publicUrl);  // Set uploaded image URL in input so user can hit Send
-      console.log("Image uploaded, preview ready!");
-    } catch (err) {
-      console.error("Upload failed:", err);
-    }
-  };
-  */
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-  
-    setPendingFile(file);
-    const localPreview = URL.createObjectURL(file);
-    setPreviewImageUrl(localPreview);
+
+
+
+  const handleMultipleFileUpload = async (e) => {
+    const files = Array.from(e.target.files);
+    if (files.length === 0) return;
+
+    // Always use the multiple files approach, even for single files
+    setPendingFiles(files);
+    
+    // Create preview URLs for files
+    const newPreviewUrls = files.map(file => URL.createObjectURL(file));
+    setPreviewImageUrls(newPreviewUrls);
+    
+    // Show the combined image preview modal
+    setShowImagePreviewModal(true);
 
     e.target.value = null;
+    setShowMenu(false);
+  };
+
+  const removePendingFile = (index) => {
+    const newFiles = pendingFiles.filter((_, i) => i !== index);
+    const newPreviewUrls = previewImageUrls.filter((_, i) => i !== index);
+    
+    setPendingFiles(newFiles);
+    setPreviewImageUrls(newPreviewUrls);
+  };
+
+  const sendMultipleImages = async () => {
+    if (pendingFiles.length === 0) return;
+
+    setIsUploadingImages(true);
+    try {
+      const uploadPromises = pendingFiles.map(async (file) => {
+        const cleanFileName = file.name.replace(/[^a-zA-Z0-9.\-_]/g, "_");
+        const fileName = `${Date.now()}_${Math.random()}_${cleanFileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('chat-images')
+          .upload(fileName, file);
+
+        if (uploadError) {
+          console.error("Image upload failed:", uploadError);
+          return null;
+        }
+
+        const { publicUrl } = supabase
+          .storage
+          .from('chat-images')
+          .getPublicUrl(fileName).data;
+
+        return publicUrl;
+      });
+
+      const uploadedUrls = await Promise.all(uploadPromises);
+      const validUrls = uploadedUrls.filter(url => url !== null);
+
+      // Send each image as a separate message
+      validUrls.forEach(url => {
+        socket.emit("send_message", {
+          senderId: currentUserId,
+          receiverId: businessId,
+          message: url,
+          type: "image",
+          seen: false,
+        });
+      });
+
+      // Cleanup
+      setPendingFiles([]);
+      setPreviewImageUrls([]);
+      pendingFiles.forEach(file => URL.revokeObjectURL(file));
+      previewImageUrls.forEach(url => URL.revokeObjectURL(url));
+      
+      // Close the modal
+      setShowImagePreviewModal(false);
+    } catch (err) {
+      console.error("Multiple image send failed:", err);
+    } finally {
+      setIsUploadingImages(false);
+    }
+  };
+
+
+
+  // Function to close image preview modal and cleanup
+  const closeImagePreviewModal = () => {
+    setShowImagePreviewModal(false);
+    setPendingFiles([]);
+    setPreviewImageUrls([]);
+    
+    // Cleanup object URLs
+    previewImageUrls.forEach(url => URL.revokeObjectURL(url));
   };
 
   const handleBusinessClick = (businessId, businessName) => {
@@ -632,92 +706,209 @@ export default function MessagingView({
     navigate(`/portfolio/${businessId}/${formattedName}`);
   };
 
-  const calculateSubtotal = () => {
-    return modalLineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
-  };
 
-  const calculateTax = () => {
-    return (calculateSubtotal() * modalTaxRate) / 100;
-  };
 
-  const calculateTotal = () => {
-    return calculateSubtotal() + calculateTax();
-  };
 
-  const addLineItem = () => {
-    const newId = Math.max(...modalLineItems.map(item => item.id), 0) + 1;
-    setModalLineItems([...modalLineItems, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
-  };
 
-  const removeLineItem = (id) => {
-    if (modalLineItems.length > 1) {
-      setModalLineItems(modalLineItems.filter(item => item.id !== id));
-    }
-  };
-
-  const updateLineItem = (id, field, value) => {
-    setModalLineItems(modalLineItems.map(item => {
-      if (item.id === id) {
-        const updatedItem = { ...item, [field]: value };
-        if (field === 'quantity' || field === 'rate') {
-          const quantity = field === 'quantity' ? parseFloat(value) || 0 : item.quantity;
-          const rate = field === 'rate' ? parseFloat(value) || 0 : item.rate;
-          updatedItem.amount = quantity * rate;
-        }
-        return updatedItem;
-      }
-      return item;
-    }));
-  };
-
-  const handleSendPaymentRequest = (paymentData) => {
-    if (!stripeAccountId) {
-      console.error('No Stripe account ID found for business');
+  const handleSendBidInvitation = () => {
+    if (!bidInfo) {
+      alert('No bid information available to send invitation');
       return;
     }
 
-    const total = calculateTotal();
-    if (total <= 0) {
-      alert('Please add at least one line item with a valid amount');
-      return;
-    }
+    const invitationMessage = `Hi! I'd like to invite you to accept my bid for $${bidInfo.bid_amount}. Please let me know if you have any questions or if you'd like to proceed with the booking.`;
 
-    const messageData = {
+    socket.emit("send_message", {
       senderId: currentUserId,
       receiverId: businessId,
-      message: JSON.stringify({
-        type: 'payment_request',
-        amount: total,
-        description: 'Service Payment',
-        paymentData: {
-          amount: total,
-          stripe_account_id: stripeAccountId,
-          payment_type: 'custom',
-          business_name: businessName,
-          description: 'Service Payment',
-          lineItems: modalLineItems.filter(item => item.amount > 0),
-          subtotal: calculateSubtotal(),
-          tax: calculateTax(),
-          taxRate: modalTaxRate
-        }
-      }),
-      type: 'payment_request',
-      payment_amount: total,
-      payment_status: 'pending',
-      payment_data: {
-        lineItems: modalLineItems.filter(item => item.amount > 0),
-        subtotal: calculateSubtotal(),
-        tax: calculateTax(),
-        taxRate: modalTaxRate,
-        stripe_account_id: stripeAccountId,
-        business_name: businessName,
-        description: 'Service Payment'
-      },
-      seen: false
-    };
+      message: invitationMessage,
+      type: "text",
+      seen: false,
+    });
 
-    socket.emit("send_message", messageData);
-    setShowPaymentModal(false);
+    setShowBidInvitationModal(false);
+    setShowMenu(false);
+  };
+
+  const toggleMenu = () => {
+    setShowMenu(!showMenu);
+  };
+
+  const closeMenu = () => {
+    setShowMenu(false);
+  };
+
+  // Bid status management functions
+  const handleMoveToPending = async (bid) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ status: 'pending' })
+        .eq('id', bid.id);
+      
+      if (error) throw error;
+      
+      // Refresh bid info
+      await refreshBidInfo();
+      toast.success('Bid moved to pending');
+    } catch (error) {
+      console.error('Error updating bid status:', error);
+      toast.error('Failed to update bid status');
+    }
+  };
+
+  const handleMoveToAccepted = async (bid) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ status: 'accepted' })
+        .eq('id', bid.id);
+      
+      if (error) throw error;
+      
+      // Refresh bid info
+      await refreshBidInfo();
+      toast.success('Bid accepted');
+    } catch (error) {
+      console.error('Error updating bid status:', error);
+      toast.error('Failed to accept bid');
+    }
+  };
+
+  const handleMoveToNotInterested = async (bid) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ status: 'denied' })
+        .eq('id', bid.id);
+      
+      if (error) throw error;
+      
+      // Refresh bid info
+      await refreshBidInfo();
+      toast.success('Bid marked as not interested');
+    } catch (error) {
+      console.error('Error updating bid status:', error);
+      toast.error('Failed to update bid status');
+    }
+  };
+
+  const handleMoveToInterested = async (bid) => {
+    try {
+      const { error } = await supabase
+        .from('bids')
+        .update({ status: 'interested' })
+        .eq('id', bid.id);
+      
+      if (error) throw error;
+      
+      // Refresh bid info
+      await refreshBidInfo();
+      toast.success('Bid marked as interested');
+    } catch (error) {
+      console.error('Error updating bid status:', error);
+      toast.error('Failed to update bid status');
+    }
+  };
+
+  const handleApproveBid = async (bid) => {
+    try {
+      // First, decline all other bids for this request
+      const otherBids = await supabase
+        .from('bids')
+        .select('id')
+        .eq('request_id', bid.request_id)
+        .neq('id', bid.id)
+        .neq('status', 'denied')
+        .neq('status', 'expired');
+
+      if (otherBids.data && otherBids.data.length > 0) {
+        const { error: declineError } = await supabase
+          .from('bids')
+          .update({ status: 'denied' })
+          .in('id', otherBids.data.map(bid => bid.id));
+
+        if (declineError) {
+          console.error('Error declining other bids:', declineError);
+          toast.error('Failed to decline other bids. Please try again.');
+          return;
+        }
+      }
+
+      // Close the request (determine table name based on request type)
+      const requestTables = [
+        'beauty_requests',
+        'catering_requests',
+        'dj_requests',
+        'florist_requests',
+        'photography_requests',
+        'videography_requests',
+        'wedding_planning_requests'
+      ];
+
+      for (const table of requestTables) {
+        const { data: requestData, error: requestError } = await supabase
+          .from(table)
+          .select('id')
+          .eq('id', bid.request_id)
+          .single();
+
+        if (!requestError && requestData) {
+          const { error: closeError } = await supabase
+            .from(table)
+            .update({ 
+              status: 'closed',
+              closed_at: new Date().toISOString()
+            })
+            .eq('id', bid.request_id);
+
+          if (closeError) {
+            console.error('Error closing request:', closeError);
+          }
+          break; // Found the table, no need to check others
+        }
+      }
+
+      // Update the selected bid status and add acceptance timestamp
+      const { error } = await supabase
+        .from('bids')
+        .update({
+          status: 'accepted',
+          accepted_at: new Date().toISOString()
+        })
+        .eq('id', bid.id);
+
+      if (error) {
+        console.error('Error updating bid:', error);
+        toast.error('Failed to accept bid. Please try again.');
+        return;
+      }
+
+      // Refresh bid info and show approval modal
+      await refreshBidInfo();
+      setShowBidDetailModal(false);
+      setShowApprovalModal(true);
+      setSelectedBidForApproval(bid);
+      
+      toast.success('Bid accepted successfully! Other bids have been declined and request closed.');
+    } catch (error) {
+      console.error('Error accepting bid:', error);
+      toast.error('Failed to accept bid. Please try again.');
+    }
+  };
+
+  const handlePostApprovalAction = async (action) => {
+    if (action === 'message') {
+      // Close approval modal and focus on message input
+      setShowApprovalModal(false);
+      setSelectedBidForApproval(null);
+      
+      // Focus on the message input
+      const messageInput = document.querySelector('.chat-input');
+      if (messageInput) {
+        messageInput.focus();
+      }
+    }
   };
 
   return (
@@ -765,10 +956,20 @@ export default function MessagingView({
               className="view-bid-button"
               onClick={() => {
                 console.log('Bid button clicked');
-                navigate('/bids');
+                if (isCurrentUserBusiness) {
+                  // For business users, open edit bid modal
+                  setShowEditBidModal(true);
+                } else {
+                  // For individual users, open bid detail modal
+                  setShowBidDetailModal(true);
+                }
               }}
+              style={{
+                cursor: 'pointer'
+              }}
+              title={isCurrentUserBusiness ? 'Edit your bid' : 'View bid details'}
             >
-              View Bids
+              {isCurrentUserBusiness ? 'Edit Bid' : 'View Bid'}
             </button>
           </div>
         </div>
@@ -776,11 +977,26 @@ export default function MessagingView({
 
       <div className="chat-window-messaging-view">
         <div className="chat-body-messaging-view">
-          {messages.map((msg, index) => (
-            <div
-              key={index}
-              className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
-            >
+          {messages.map((msg, index) => {
+            // Check if we need to show a date separator
+            const showDateSeparator = index === 0 || 
+              !isToday(messages[index - 1].createdAt) || 
+              !isToday(msg.createdAt);
+            
+            return (
+              <React.Fragment key={index}>
+                {showDateSeparator && (
+                  <div className="date-separator">
+                    <div className="date-separator-line"></div>
+                    <span className="date-separator-text">
+                      {formatTimestamp(msg.createdAt, 'date')}
+                    </span>
+                    <div className="date-separator-line"></div>
+                  </div>
+                )}
+                <div
+                  className={`message-bubble ${msg.senderId === currentUserId ? "sent" : "received"} ${!msg.seen && msg.senderId === currentUserId ? "unseen" : ""}`}
+                >
               {msg.type === 'image' ? (
                 <img
                   src={msg.message}
@@ -807,12 +1023,7 @@ export default function MessagingView({
                 formatMessageText(msg.message)
               )}
               <div className="message-time">
-                {new Date(msg.createdAt).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true,
-                  timeZone: 'America/Denver'
-                })}
+                {formatTimestamp(msg.createdAt, 'datetime')}
                 {msg.senderId === currentUserId && (
                   <span className="seen-indicator">
                     {msg.seen ? "✓✓" : "✓"}
@@ -820,7 +1031,9 @@ export default function MessagingView({
                 )}
               </div>
             </div>
-          ))}
+          </React.Fragment>
+        );
+      })}
           {isTyping && (
             <div className="typing-indicator">
               <span className="dot"></span>
@@ -850,39 +1063,132 @@ export default function MessagingView({
         </div>
       )}
 
+      {/* Combined Image Preview Modal */}
+      {showImagePreviewModal && (
+        <div className="image-preview-modal-overlay" onClick={closeImagePreviewModal}>
+          <div className="image-preview-modal" onClick={(e) => e.stopPropagation()}>
+                           <div className="image-preview-modal-header">
+                 <h3>
+                   {`Images to Send (${pendingFiles.length})`}
+                 </h3>
+              <button 
+                className="close-btn"
+                onClick={closeImagePreviewModal}
+              >
+                ×
+              </button>
+            </div>
+                          <div className="image-preview-modal-content">
+                <div className="multiple-images-preview-container">
+                  <div className="preview-grid">
+                    {previewImageUrls.map((url, index) => (
+                      <div key={index} className="preview-item">
+                        <img src={url} alt={`Preview ${index + 1}`} />
+                        <button 
+                          className="remove-preview-btn"
+                          onClick={() => removePendingFile(index)}
+                        >
+                          <FaTimes />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              <div className="image-preview-actions">
+                <button 
+                  className="cancel-btn"
+                  onClick={closeImagePreviewModal}
+                >
+                  Cancel
+                </button>
+                <button 
+                  className="send-btn"
+                  onClick={sendMultipleImages}
+                  disabled={isUploadingImages}
+                >
+                  {isUploadingImages ? "Sending..." : "Send All Images"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       <footer className="chat-footer" style={{ marginBottom: '0px' }}>
         <div className="chat-upload-container">
-          <label htmlFor="file-upload" className="chat-upload-btn">
-            <span>＋</span>
-            <input
-              id="file-upload"
-              type="file"
-              accept="image/*"
-              style={{ display: "none" }}
-              onChange={handleFileUpload}
-            />
-          </label>
-          {isCurrentUserBusiness && stripeAccountId && (
+          {/* Enhanced Plus Button with Menu */}
+          <div className="chat-plus-menu-container">
             <button 
-              className="chat-payment-btn"
-              onClick={() => setShowPaymentModal(true)}
-              title="Send Payment Request"
+              className="chat-upload-btn tw-border-none"
+              onClick={toggleMenu}
+              title="Add content"
             >
-              <FaCreditCard />
+              <FaPlus />
+              {pendingFiles.length > 0 && (
+                <span className="pending-count-badge">
+                  {pendingFiles.length}
+                </span>
+              )}
             </button>
-          )}
+            
+            {showMenu && (
+              <div className="chat-plus-menu">
+                <div className="menu-header">
+                  <span>Add Content</span>
+                  <button className="close-menu-btn" onClick={closeMenu}>
+                    <FaTimes />
+                  </button>
+                </div>
+                
+                <div className="menu-options">
+                  <label className="menu-option">
+                    <FaImage />
+                    <span>Upload Images</span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      style={{ display: "none" }}
+                      onChange={handleMultipleFileUpload}
+                    />
+                  </label>
+                  
+                  {isCurrentUserBusiness && bidInfo && (
+                    <button 
+                      className="menu-option"
+                      onClick={() => {
+                        setShowBidInvitationModal(true);
+                        setShowMenu(false);
+                      }}
+                    >
+                      <FaCheckCircle />
+                      <span>Send Bid Invitation</span>
+                    </button>
+                  )}
+                  
+                                     {isCurrentUserBusiness && stripeAccountId && (
+                     <button 
+                       className="menu-option"
+                       onClick={(e) => {
+                         e.preventDefault();
+                         e.stopPropagation();
+                         console.log('Send Payment Request button clicked');
+                         // Navigate to BidsPage for payment processing
+                         navigate('/bids');
+                         setShowMenu(false);
+                       }}
+                     >
+                       <FaCreditCard />
+                       <span>Send Payment Request</span>
+                     </button>
+                   )}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="chat-input-wrapper">
-          {previewImageUrl && (
-            <div className="inline-image-preview">
-              <img src={previewImageUrl} alt="Preview" />
-              <button className="inline-remove-button" onClick={() => {
-                setPreviewImageUrl(null);
-                setPendingFile(null);
-              }}>×</button>
-            </div>
-          )}
           <textarea
             className="chat-input"
             placeholder="Add a message…"
@@ -904,123 +1210,193 @@ export default function MessagingView({
           />
         </div>
 
-        <button className="chat-send-btn" onClick={sendMessage}>
+        <button className="chat-send-btn" onClick={sendMessage} disabled={isUploadingImages}>
           Send
         </button>
       </footer>
 
-      {/* Payment Request Modal */}
-      {showPaymentModal && (
+      {/* Payment Modal - Same as in BidDisplay.js */}
+      {showPaymentModal && bidInfo && (
         <div className="payment-modal-overlay" onClick={() => setShowPaymentModal(false)}>
           <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
-            <div className="payment-modal-header">
-              <h3>Send Payment Request</h3>
-              <button 
-                className="close-btn"
-                onClick={() => setShowPaymentModal(false)}
-              >
-                ×
-              </button>
-            </div>
+                         <div className="payment-modal-header">
+               <h3>Payment Options</h3>
+               <button 
+                 className="close-btn"
+                 onClick={() => setShowPaymentModal(false)}
+               >
+                 ×
+               </button>
+             </div>
             <div className="payment-modal-content">
-              <div className="line-items-section">
-                <div className="line-items-header">
-                  <h4>Service Breakdown</h4>
-                  <button 
-                    className="add-line-item-btn"
-                    onClick={addLineItem}
-                    type="button"
-                  >
-                    <FaPlus /> Add Service
-                  </button>
-                </div>
-                
-                <div className="line-items-help">
-                  <p><strong>Itemize your services:</strong> List each service or item separately. For example: "Wedding Photography" (8 hours × $150), "Bouquet Design" (1 item × $200), etc.</p>
-                </div>
-                
-                <div className="line-items-list">
-                  {modalLineItems.map((item) => (
-                    <div key={item.id} className="line-item">
-                      <div className="line-item-row">
-                        <div className="line-item-description">
-                          <input
-                            type="text"
-                            placeholder="e.g., Wedding Photography, Bouquet Design, DJ Services"
-                            value={item.description}
-                            onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
-                          />
+              <div className="payment-options">
+                {(() => {
+                  // Check if down payment has already been made
+                  const hasDownPayment = bidInfo.payment_amount && parseFloat(bidInfo.payment_amount) > 0;
+                  const downPaymentAmount = hasDownPayment ? parseFloat(bidInfo.payment_amount) : 0;
+                  const totalBidAmount = parseFloat(bidInfo.bid_amount) || 0;
+                  const remainingAmount = Math.max(0, totalBidAmount - downPaymentAmount);
+                  
+                  // If down payment has already been made, show remaining amount
+                  if (hasDownPayment && remainingAmount > 0) {
+                    return (
+                      <div className="payment-option">
+                        <h4>Pay Remaining Balance</h4>
+                        <div className="payment-summary">
+                          <p className="payment-amount">${remainingAmount.toFixed(2)}</p>
+                          <div className="payment-breakdown">
+                            <span>Total Bid: ${totalBidAmount.toFixed(2)}</span>
+                            <span>Already Paid: ${downPaymentAmount.toFixed(2)}</span>
+                            <span className="remaining-amount">Remaining: ${remainingAmount.toFixed(2)}</span>
+                          </div>
                         </div>
-                        <div className="line-item-quantity">
-                          <input
-                            type="number"
-                            placeholder="Hours/Qty"
-                            min="1"
-                            value={item.quantity}
-                            onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
-                          />
-                        </div>
-                        <div className="line-item-rate">
-                          <input
-                            type="number"
-                            placeholder="$ per hour/item"
-                            min="0"
-                            step="0.01"
-                            value={item.rate}
-                            onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
-                          />
-                        </div>
-                        <div className="line-item-amount">
-                          ${(item.amount || 0).toFixed(2)}
-                        </div>
-                        <div className="line-item-actions">
-                          <button
-                            className="remove-line-item-btn"
-                            onClick={() => removeLineItem(item.id)}
-                            type="button"
-                            disabled={modalLineItems.length === 1}
+                        <p className="payment-description">
+                          Complete your payment to finalize this booking
+                        </p>
+                        <button 
+                          className="payment-option-btn success"
+                          onClick={() => {
+                            // Navigate to checkout form with payment data
+                            navigate('/checkout', {
+                              state: {
+                                paymentData: {
+                                  amount: remainingAmount,
+                                  payment_type: 'remaining_balance',
+                                  business_name: bidInfo.business_profiles?.business_name || 'Business',
+                                  stripe_account_id: bidInfo.business_profiles?.stripe_account_id,
+                                  bid_id: bidInfo.id,
+                                  lineItems: bidInfo.line_items || [],
+                                  taxRate: bidInfo.tax_rate || 0,
+                                  subtotal: remainingAmount,
+                                  tax: 0,
+                                  description: `Remaining balance for bid #${bidInfo.id}`
+                                }
+                              }
+                            });
+                            setShowPaymentModal(false);
+                          }}
+                        >
+                          Pay Remaining Balance (${remainingAmount.toFixed(2)})
+                        </button>
+                      </div>
+                    );
+                  }
+                  
+                  // Check if down payment option is available
+                  const hasDownPaymentOption = bidInfo.business_profiles?.amount && bidInfo.business_profiles?.down_payment_type;
+                  
+                  if (hasDownPaymentOption) {
+                    const downPaymentAmount = bidInfo.business_profiles.down_payment_type === 'percentage' 
+                      ? (totalBidAmount * parseFloat(bidInfo.business_profiles.amount)) / 100
+                      : parseFloat(bidInfo.business_profiles.amount);
+                    
+                    return (
+                      <>
+                        <div className="payment-option">
+                          <h4>Down Payment</h4>
+                          <p className="payment-amount">
+                            {bidInfo.business_profiles.down_payment_type === 'percentage' 
+                              ? `${bidInfo.business_profiles.amount}% ($${downPaymentAmount.toFixed(2)})`
+                              : `$${bidInfo.business_profiles.amount}`
+                            }
+                          </p>
+                          <p className="payment-description">
+                            Secure your booking with a partial payment
+                          </p>
+                          <button 
+                            className="payment-option-btn primary"
+                            onClick={() => {
+                              // Navigate to checkout form with payment data
+                              navigate('/checkout', {
+                                state: {
+                                  paymentData: {
+                                    amount: downPaymentAmount,
+                                    payment_type: 'down_payment',
+                                    business_name: bidInfo.business_profiles?.business_name || 'Business',
+                                    stripe_account_id: bidInfo.business_profiles?.stripe_account_id,
+                                    bid_id: bidInfo.id,
+                                    lineItems: bidInfo.line_items || [],
+                                    taxRate: bidInfo.tax_rate || 0,
+                                    subtotal: downPaymentAmount,
+                                    tax: 0,
+                                    description: `Down payment for bid #${bidInfo.id}`
+                                  }
+                                }
+                              });
+                              setShowPaymentModal(false);
+                            }}
                           >
-                            <FaTrash />
+                            Pay Down Payment
                           </button>
                         </div>
-                      </div>
+                        <div className="payment-option">
+                          <h4>Full Payment</h4>
+                          <p className="payment-amount">${totalBidAmount.toFixed(2)}</p>
+                          <p className="payment-description">Pay the complete amount upfront</p>
+                          <button 
+                            className="payment-option-btn success"
+                            onClick={() => {
+                              // Navigate to checkout form with payment data
+                              navigate('/checkout', {
+                                state: {
+                                  paymentData: {
+                                    amount: totalBidAmount,
+                                    payment_type: 'full_payment',
+                                    business_name: bidInfo.business_profiles?.business_name || 'Business',
+                                    stripe_account_id: bidInfo.business_profiles?.stripe_account_id,
+                                    bid_id: bidInfo.id,
+                                    lineItems: bidInfo.line_items || [],
+                                    taxRate: bidInfo.tax_rate || 0,
+                                    subtotal: totalBidAmount,
+                                    tax: 0,
+                                    description: `Full payment for bid #${bidInfo.id}`
+                                  }
+                                }
+                              });
+                              setShowPaymentModal(false);
+                            }}
+                          >
+                            Pay Full Amount
+                          </button>
+                        </div>
+                      </>
+                    );
+                  }
+                  
+                  // Default: Full payment only
+                  return (
+                    <div className="payment-option">
+                      <h4>Full Payment</h4>
+                      <p className="payment-amount">${totalBidAmount.toFixed(2)}</p>
+                      <p className="payment-description">Complete payment for this service</p>
+                      <button 
+                        className="payment-option-btn success"
+                        onClick={() => {
+                          // Navigate to checkout form with payment data
+                          navigate('/checkout', {
+                            state: {
+                              paymentData: {
+                                amount: totalBidAmount,
+                                payment_type: 'full_payment',
+                                business_name: bidInfo.business_profiles?.business_name || 'Business',
+                                stripe_account_id: bidInfo.business_profiles?.stripe_account_id,
+                                bid_id: bidInfo.id,
+                                lineItems: bidInfo.line_items || [],
+                                taxRate: bidInfo.tax_rate || 0,
+                                subtotal: totalBidAmount,
+                                tax: 0,
+                                description: `Full payment for bid #${bidInfo.id}`
+                              }
+                            }
+                          });
+                          setShowPaymentModal(false);
+                        }}
+                      >
+                        Pay Now
+                      </button>
                     </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="tax-section">
-                <div className="tax-input">
-                  <label>Tax Rate (%)</label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    min="0"
-                    max="100"
-                    step="0.01"
-                    value={modalTaxRate}
-                    onChange={(e) => setModalTaxRate(parseFloat(e.target.value) || 0)}
-                  />
-                  <small>Leave as 0 if no tax applies</small>
-                </div>
-              </div>
-
-              <div className="payment-summary">
-                <h4>Payment Summary</h4>
-                <div className="summary-row">
-                  <span>Subtotal:</span>
-                  <span>${calculateSubtotal().toFixed(2)}</span>
-                </div>
-                {modalTaxRate > 0 && (
-                  <div className="summary-row">
-                    <span>Tax ({modalTaxRate}%):</span>
-                    <span>${calculateTax().toFixed(2)}</span>
-                  </div>
-                )}
-                <div className="summary-row total">
-                  <span>Total Amount:</span>
-                  <span>${calculateTotal().toFixed(2)}</span>
-                </div>
+                  );
+                })()}
               </div>
             </div>
             <div className="payment-modal-actions">
@@ -1030,38 +1406,167 @@ export default function MessagingView({
               >
                 Cancel
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bid Invitation Modal */}
+      {showBidInvitationModal && (
+        <div className="bid-invitation-modal-overlay" onClick={() => setShowBidInvitationModal(false)}>
+          <div className="bid-invitation-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="bid-invitation-modal-header">
+              <h3>Send Bid Invitation</h3>
+              <button 
+                className="close-btn"
+                onClick={() => setShowBidInvitationModal(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="bid-invitation-modal-content">
+              <div className="bid-info-summary">
+                <h4>Bid Details</h4>
+                <div className="bid-summary-row">
+                  <span>Amount:</span>
+                  <span className="bid-amount">${bidInfo?.bid_amount}</span>
+                </div>
+                <div className="bid-summary-row">
+                  <span>Status:</span>
+                  <span className="bid-status">{bidInfo?.status}</span>
+                </div>
+              </div>
+              
+              <div className="invitation-message">
+                <h4>Invitation Message</h4>
+                <p>
+                  This will send a friendly invitation message asking the client to accept your bid for ${bidInfo?.bid_amount}. 
+                  The message will be sent as a regular chat message that they can respond to.
+                </p>
+              </div>
+            </div>
+            <div className="bid-invitation-modal-actions">
+              <button 
+                className="cancel-btn"
+                onClick={() => setShowBidInvitationModal(false)}
+              >
+                Cancel
+              </button>
               <button 
                 className="send-btn"
-                onClick={() => {
-                  const total = calculateTotal();
-                  if (total <= 0) {
-                    alert('Please add at least one line item with a valid amount');
-                    return;
-                  }
-
-                  handleSendPaymentRequest({
-                    amount: total,
-                    description: 'Service Payment',
-                    paymentData: {
-                      amount: total,
-                      stripe_account_id: stripeAccountId,
-                      payment_type: 'custom',
-                      business_name: businessName,
-                      description: 'Service Payment',
-                      lineItems: modalLineItems.filter(item => item.amount > 0),
-                      subtotal: calculateSubtotal(),
-                      tax: calculateTax(),
-                      taxRate: modalTaxRate
-                    }
-                  });
-                }}
+                onClick={handleSendBidInvitation}
               >
-                Send Request
+                Send Invitation
               </button>
             </div>
           </div>
         </div>
       )}
+
+             {/* Bid Detail Modal - Show for both individual and business users */}
+       {showBidDetailModal && bidInfo && (
+         <BidDetailModal
+           isOpen={showBidDetailModal}
+           onClose={() => setShowBidDetailModal(false)}
+           bid={bidInfo}
+           currentUserId={currentUserId}
+           isCurrentUserBusiness={isCurrentUserBusiness}
+           onEditBid={() => {
+             setShowBidDetailModal(false);
+             setShowEditBidModal(true);
+           }}
+           onPayClick={() => {
+             setShowBidDetailModal(false);
+             setShowPaymentModal(true);
+           }}
+           onMessageClick={() => {
+             setShowBidDetailModal(false);
+             // Focus on the message input
+             const messageInput = document.querySelector('.chat-input');
+             if (messageInput) {
+               messageInput.focus();
+             }
+           }}
+           onConsultationClick={() => {
+             setShowBidDetailModal(false);
+             // You can implement consultation functionality here
+             console.log('Consultation requested');
+           }}
+           onApprove={() => {
+             handleApproveBid(bidInfo);
+           }}
+           onDeny={() => {
+             handleMoveToNotInterested(bidInfo);
+             setShowBidDetailModal(false);
+           }}
+           onMoveToPending={() => {
+             handleMoveToPending(bidInfo);
+           }}
+           onMoveToInterested={() => {
+             handleMoveToInterested(bidInfo);
+           }}
+           showActions={true}
+         />
+       )}
+
+      {/* Approval Modal */}
+      {showApprovalModal && selectedBidForApproval && (
+        <div className="approval-modal-overlay" onClick={() => handlePostApprovalAction('message')}>
+          <div className="approval-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="approval-modal-header">
+              <h3>Bid Accepted!</h3>
+              <button 
+                className="tw-position-absolute tw-top-0 tw-right-0 tw-text-2xl tw-font-bold tw-text-gray-500 tw-bg-white tw-rounded-full tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-border-none tw-cursor-pointer"
+                onClick={() => handlePostApprovalAction('message')}
+              >
+                ×
+              </button>
+            </div>
+            <div className="approval-modal-content">
+              <p>
+                The bid from {bidInfo?.business_profiles?.business_name || 'a business'} for ${bidInfo?.bid_amount} has been accepted. 
+                What would you like to do next?
+              </p>
+              <div className="approval-modal-actions">
+                <button 
+                  className="send-btn"
+                  onClick={() => handlePostApprovalAction('message')}
+                >
+                  Send Message
+                </button>
+                <button 
+                  className="send-btn"
+                  style={{
+                    backgroundColor: '#ec4899',
+                    color: '#fff',
+                    cursor: 'pointer',
+                  }}
+                  onClick={() => {
+                    // Open the payment modal instead of navigating
+                    setShowApprovalModal(false);
+                    setShowPaymentModal(true);
+                  }}
+                >
+                  Pay
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Bid Modal - Only show for business users */}
+      {showEditBidModal && bidInfo && (
+        <SlidingBidModal
+          isOpen={showEditBidModal}
+          onClose={() => setShowEditBidModal(false)}
+          requestId={bidInfo.request_id}
+          editMode={true}
+          bidId={bidInfo.id}
+        />
+      )}
+
+
     </div>
   );
 }

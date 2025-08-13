@@ -30,6 +30,7 @@ function BidDisplay({
   showApproved = false,
   showExpired = false,
   showPaymentOptions = false,
+  showHistorical = false,
   isCalendarConnected = false,
   stripeAccountId = null,
   // Mobile-specific props
@@ -41,7 +42,8 @@ function BidDisplay({
   onOpenBidDetail = null, // Callback to open bid detail modal at parent level
   onOpenBidMessaging = null, // Callback to open bid messaging modal at parent level
   onOpenPortfolio = null, // Callback to open portfolio modal at parent level
-  onOpenPaymentModal = null // Callback to open payment modal at parent level
+  onOpenPaymentModal = null, // Callback to open payment modal at parent level
+  isIndividualUser = false // Flag to indicate if current user is an individual
 }) {
   const navigate = useNavigate();
   const [showConsultationModal, setShowConsultationModal] = useState(false);
@@ -73,7 +75,12 @@ function BidDisplay({
     payment_amount,
     down_payment,
     tax_rate,
-    line_items
+    line_items,
+    add_ons,
+    subtotal,
+    discount_type,
+    discount_value,
+    discount_deadline
   } = bid;
 
   // Detect mobile device
@@ -81,9 +88,11 @@ function BidDisplay({
     return window.innerWidth <= 768 || isMobile;
   };
 
-  // Handle row click to open bid detail modal
+  // Handle row click - different behavior for different user types
   const handleRowClick = () => {
-    if (onOpenBidDetail) {
+    // Only open bid detail modal for individuals
+    // For business users, this should not open any modal
+    if (isIndividualUser && onOpenBidDetail) {
       onOpenBidDetail(bid);
     }
   };
@@ -433,10 +442,60 @@ function BidDisplay({
     }
   };
 
+  const getTaxAmount = () => {
+    if (!tax_rate) return 0;
+    return (parseFloat(bid_amount) * parseFloat(tax_rate)) / 100;
+  };
+
+  // Discount calculation functions
+  const calculateDiscountAmount = () => {
+    if (!discount_type || !discount_value) return 0;
+    
+    const totalAmount = parseFloat(bid_amount) || 0;
+    if (discount_type === 'percentage') {
+      return ((totalAmount+getTaxAmount()) * parseFloat(discount_value)) / 100;
+    } else {
+      return parseFloat(discount_value) || 0;
+    }
+  };
+
+  const getDiscountedAmount = () => {
+    const discountAmount = calculateDiscountAmount();
+    const totalAmount = parseFloat(bid_amount) || 0;
+    return Math.max(0, totalAmount - discountAmount);
+  };
+
+  const isDiscountActive = () => {
+    if (!discount_deadline) return false;
+    const now = new Date();
+    const deadline = new Date(discount_deadline);
+    return now <= deadline;
+  };
+
+  const getDiscountTimeRemaining = () => {
+    if (!discount_deadline || !isDiscountActive()) return null;
+    
+    const now = new Date();
+    const deadline = new Date(discount_deadline);
+    const diffInMs = deadline - now;
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+    
+    if (diffInDays > 0) {
+      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} left`;
+    } else if (diffInHours > 0) {
+      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} left`;
+    } else {
+      return 'Expires soon!';
+    }
+  };
+
   const getBidStatus = () => {
+    if (showHistorical) return 'historical';
     if (showExpired) return 'expired';
     if (status === 'denied') return 'denied';
-    if (showApproved || status === 'approved' || status === 'accepted' || status === 'interested') return 'approved';
+    if (status === 'accepted') return 'accepted';
+    if (showApproved || status === 'approved' || status === 'interested') return 'approved';
     if (showPaymentOptions) return 'payment';
     if (showPending || status === 'pending') return 'pending';
     return 'default';
@@ -644,6 +703,23 @@ function BidDisplay({
             <span>Approved</span>
           </div>
         );
+      case 'accepted':
+        return (
+          <div className="bid-row-status accepted" style={{
+            background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+            color: 'white',
+            padding: '8px 16px',
+            borderRadius: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontWeight: '600',
+            fontSize: '14px'
+          }}>
+            <i className="fas fa-check-circle"></i>
+            <span>Accepted</span>
+          </div>
+        );
       case 'pending':
         return (
           <div className="bid-row-status pending">
@@ -663,6 +739,13 @@ function BidDisplay({
           <div className="bid-row-status expired">
             <CancelIcon />
             <span>Expired</span>
+          </div>
+        );
+      case 'historical':
+        return (
+          <div className="bid-row-status historical">
+            <CheckCircleIcon />
+            <span>Completed</span>
           </div>
         );
       default:
@@ -720,6 +803,82 @@ function BidDisplay({
             >
               Move Back to Pending
             </button>
+          </div>
+        );
+
+      case 'accepted':
+        return (
+          <div className="bid-row-actions">
+            <div className="accepted-bid-next-steps" style={{
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              <h4 style={{ 
+                color: '#155724', 
+                margin: '0 0 12px 0', 
+                fontSize: '16px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                justifyContent: 'center'
+              }}>
+                <i className="fas fa-check-circle"></i>
+                Bid Accepted! Next Steps:
+              </h4>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  className="bid-row-btn bid-row-btn-primary"
+                  style={{
+                    background: '#9633eb',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 16px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMessageClick(e);
+                  }}
+                >
+                  <i className="fas fa-comments"></i>
+                  Message Vendor
+                </button>
+                <button
+                  className="bid-row-btn bid-row-btn-success"
+                  style={{
+                    background: '#ec4899',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '10px 16px',
+                    fontSize: '14px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handlePaymentClick(e);
+                  }}
+                >
+                  <i className="fas fa-credit-card"></i>
+                  {downPaymentMade ? 'Pay Remaining' : 'Make Payment'}
+                </button>
+              </div>
+            </div>
           </div>
         );
         
@@ -822,6 +981,68 @@ function BidDisplay({
             >
               Move Back to Pending
             </button>
+          </div>
+        );
+        
+      case 'historical':
+        return (
+          <div className="bid-row-actions">
+            <div className="historical-bid-info" style={{
+              background: 'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+              border: '1px solid #dee2e6',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              <h4 style={{ 
+                color: '#6c757d', 
+                margin: '0 0 8px 0', 
+                fontSize: '16px',
+                fontWeight: '600',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                justifyContent: 'center'
+              }}>
+                <i className="fas fa-check-circle"></i>
+                Service Completed
+              </h4>
+              <p style={{ 
+                color: '#868e96', 
+                margin: '0 0 12px 0', 
+                fontSize: '14px',
+                fontStyle: 'italic'
+              }}>
+                This bid has been fully paid and completed. It's now part of your service history.
+              </p>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  className="bid-row-btn bid-row-btn-secondary"
+                  style={{
+                    background: '#6c757d',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    fontSize: '12px',
+                    fontWeight: '500',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    opacity: '0.8'
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleMessageClick(e);
+                  }}
+                >
+                  <i className="fas fa-comments"></i>
+                  View Messages
+                </button>
+              </div>
+            </div>
           </div>
         );
         
@@ -971,7 +1192,7 @@ function BidDisplay({
       {/* Mobile Detail View */}
       {mobileDetailView && (
         <div 
-          className="mobile-bid-detail-view"
+                      className={`mobile-bid-detail-view ${status === 'accepted' ? 'accepted' : ''} ${getBidStatus() === 'historical' ? 'historical' : ''}`}
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
@@ -1182,6 +1403,44 @@ function BidDisplay({
               </div>
             )}
             
+            {/* Discount Information - Only show if discount is active */}
+            {discount_type && discount_value && isDiscountActive() && (
+              <div className="mobile-bid-detail-section">
+                <h4 className="mobile-section-title">Special Offer</h4>
+                <div className="mobile-discount-details">
+                  <div className="mobile-discount-item">
+                    <span>Discount:</span>
+                    <span className="mobile-discount-value">
+                      {discount_type === 'percentage' 
+                        ? `${discount_value}% OFF`
+                        : `$${discount_value} OFF`
+                      }
+                    </span>
+                  </div>
+                  {discount_deadline && (
+                    <div className="mobile-discount-item">
+                      <span>Expires:</span>
+                      <span className="mobile-discount-deadline active">
+                        {getDiscountTimeRemaining()}
+                      </span>
+                    </div>
+                  )}
+                  <div className="mobile-discount-item">
+                    <span>Original Price:</span>
+                    <span className="mobile-original-price">${bid_amount}</span>
+                  </div>
+                  <div className="mobile-discount-item">
+                    <span>Final Price:</span>
+                    <span className="mobile-final-price">${getDiscountedAmount().toFixed(2)}</span>
+                  </div>
+                  <div className="mobile-discount-item">
+                    <span>You Save:</span>
+                    <span className="mobile-savings">${calculateDiscountAmount().toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+            
             {/* Chat handled by separate messaging modal */}
 
 
@@ -1191,7 +1450,7 @@ function BidDisplay({
 
       {/* Desktop Bid Row */}
       {!mobileDetailView && (
-        <div className="bid-row" onClick={handleRowClick}>
+        <div className={`bid-row ${status === 'accepted' ? 'accepted' : ''} ${getBidStatus() === 'historical' ? 'historical' : ''}`} onClick={handleRowClick}>
           {/* New Tag */}
           {isNew && (
             <div className="bid-new-tag">
@@ -1251,10 +1510,25 @@ function BidDisplay({
                 </div>
                 
                 <div className="bid-row-price">
-                  <span className="price-amount">${bid_amount}</span>
-                  {tax_rate > 0 && (
-                    <span className="tax-info">+ {tax_rate}% tax</span>
-                  )}
+                  
+                  {/* Price Display */}
+                  <div className="price-display" style={{backgroundColor: 'transparent', padding: '10px', borderRadius: '10px'}}>
+                    {discount_type && discount_value && isDiscountActive() ? (
+                      <>
+                        <span className="original-price">${bid_amount}</span>
+                        <span className="discounted-price" style={{color: '#ec4899'}}>${getDiscountedAmount().toFixed(2)}</span>
+                        <span className="discount-label">
+                        {discount_type === 'percentage' ? `${discount_value}% OFF` : `$${discount_value} OFF`}
+                      </span>
+                      <span className="discount-deadline active">
+                        {getDiscountTimeRemaining()}
+                      </span>
+                      </>
+                    ) : (
+                      <span className="price-amount">${bid_amount}</span>
+                    )}
+                  </div>
+                  
                   {downPaymentMade && (
                     <div className="payment-status-indicator">
                       <CheckCircleIcon style={{ fontSize: '16px', color: '#10b981' }} />
@@ -1298,39 +1572,6 @@ function BidDisplay({
                 </span>
               )}
             </div>
-
-            {/* Payment Status Row - Only show for bids with down payment configured */}
-            {(status === 'accepted' || status === 'approved' || status === 'interested') && business_profiles?.amount && business_profiles?.down_payment_type && (
-              <div className="bid-row-payment-status">
-                {downPaymentMade ? (
-                                     <div className="payment-status-row">
-                     <div className="payment-status-item">
-                       <CheckCircleIcon style={{ fontSize: '16px', color: '#10b981' }} />
-                       <span>Down Payment Paid: ${downPaymentAmount.toFixed(2)}</span>
-                       {downPaymentDate && (
-                         <span className="payment-date">on {downPaymentDate.toLocaleDateString()}</span>
-                       )}
-                     </div>
-                     <div className="payment-status-item">
-                       <span>Remaining Balance: ${getDatabaseRemainingAmount().toFixed(2)}</span>
-                     </div>
-                   </div>
-                ) : (
-                                     <div className="payment-status-row">
-                     <div className="payment-status-item">
-                       <span>Down Payment Required: {
-                         business_profiles.down_payment_type === 'percentage' 
-                           ? `${business_profiles.amount}% ($${getDownPaymentAmount().toFixed(2)})`
-                           : `$${business_profiles.amount}`
-                       }</span>
-                     </div>
-                     <div className="payment-status-item">
-                       <span>Remaining Balance: ${getDatabaseRemainingAmount().toFixed(2)}</span>
-                     </div>
-                   </div>
-                )}
-              </div>
-            )}
 
             {/* Action Buttons */}
             {showActions && (

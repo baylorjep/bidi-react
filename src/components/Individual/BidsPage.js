@@ -202,6 +202,10 @@ export default function BidsPage({ onOpenChat }) {
     const [showRequestSummary, setShowRequestSummary] = useState(true);
     const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
 
+    // Add new state for post-approval flow
+    const [showPostApprovalModal, setShowPostApprovalModal] = useState(false);
+    const [selectedBidForPostApproval, setSelectedBidForPostApproval] = useState(null);
+
     // Memoize the loading skeleton at the top level to avoid conditional hook calls
     const loadingSkeleton = useMemo(() => <BidsPageSkeleton />, []);
 
@@ -316,72 +320,78 @@ export default function BidsPage({ onOpenChat }) {
             });
         };
         
-        // Debug logging for payment status
-        const paidBids = requestBids.filter(bid => {
-            // Check multiple indicators of payment
+        // Helper function to check if a bid is fully paid
+        const isFullyPaid = (bid) => {
+            // Check if the bid is fully paid (not just down payment)
+            return bid.payment_status === 'fully_paid' || 
+                   (bid.payment_type === 'full' && bid.payment_amount && parseFloat(bid.payment_amount) >= parseFloat(bid.bid_amount));
+        };
+        
+        // Helper function to check if a bid has any payment
+        const hasAnyPayment = (bid) => {
             const hasPaymentStatus = bid.status === 'paid' || 
                                    bid.payment_status === 'down_payment_paid' || 
-                                   bid.payment_status === 'fully_paid' ||
-                                   bid.payment_status === 'paid';
+                                   bid.payment_status === 'fully_paid';
             
             const hasPaymentAmount = bid.payment_amount && parseFloat(bid.payment_amount) > 0;
-            
-            // Also check for legacy fields that might exist
             const hasLegacyPayment = bid.down_payment && parseFloat(bid.down_payment) > 0;
             
             return hasPaymentStatus || hasPaymentAmount || hasLegacyPayment;
-        });
+        };
         
+        // Separate fully paid bids (historical) from active bids
+        const fullyPaidBids = requestBids.filter(bid => isFullyPaid(bid));
+        const activePaidBids = requestBids.filter(bid => hasAnyPayment(bid) && !isFullyPaid(bid));
+        
+        // Debug logging for payment status
         console.log('Payment status debug:', {
             totalBids: requestBids.length,
-            paidBids: paidBids.length,
-            paidBidsDetails: paidBids.map(bid => ({
+            fullyPaidBids: fullyPaidBids.length,
+            activePaidBids: activePaidBids.length,
+            fullyPaidBidsDetails: fullyPaidBids.map(bid => ({
                 id: bid.id,
                 status: bid.status,
                 payment_status: bid.payment_status,
                 payment_type: bid.payment_type,
                 payment_amount: bid.payment_amount,
-                paid_at: bid.paid_at,
-                isExpired: bid.isExpired
+                bid_amount: bid.bid_amount,
+                paid_at: bid.paid_at
             }))
         });
-        
-        // Log all bids to see their current status
-        console.log('All bids status:', requestBids.map(bid => ({
-            id: bid.id,
-            status: bid.status,
-            payment_status: bid.payment_status,
-            payment_type: bid.payment_type,
-            payment_amount: bid.payment_amount,
-            isExpired: bid.isExpired,
-            expiration_date: bid.expiration_date
-        })));
 
         return {
-            // Paid bids should always be visible regardless of expiration status
-            paid: sortBids(paidBids),
+            // Historical: Fully paid bids (treated as completed/historical)
+            historical: sortBids(fullyPaidBids),
             
-            // Other statuses should only show non-expired bids
-            approved: sortBids(requestBids.filter(bid => (bid.status === 'approved' || bid.status === 'accepted') && !bid.isExpired)),
-            interested: sortBids(requestBids.filter(bid => bid.status === 'interested' && !bid.isExpired)),
-            pending: sortBids(requestBids.filter(bid => bid.status === 'pending' && !bid.isExpired)),
-            denied: sortBids(requestBids.filter(bid => bid.status === 'denied' && !bid.isExpired)),
+            // Active: Bids with partial payments (down payments)
+            paid: sortBids(activePaidBids),
             
-            // Expired bids should exclude any that are already paid
+            // Other active statuses should only show non-expired, non-paid bids
+            approved: sortBids(requestBids.filter(bid => 
+                (bid.status === 'approved' || bid.status === 'accepted') && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            interested: sortBids(requestBids.filter(bid => 
+                bid.status === 'interested' && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            pending: sortBids(requestBids.filter(bid => 
+                bid.status === 'pending' && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            denied: sortBids(requestBids.filter(bid => 
+                bid.status === 'denied' && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            
+            // Expired bids should exclude any that have payments
             expired: sortBids(requestBids.filter(bid => {
                 if (!bid.isExpired) return false;
-                
-                // Check if this bid has any payment indicators
-                const hasPaymentStatus = bid.status === 'paid' || 
-                                       bid.payment_status === 'down_payment_paid' || 
-                                       bid.payment_status === 'fully_paid' ||
-                                       bid.payment_status === 'paid';
-                
-                const hasPaymentAmount = bid.payment_amount && parseFloat(bid.payment_amount) > 0;
-                const hasLegacyPayment = bid.down_payment && parseFloat(bid.down_payment) > 0;
-                
-                // Only show as expired if it has no payment indicators
-                return !hasPaymentStatus && !hasPaymentAmount && !hasLegacyPayment;
+                return !hasAnyPayment(bid);
             })),
         };
     };
@@ -390,6 +400,8 @@ export default function BidsPage({ onOpenChat }) {
     const getNewBidsCount = (statusKey) => {
         const bidsByStatus = getBidsByStatus();
         const statusBids = bidsByStatus[statusKey] || [];
+        // Historical bids don't show new count since they're completed
+        if (statusKey === 'historical') return 0;
         return statusBids.filter(bid => !bid.viewed).length;
     };
 
@@ -909,7 +921,7 @@ export default function BidsPage({ onOpenChat }) {
 
             const paymentData = {
                 bid_id: bid.id,
-                amount: amountToPay,
+                amount: amountToPay + (bid.tax_rate * bid.bid_amount || 0),
                 stripe_account_id: stripeAccountId,
                 payment_type: paymentType,
                 business_name: bid.business_profiles?.business_name || 'Unknown Business',
@@ -956,7 +968,7 @@ export default function BidsPage({ onOpenChat }) {
 
             const paymentData = {
                 bid_id: bid.id,
-                amount: downPayment.amount,
+                amount: downPayment.amount + (bid.tax_rate * downPayment.amount || 0),
                 stripe_account_id: stripeAccountId,
                 payment_type: 'down_payment',
                 business_name: bid.business_profiles?.business_name || 'Unknown Business',
@@ -1208,7 +1220,61 @@ export default function BidsPage({ onOpenChat }) {
     const handleConfirmAccept = async () => {
         if (selectedBid) {
             try {
-                // Update the bid status and add acceptance timestamp
+                // First, decline all other bids for this request
+                const currentRequest = requests[currentRequestIndex];
+                const otherBids = bids.filter(bid => 
+                    bid.request_id === currentRequest.id && 
+                    bid.id !== selectedBid.id &&
+                    bid.status !== 'denied' &&
+                    bid.status !== 'expired'
+                );
+
+                // Update other bids to denied status
+                if (otherBids.length > 0) {
+                    const { error: declineError } = await supabase
+                        .from('bids')
+                        .update({ 
+                            status: 'denied',
+                        })
+                        .in('id', otherBids.map(bid => bid.id));
+
+                    if (declineError) {
+                        console.error('Error declining other bids:', declineError);
+                        toast.error('Failed to decline other bids. Please try again.');
+                        return;
+                    }
+                }
+
+                // Close the request
+                const requestType = currentRequest.type || 'regular';
+                const tableMap = {
+                    regular: "requests",
+                    photography: "photography_requests",
+                    dj: "dj_requests",
+                    catering: "catering_requests",
+                    beauty: "beauty_requests",
+                    videography: "videography_requests",
+                    florist: "florist_requests",
+                    wedding_planning: "wedding_planning_requests"
+                };
+
+                const tableName = tableMap[requestType];
+                if (tableName) {
+                    const { error: closeError } = await supabase
+                        .from(tableName)
+                        .update({ 
+                            status: 'closed',
+                            closed_at: new Date().toISOString()
+                        })
+                        .eq('id', currentRequest.id);
+
+                    if (closeError) {
+                        console.error('Error closing request:', closeError);
+                        // Continue anyway as this is not critical
+                    }
+                }
+
+                // Update the selected bid status and add acceptance timestamp
                 const updateData = {
                     status: 'accepted',
                     accepted_at: new Date().toISOString()
@@ -1225,14 +1291,19 @@ export default function BidsPage({ onOpenChat }) {
                     return;
                 }
 
-                // Reload bids to reflect the change
+                // Reload bids and requests to reflect the changes
                 await loadBids();
+                await loadRequests(user.id);
                 
-                // Close modal and reset state
+                // Close accept modal and show post-approval modal
                 setShowAcceptModal(false);
                 setSelectedBid(null);
                 
-                toast.success('Bid accepted successfully!');
+                // Show post-approval modal
+                setShowPostApprovalModal(true);
+                setSelectedBidForPostApproval(selectedBid);
+                
+                toast.success('Bid accepted successfully! Other bids have been declined and request closed.');
             } catch (error) {
                 console.error('Error accepting bid:', error);
                 toast.error('Failed to accept bid. Please try again.');
@@ -1294,6 +1365,28 @@ export default function BidsPage({ onOpenChat }) {
                 type: 'remaining',
                 alreadyPaid: totalPaid
             };
+        }
+    };
+
+    // Check if user has already been messaging with this vendor
+    const hasExistingConversation = async (bid) => {
+        try {
+            // Check if there are any existing messages between the user and this business
+            const { data: messages, error } = await supabase
+                .from('messages')
+                .select('id')
+                .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${bid.business_profiles.id}),and(sender_id.eq.${bid.business_profiles.id},recipient_id.eq.${currentUserId})`)
+                .limit(1);
+
+            if (error) {
+                console.error('Error checking existing conversations:', error);
+                return false;
+            }
+
+            return messages && messages.length > 0;
+        } catch (error) {
+            console.error('Error checking existing conversations:', error);
+            return false;
         }
     };
 
@@ -1609,7 +1702,8 @@ export default function BidsPage({ onOpenChat }) {
             onOpenBidDetail: handleOpenBidDetail, // Add callback for opening bid detail modal
             onOpenBidMessaging: handleOpenBidMessagingFromList, // Add callback for opening bid messaging modal
             onOpenPortfolio: handleOpenPortfolio, // Add callback for opening portfolio modal
-            onOpenPaymentModal: handleOpenPaymentModal // Add callback for opening payment modal
+            onOpenPaymentModal: handleOpenPaymentModal, // Add callback for opening payment modal
+            isIndividualUser: true // This is BidsPage, so users are individuals
         };
 
         // Determine which props to show based on bid status
@@ -1688,6 +1782,16 @@ export default function BidsPage({ onOpenChat }) {
                         handlePayNow(bid);
                     }
                 },
+                showPending: false,
+                showNotInterested: false,
+                showInterested: false
+            };
+        } else if (bid.payment_status === 'fully_paid' || 
+                   (bid.payment_type === 'full' && bid.payment_amount && parseFloat(bid.payment_amount) >= parseFloat(bid.bid_amount))) {
+            // Historical bid - fully paid and completed
+            statusProps = {
+                showHistorical: true,
+                showActions: false,
                 showPending: false,
                 showNotInterested: false,
                 showInterested: false
@@ -1937,7 +2041,8 @@ export default function BidsPage({ onOpenChat }) {
                                             { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
                                             { key: 'interested', label: 'Interested', description: 'Bids you\'re interested in' },
                                             { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
-                                            { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
+                                            { key: 'paid', label: 'Paid', description: 'Bids with partial payments' },
+                                            { key: 'historical', label: 'Historical', description: 'Completed and fully paid bids' },
                                             { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
                                             { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
                                         ].map(({ key, label, description }) => {
@@ -2086,6 +2191,26 @@ export default function BidsPage({ onOpenChat }) {
     };
     
 
+
+    const handlePostApprovalAction = async (action) => {
+        if (action === 'message') {
+            // Open messaging modal
+            setShowPostApprovalModal(false);
+            setSelectedBidForPostApproval(null);
+            
+            // Open the messaging modal for this bid
+            setSelectedBidForMessagingFromList(selectedBidForPostApproval);
+            setShowBidMessagingFromList(true);
+        } else if (action === 'payment') {
+            // Open payment modal
+            setShowPostApprovalModal(false);
+            setSelectedBidForPostApproval(null);
+            
+            // Open the payment modal for this bid
+            setSelectedBidForPayment(selectedBidForPostApproval);
+            setShowPaymentModal(true);
+        }
+    };
 
     // Enhanced request card with better visual feedback
     const renderRequestCard = (request, index) => {
@@ -2249,7 +2374,8 @@ export default function BidsPage({ onOpenChat }) {
                                         { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
                                         { key: 'interested', label: 'Interested', description: 'Bids you\'re interested in' },
                                         { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
-                                        { key: 'paid', label: 'Paid', description: 'Bids with completed payments' },
+                                        { key: 'paid', label: 'Paid', description: 'Bids with partial payments' },
+                                        { key: 'historical', label: 'Historical', description: 'Completed and fully paid bids' },
                                         { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
                                         { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
                                     ].map(({ key, label, description }) => {
@@ -3146,6 +3272,38 @@ export default function BidsPage({ onOpenChat }) {
                         <div style={{ 
                             marginBottom: '24px', 
                             padding: '16px',
+                            background: '#fff3cd',
+                            borderRadius: '8px',
+                            border: '1px solid #ffeaa7',
+                            color: '#856404'
+                        }}>
+                            <h4 style={{ color: '#856404', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className="fas fa-exclamation-triangle"></i>
+                                Important: This action will:
+                            </h4>
+                            <ul style={{ 
+                                margin: '0', 
+                                paddingLeft: '20px',
+                                listStyleType: 'none'
+                            }}>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-times-circle" style={{ color: '#dc3545' }}></i>
+                                    Decline all other bids for this request
+                                </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-lock" style={{ color: '#6c757d' }}></i>
+                                    Close this request (no more bids will be accepted)
+                                </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-check-circle" style={{ color: '#28a745' }}></i>
+                                    Accept only this vendor's bid
+                                </li>
+                            </ul>
+                        </div>
+                        
+                        <div style={{ 
+                            marginBottom: '24px', 
+                            padding: '16px',
                             background: '#f8f9fa',
                             borderRadius: '8px',
                             border: '1px solid #e9ecef'
@@ -3574,6 +3732,156 @@ export default function BidsPage({ onOpenChat }) {
                             >
                                 Cancel
                             </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+                        {/* Enhanced Post-Approval Modal */}
+            {showPostApprovalModal && selectedBidForPostApproval && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div className="modal-content-bids-page" style={{
+                        background: 'white',
+                        padding: '32px',
+                        borderRadius: '16px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                        maxWidth: '600px',
+                        margin: '0 auto',
+                        overflowY: 'auto',
+                        height: window.innerWidth > 1024 ? 'auto' : '80vh',
+                        marginBottom: '80px',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ marginBottom: '24px' }}>
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto 16px',
+                                color: 'white',
+                                fontSize: '32px'
+                            }}>
+                                <i className="fas fa-check"></i>
+                            </div>
+                            <h3 style={{ marginBottom: '16px', color: '#2c3e50', fontSize: '24px' }}>
+                                Bid Accepted Successfully! 🎉
+                            </h3>
+                            <p style={{ marginBottom: '24px', color: '#6c757d', fontSize: '16px' }}>
+                                Your request has been closed and other bids have been declined. 
+                                {selectedBidForPostApproval.business_profiles?.business_name} is now your selected vendor!
+                            </p>
+                        </div>
+
+                        <div style={{ 
+                            marginBottom: '32px', 
+                            padding: '20px',
+                            background: '#f8f9fa',
+                            borderRadius: '12px',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <h4 style={{ color: '#495057', marginBottom: '16px', fontSize: '18px' }}>
+                                What would you like to do next?
+                            </h4>
+                            
+                            <div style={{ marginBottom: '20px' }}>
+                                <p style={{ color: '#6c757d', marginBottom: '16px' }}>
+                                    <i className="fas fa-info-circle" style={{ color: '#9633eb', marginRight: '8px' }}></i>
+                                    <strong>Recommended:</strong> Start by messaging {selectedBidForPostApproval.business_profiles?.business_name || 'this vendor'} to discuss service details, 
+                                    ask questions, and coordinate logistics.
+                                </p>
+                                <button 
+                                    className="btn-primary"
+                                    style={{
+                                        borderRadius: '50px',
+                                        padding: '16px 32px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        backgroundColor: '#9633eb',
+                                        color: 'white',
+                                        fontSize: '16px',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        margin: '0 auto',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onClick={() => handlePostApprovalAction('message')}
+                                >
+                                    <i className="fas fa-comments"></i>
+                                    Start Conversation with {selectedBidForPostApproval.business_profiles?.business_name || 'this vendor'}
+                                </button>
+                            </div>
+
+                            <div style={{ 
+                                padding: '16px',
+                                background: 'white',
+                                borderRadius: '8px',
+                                border: '1px solid #dee2e6'
+                            }}>
+                                <h5 style={{ color: '#495057', marginBottom: '12px', fontSize: '16px' }}>
+                                    Payment Options
+                                </h5>
+                                <p style={{ color: '#6c757d', marginBottom: '16px', fontSize: '14px' }}>
+                                    {(() => {
+                                        const downPayment = calculateDownPayment(selectedBidForPostApproval);
+                                        if (downPayment) {
+                                            return `Down Payment: ${downPayment.display} | Full Amount: $${selectedBidForPostApproval.bid_amount}`;
+                                        }
+                                        return `Full Amount: $${selectedBidForPostApproval.bid_amount}`;
+                                    })()}
+                                </p>
+                                <button 
+                                    className="btn-success"
+                                    style={{
+                                        borderRadius: '50px',
+                                        padding: '12px 24px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        margin: '0 auto',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onClick={() => handlePostApprovalAction('payment')}
+                                >
+                                    <i className="fas fa-credit-card"></i>
+                                    Proceed to Payment
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ 
+                            padding: '16px',
+                            background: '#e8f5e8',
+                            borderRadius: '8px',
+                            border: '1px solid #c3e6cb'
+                        }}>
+                            <p style={{ color: '#155724', fontSize: '14px', margin: 0 }}>
+                                <i className="fas fa-shield-alt" style={{ marginRight: '8px' }}></i>
+                                <strong>Bidi Protection:</strong> Your payment is secure and protected. 
+                                Full refund if the vendor doesn't deliver the service as promised.
+                                </p>
                         </div>
                     </div>
                 </div>

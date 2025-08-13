@@ -2020,11 +2020,6 @@
     flex-direction: column;
   }
 
-  .close-btn,
-  .save-btn {
-    width: 100%;
-  }
-
   .package-editor-header {
     flex-direction: column;
   }

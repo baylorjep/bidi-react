@@ -412,6 +412,7 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
     const [selectedPhoto, setSelectedPhoto] = useState(null);
     const [timeLeft, setTimeLeft] = useState('');
     const [filteredPhotos, setFilteredPhotos] = useState([]);
+    const [bidStats, setBidStats] = useState({ min: null, max: null, avg: null });
 
     useEffect(() => {
         if (!request) return;
@@ -467,6 +468,33 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
         };
         fetchPhotos();
     }, [request, servicePhotos]);
+
+    // Fetch bid statistics
+    useEffect(() => {
+        if (!request) return;
+        const fetchBidStats = async () => {
+            try {
+                const { data: bids, error } = await supabase
+                    .from('bids')
+                    .select('bid_amount')
+                    .eq('request_id', request.id);
+
+                if (error) throw error;
+
+                if (bids && bids.length > 0) {
+                    const amounts = bids.map(bid => parseFloat(bid.bid_amount));
+                    setBidStats({
+                        min: Math.min(...amounts),
+                        max: Math.max(...amounts),
+                        avg: amounts.reduce((a, b) => a + b, 0) / amounts.length
+                    });
+                }
+            } catch (error) {
+                console.error('Error fetching bid statistics:', error);
+            }
+        };
+        fetchBidStats();
+    }, [request]);
 
     useEffect(() => {
         if (!request) return;
@@ -2110,6 +2138,28 @@ function RequestDisplay({ request, servicePhotos, hideBidButton, requestType, lo
                         </div>
                     )}
                 </div>
+                
+                {/* Bid Statistics */}
+                {bidStats.min !== null && (
+                    <div className="rdm-bid-stats">
+                        <div className="rdm-bid-stats-title">Current Bid Statistics</div>
+                        <div className="rdm-bid-stats-grid">
+                            <div className="rdm-bid-stat">
+                                <div className="rdm-bid-stat-label">Lowest Bid</div>
+                                <div className="rdm-bid-stat-value">${bidStats.min?.toFixed(2)}</div>
+                            </div>
+                            <div className="rdm-bid-stat">
+                                <div className="rdm-bid-stat-label">Average Bid</div>
+                                <div className="rdm-bid-stat-value">${bidStats.avg?.toFixed(2)}</div>
+                            </div>
+                            <div className="rdm-bid-stat">
+                                <div className="rdm-bid-stat-label">Highest Bid</div>
+                                <div className="rdm-bid-stat-value">${bidStats.max?.toFixed(2)}</div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                
                 <div className="rdm-section">
                     {renderRequestDetails()}
                 </div>

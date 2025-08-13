@@ -8,6 +8,7 @@ import messageIcon from "../../assets/images/Icons/message.svg";
 import profileIcon from "../../assets/images/Icons/profile.svg";
 import settingsIcon from "../../assets/images/Icons/settings.svg";
 import { FaArrowLeft } from "react-icons/fa";
+import { formatTimestamp } from "../../utils/dateTimeUtils";
 
 // Skeleton components for loading states
 const MobileChatItemSkeleton = () => (
@@ -145,7 +146,15 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
         last_message_time: latestMap[p.id]?.created_at
       }));
 
-      setChats(formatted);
+      // Sort chats by most recent message time (newest first)
+      const sortedChats = formatted.sort((a, b) => {
+        if (!a.last_message_time && !b.last_message_time) return 0;
+        if (!a.last_message_time) return 1;
+        if (!b.last_message_time) return -1;
+        return new Date(b.last_message_time) - new Date(a.last_message_time);
+      });
+
+      setChats(sortedChats);
       setIsLoading(false);
     };
 
@@ -269,11 +278,7 @@ export default function MobileChatList({ currentUserId, userType, onChatSelect }
                 color: "#888",
                 marginLeft: "0.5rem"
               }}>
-                {new Date(chat.last_message_time).toLocaleTimeString('en-US', {
-                  hour: 'numeric',
-                  minute: '2-digit',
-                  hour12: true
-                })}
+                {formatTimestamp(chat.last_message_time, 'datetime')}
               </div>
             </div>
           </li>

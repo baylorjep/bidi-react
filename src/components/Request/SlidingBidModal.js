@@ -123,13 +123,13 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
     const [businessProfile, setBusinessProfile] = useState(null);
     const [profileImage, setProfileImage] = useState("/images/default.jpg");
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 600);
-    const [bidStats, setBidStats] = useState({ min: null, max: null, avg: null });
     const [isDragging, setIsDragging] = useState(false);
     const [dragStartY, setDragStartY] = useState(0);
     const [currentTranslateY, setCurrentTranslateY] = useState(0);
     const modalRef = useRef(null);
     const [isToolboxOpen, setIsToolboxOpen] = useState(true);
     const [originalBidData, setOriginalBidData] = useState(null);
+    const popoutRef = useRef(null);
 
     // New state for itemized quotes
     const [lineItems, setLineItems] = useState([
@@ -137,6 +137,11 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
     ]);
     const [taxRate, setTaxRate] = useState(0);
     const [useItemizedQuote, setUseItemizedQuote] = useState(false);
+    
+    // New state for add-ons
+    const [addOns, setAddOns] = useState([
+        { id: 1, description: '', quantity: 1, rate: '', amount: 0 }
+    ]);
 
     useEffect(() => {
         const handleResize = () => setIsMobile(window.innerWidth <= 600);
@@ -163,7 +168,6 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                 fetchBidTemplate();
             }
             fetchBusinessProfile();
-            fetchBidStats();
             // Reset drag state when modal opens
             setCurrentTranslateY(0);
             setIsDragging(false);
@@ -340,27 +344,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
         if (photo && photo.photo_url) setProfileImage(photo.photo_url);
     };
 
-    const fetchBidStats = async () => {
-        try {
-            const { data: bids, error } = await supabase
-                .from('bids')
-                .select('bid_amount')
-                .eq('request_id', requestId);
 
-            if (error) throw error;
-
-            if (bids && bids.length > 0) {
-                const amounts = bids.map(bid => parseFloat(bid.bid_amount));
-                setBidStats({
-                    min: Math.min(...amounts),
-                    max: Math.max(...amounts),
-                    avg: amounts.reduce((a, b) => a + b, 0) / amounts.length
-                });
-            }
-        } catch (error) {
-            console.error('Error fetching bid statistics:', error);
-        }
-    };
 
     const validateBidDescription = (content) => {
         const phoneRegex = /\d{3}[-.\s]?\d{3}[-.\s]?\d{4}/g;
@@ -393,31 +377,78 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
         validateBidDescription(content);
     };
 
-    // Calculate subtotal from line items
+    // Calculate subtotal from line items and add-ons
     const calculateSubtotal = () => {
-        return lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+        const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+        const addOnsTotal = addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0);
+        return lineItemsTotal + addOnsTotal;
     };
 
-    // Calculate tax amount
-    const calculateTax = () => {
-        return (calculateSubtotal() * taxRate) / 100;
+    const calculateTotal = () => {
+        if (useItemizedQuote) {
+            const lineItemsTotal = lineItems.reduce((sum, item) => sum + (item.amount || 0), 0);
+            const addOnsTotal = addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0);
+            const subtotal = lineItemsTotal + addOnsTotal;
+            const tax = calculateTax(subtotal);
+            const discount = calculateDiscount(subtotal);
+            return subtotal + tax - discount;
+        }
+        return parseFloat(bidAmount) || 0;
     };
 
-    // Calculate discount amount
-    const calculateDiscount = () => {
+    const calculateTax = (subtotal = null) => {
+        if (useItemizedQuote) {
+            const baseSubtotal = subtotal || (lineItems.reduce((sum, item) => sum + (item.amount || 0), 0) + 
+                                            addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0));
+            return (baseSubtotal * taxRate) / 100;
+        }
+        return 0;
+    };
+
+    const calculateDiscount = (subtotal = null) => {
         if (!discountType || !discountValue) return 0;
-        const subtotalWithTax = calculateSubtotal() + calculateTax();
+        
+        if (useItemizedQuote) {
+            const baseSubtotal = subtotal || (lineItems.reduce((sum, item) => sum + (item.amount || 0), 0) + 
+                                            addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0));
+            
         if (discountType === 'percentage') {
-            return (subtotalWithTax * parseFloat(discountValue)) / 100;
+                return (baseSubtotal * parseFloat(discountValue)) / 100;
         } else {
-            return parseFloat(discountValue) || 0;
+                return parseFloat(discountValue);
+            }
+        } else {
+            if (discountType === 'percentage') {
+                return ((parseFloat(bidAmount) || 0) * parseFloat(discountValue)) / 100;
+            } else {
+                return parseFloat(discountValue);
+            }
         }
     };
 
-    // Calculate total amount with discount
-    const calculateTotal = () => {
-        const subtotalWithTax = calculateSubtotal() + calculateTax();
-        return subtotalWithTax - calculateDiscount();
+    // Helper functions for add-ons
+    const addAddOn = () => {
+        const newId = Math.max(...addOns.map(a => a.id), 0) + 1;
+        setAddOns([...addOns, { id: newId, description: '', quantity: 1, rate: '', amount: 0 }]);
+    };
+
+    const removeAddOn = (id) => {
+        if (addOns.length > 1) {
+            setAddOns(addOns.filter(addon => addon.id !== id));
+        }
+    };
+
+    const updateAddOn = (id, field, value) => {
+        setAddOns(addOns.map(addon => {
+            if (addon.id === id) {
+                const updated = { ...addon, [field]: value };
+                if (field === 'quantity' || field === 'rate') {
+                    updated.amount = (parseFloat(updated.quantity) || 0) * (parseFloat(updated.rate) || 0);
+                }
+                return updated;
+            }
+            return addon;
+        }));
     };
 
     // Add new line item
@@ -533,12 +564,14 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
             // Add itemized quote data if enabled
             if (useItemizedQuote) {
                 bidData.line_items = lineItems.filter(item => item.amount > 0);
+                bidData.add_ons = addOns.filter(addon => addon.amount > 0);
                 bidData.subtotal = calculateSubtotal();
                 bidData.tax = calculateTax();
                 bidData.tax_rate = taxRate;
             } else {
                 // Clear itemized quote data if not using it
                 bidData.line_items = null;
+                bidData.add_ons = null;
                 bidData.subtotal = null;
                 bidData.tax = null;
                 bidData.tax_rate = null;
@@ -796,7 +829,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                 )}
 
                 {/* Content */}
-                <div className="sbm-content">
+                <div className="sbm-content" style={{ position: 'relative' }}>
                     {/* Full Request Display */}
                     <RequestDisplay
                         request={requestDetails}
@@ -810,88 +843,462 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                     <form onSubmit={handleSubmit} style={{ maxWidth:'900px', marginLeft:'auto', marginRight:'auto' }}>
                         <div className="sbm-form-section-title">{editMode ? 'Edit Bid' : 'Bid'}</div>
                         
-                        {/* Bid Statistics - only show for new bids */}
-                        {!editMode && bidStats.min !== null && (
-                            <div className="sbm-bid-stats">
-                                <div className="sbm-bid-stats-title">Current Bid Statistics</div>
-                                <div className="sbm-bid-stats-grid">
-                                    <div className="sbm-bid-stat">
-                                        <div className="sbm-bid-stat-label">Lowest Bid</div>
-                                        <div className="sbm-bid-stat-value">${bidStats.min?.toFixed(2)}</div>
+                        {/* Top Right Corner Options */}
+                        <div style={{
+                            display: 'flex',
+                            gap: '12px',
+                            justifyContent: 'flex-end',
+                            zIndex: 10
+                        }}>
+                            {/* Itemized Quote Toggle */}
+                            <div className="sbm-itemized-toggle" style={{
+                                background: 'white',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #e5e7eb',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                            }}>
+                                <label style={{ display: 'flex', alignItems: 'center', gap: 8, margin: 0 }}>
+                                    <IPhoneToggle
+                                        checked={useItemizedQuote}
+                                        onChange={() => setUseItemizedQuote(!useItemizedQuote)}
+                                    />
+                                    <span style={{ fontSize: 14, fontWeight: '500' }}>Itemized Quote</span>
+                                </label>
                                     </div>
-                                    <div className="sbm-bid-stat">
-                                        <div className="sbm-bid-stat-label">Average Bid</div>
-                                        <div className="sbm-bid-stat-value">${bidStats.avg?.toFixed(2)}</div>
-                                    </div>
-                                    <div className="sbm-bid-stat">
-                                        <div className="sbm-bid-stat-label">Highest Bid</div>
-                                        <div className="sbm-bid-stat-value">${bidStats.max?.toFixed(2)}</div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
 
-                        {/* Itemized Quote Toggle */}
-                        <div className="sbm-itemized-toggle">
+                            {/* Bid Options Toggle */}
+                            <div className="sbm-toolbox-toggle" style={{
+                                background: 'white',
+                                padding: '12px 16px',
+                                borderRadius: '8px',
+                                border: '1px solid #e5e7eb',
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                cursor: 'pointer',
+                                position: 'relative'
+                            }} onClick={() => setIsToolboxOpen(!isToolboxOpen)}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                    <span style={{ fontSize: 16 }}>🧰</span>
+                                    <span style={{ fontSize: 14, fontWeight: '500' }}>Bid Options</span>
+                                    <svg
+                                        width="16"
+                                        height="16"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        style={{
+                                            transform: isToolboxOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                                            transition: 'transform 0.3s ease',
+                                            marginLeft: '4px'
+                                        }}
+                                    >
+                                        <path
+                                            d="M6 9L12 15L18 9"
+                                            stroke="currentColor"
+                                            strokeWidth="2"
+                                            strokeLinecap="round"
+                                            strokeLinejoin="round"
+                                        />
+                                    </svg>
+                                    </div>
+                                
+                                {/* Bid Options Popout */}
+                                {isToolboxOpen && (
+                                    <div 
+                                        ref={popoutRef}
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{
+                                            position: 'absolute',
+                                            top: '100%',
+                                            right: '0',
+                                            marginTop: '8px',
+                                            background: 'white',
+                                            border: '1px solid #e5e7eb',
+                                            borderRadius: '12px',
+                                            boxShadow: '0 10px 25px rgba(0,0,0,0.15)',
+                                            padding: '20px',
+                                            minWidth: '300px',
+                                            zIndex: 1000,
+                                            animation: 'slideIn 0.2s ease-out'
+                                        }}
+                                    >
+                                        <div style={{
+                                            display: 'flex',
+                                            justifyContent: 'space-between',
+                                            alignItems: 'center',
+                                            marginBottom: '16px',
+                                            paddingBottom: '12px',
+                                            borderBottom: '1px solid #f3f4f6'
+                                        }}>
+                                            <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+                                                Bid Options
+                                            </h4>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setIsToolboxOpen(false);
+                                                }}
+                                                style={{
+                                                    background: 'none',
+                                                    border: 'none',
+                                                    fontSize: '18px',
+                                                    cursor: 'pointer',
+                                                    color: '#6b7280',
+                                                    padding: '4px',
+                                                    borderRadius: '4px',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center'
+                                                }}
+                                            >
+                                                ×
+                                            </button>
+                                    </div>
+                                        
+                                        <div style={{ marginBottom: '16px' }}>
+                                            <div className="sbm-discount-label" style={{ marginBottom: '8px' }}>Expiration Date</div>
+                                            <input
+                                                className="sbm-input"
+                                                id="bidExpirationDate"
+                                                name="bidExpirationDate"
+                                                type="date"
+                                                value={bidExpirationDate}
+                                                onChange={(e) => setBidExpirationDate(e.target.value)}
+                                                min={new Date().toISOString().split('T')[0]}
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '8px 12px',
+                                                    borderRadius: '6px',
+                                                    border: '1px solid #d1d5db',
+                                                    fontSize: '14px'
+                                                }}
+                                            />
+                                </div>
+                                        
+                                        <div style={{ marginBottom: '16px' }}>
+                                            <div className="sbm-discount-label" style={{ marginBottom: '8px' }}>Discount (Optional)</div>
+                                            <div className="sbm-discount-section">
+                                                <div className="sbm-discount-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '12px' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <IPhoneToggle
-                                    checked={useItemizedQuote}
-                                    onChange={() => setUseItemizedQuote(!useItemizedQuote)}
+                                                            checked={!!discountType}
+                                                            onChange={() => setDiscountType(discountType ? '' : 'percentage')}
+                                                            disabled={!connectedAccountId && !Bidi_Plus}
                                 />
-                                <span style={{ fontSize: 16 }}>Create Itemized Quote</span>
+                                                        <span style={{ fontSize: 14 }}>{discountType ? 'Yes' : 'No'}</span>
                             </label>
+                                                    {discountType && (
+                                                        <>
+                                                            <select
+                                                                value={discountType}
+                                                                onChange={e => setDiscountType(e.target.value)}
+                                                                style={{
+                                                                    padding: '6px 10px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    fontSize: '14px',
+                                                                    backgroundColor: 'white',
+                                                                    minWidth: '60px'
+                                                                }}
+                                                            >
+                                                                <option value="percentage">%</option>
+                                                                <option value="flat">$</option>
+                                                            </select>
+                                                            <input
+                                                                className="sbm-discount-value"
+                                                                id="discountValue"
+                                                                name="discountValue"
+                                                                type="number"
+                                                                min="0"
+                                                                step="0.01"
+                                                                placeholder={discountType === 'percentage' ? '%' : '$'}
+                                                                value={discountValue}
+                                                                onChange={e => setDiscountValue(e.target.value)}
+                                                                required
+                                                                style={{
+                                                                    width: '80px',
+                                                                    padding: '6px 10px',
+                                                                    borderRadius: '6px',
+                                                                    border: '1px solid #d1d5db',
+                                                                    fontSize: '14px'
+                                                                }}
+                                                            />
+                                                            <span className="sbm-discount-percent" style={{ fontSize: '14px', color: '#6b7280' }}>
+                                                                {discountType === 'percentage' ? '%' : ''}
+                                                            </span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                                {discountType && (
+                                                    <div style={{ width: '100%' }}>
+                                                        <div className="sbm-discount-label" style={{ marginBottom: '8px' }}>Discount Deadline (Optional)</div>
+                                                        <input
+                                                            className="sbm-input"
+                                                            id="discountDeadline"
+                                                            name="discountDeadline"
+                                                            type="date"
+                                                            value={discountDeadline}
+                                                            onChange={e => setDiscountDeadline(e.target.value)}
+                                                            min={new Date().toISOString().split('T')[0]}
+                                                            required
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '8px 12px',
+                                                                borderRadius: '6px',
+                                                                border: '1px solid #d1d5db',
+                                                                fontSize: '14px'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        {/* Itemized Quote Section */}
+                                                {/* Main Price Section - Centered and Prominent */}
+                        <div style={{
+                            textAlign: 'center',
+                            margin: '40px 0',
+                            padding: '40px',
+                            background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
+                            borderRadius: '16px',
+                            border: '2px solid #e2e8f0'
+                        }}>
+                            <h2 style={{
+                                fontSize: '1.5rem',
+                                fontWeight: '600',
+                                color: '#374151',
+                                marginBottom: '24px'
+                            }}>
+                                {editMode ? 'Edit Your Bid Amount' : 'Enter Your Bid Amount'}
+                            </h2>
+                            
                         {useItemizedQuote ? (
-                            <div className="sbm-itemized-section">
-                                <div className="sbm-itemized-header">
-                                    <h4>Service Breakdown</h4>
+                                /* Itemized Quote Total Display */
+                                <div style={{ marginBottom: '24px' }}>
+                                    <div style={{
+                                        fontSize: '3rem',
+                                        fontWeight: '700',
+                                        color: '#059669',
+                                        marginBottom: '8px'
+                                    }}>
+                                        ${calculateTotal().toFixed(2)}
+                                    </div>
+                                    <div style={{
+                                        fontSize: '1rem',
+                                        color: '#6b7280',
+                                        marginBottom: '16px'
+                                    }}>
+                                        Total Amount (including tax & discounts)
+                                    </div>
+                                </div>
+                            ) : (
+                                /* Simple Bid Amount Input */
+                                <div style={{ marginBottom: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                    <div style={{
+                                        fontSize: '2rem',
+                                        fontWeight: '600',
+                                        color: '#374151',
+                                        marginBottom: '16px'
+                                    }}>
+                                        $
+                                    </div>
+                                    <input
+                                        className="sbm-input"
+                                        id="bidAmount"
+                                        name="bidAmount"
+                                        type="number"
+                                        placeholder="0.00"
+                                        value={bidAmount}
+                                        onChange={(e) => setBidAmount(e.target.value)}
+                                        required
+                                        style={{
+                                            fontSize: '2.5rem',
+                                            fontWeight: '600',
+                                            textAlign: 'center',
+                                            border: '2px solid #d1d5db',
+                                            borderRadius: '12px',
+                                            padding: '16px 24px',
+                                            width: '200px',
+                                            background: 'white'
+                                        }}
+                                    />
+                                </div>
+                            )}
+                            
+                            <div style={{
+                                fontSize: '0.875rem',
+                                color: '#6b7280',
+                                fontStyle: 'italic'
+                            }}>
+                                {useItemizedQuote 
+                                    ? 'Amount calculated from your itemized services below'
+                                    : 'Enter the total amount for your services'
+                                }
+                            </div>
+                        
+
+                        {/* Itemized Quote Section */}
+                        {useItemizedQuote && (
+                            <div className="sbm-itemized-section" style={{
+                                background: '#f8fafc',
+                                borderRadius: '16px',
+                                padding: '24px',
+                                margin: '24px 0',
+                                border: '1px solid #e2e8f0'
+                            }}>
+                                <div className="sbm-itemized-header" style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'center',
+                                    marginBottom: '20px'
+                                }}>
+                                    <h4 style={{ margin: 0, fontSize: '18px', fontWeight: '600', color: '#374151' }}>
+                                        Service Breakdown
+                                    </h4>
                                     <button 
                                         type="button"
                                         className="sbm-add-line-item-btn"
                                         onClick={addLineItem}
+                                        style={{
+                                            background: '#059669',
+                                            color: 'white',
+                                            border: 'none',
+                                            borderRadius: '8px',
+                                            padding: '8px 16px',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            cursor: 'pointer',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px'
+                                        }}
                                     >
                                         <FaPlus /> Add Service
                                     </button>
                                 </div>
                                 
-                                <div className="sbm-itemized-help">
-                                    <p><strong>Itemize your services:</strong> List each service or item separately. For example: "Wedding Photography" (8 hours × $150), "Bouquet Design" (1 item × $200), etc.</p>
+                                <div className="sbm-itemized-help" style={{
+                                    background: 'white',
+                                    padding: '16px',
+                                    borderRadius: '8px',
+                                    marginBottom: '20px',
+                                    border: '1px solid #e5e7eb'
+                                }}>
+                                    <p style={{ margin: 0, fontSize: '14px', color: '#6b7280', lineHeight: '1.5' }}>
+                                        <strong>💡 Tip:</strong> Set your core services that are always included, then add optional add-ons that clients can choose from.
+                                    </p>
                                 </div>
                                 
+                                {/* Core Services Section */}
+                                <div style={{
+                                    background: 'white',
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    marginBottom: '20px',
+                                    border: '1px solid #e5e7eb'
+                                }}>
+                                    <h5 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+                                        🔧 Core Services (Always Included)
+                                    </h5>
                                 <div className="sbm-line-items-list">
-                                    {lineItems.map((item) => (
-                                        <div key={item.id} className="sbm-line-item">
-                                            <div className="sbm-line-item-row">
+                                        {/* Column Headers */}
+                                        <div className="sbm-line-item-header" style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                                            gap: '16px',
+                                            padding: '12px 16px',
+                                            background: '#f8fafc',
+                                            borderBottom: '2px solid #e5e7eb',
+                                            borderRadius: '8px 8px 0 0',
+                                            fontWeight: '600',
+                                            fontSize: '13px',
+                                            color: '#6b7280',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                        }}>
+                                            <div>Service</div>
+                                            <div>Qty</div>
+                                            <div>Rate</div>
+                                            <div>Total</div>
+                                            <div></div>
+                                        </div>
+                                        
+                                        {lineItems.map((item, index) => (
+                                            <div key={item.id} className="sbm-line-item" style={{
+                                                background: 'white',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                borderRadius: index === lineItems.length - 1 ? '0 0 8px 8px' : '0'
+                                            }}>
+                                                <div className="sbm-line-item-row" style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                                                    gap: '16px',
+                                                    alignItems: 'center',
+                                                    padding: '16px'
+                                                }}>
                                                 <div className="sbm-line-item-description">
                                                     <input
                                                         type="text"
-                                                        placeholder="e.g., Wedding Photography, Bouquet Design, DJ Services"
+                                                            placeholder="Service name..."
                                                         value={item.description}
                                                         onChange={(e) => updateLineItem(item.id, 'description', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '6px',
+                                                                fontSize: '14px',
+                                                                background: 'white'
+                                                            }}
                                                     />
                                                 </div>
                                                 <div className="sbm-line-item-quantity">
                                                     <input
                                                         type="number"
-                                                        placeholder="Hours/Qty"
+                                                            placeholder="1"
                                                         min="1"
                                                         value={item.quantity}
                                                         onChange={(e) => updateLineItem(item.id, 'quantity', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '6px',
+                                                                fontSize: '14px',
+                                                                textAlign: 'center',
+                                                                background: 'white'
+                                                            }}
                                                     />
                                                 </div>
                                                 <div className="sbm-line-item-rate">
                                                     <input
                                                         type="number"
-                                                        placeholder="$ per hour/item"
+                                                            placeholder="0.00"
                                                         min="0"
                                                         step="0.01"
                                                         value={item.rate}
                                                         onChange={(e) => updateLineItem(item.id, 'rate', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '6px',
+                                                                fontSize: '14px',
+                                                                textAlign: 'center',
+                                                                background: 'white'
+                                                            }}
                                                     />
                                                 </div>
-                                                <div className="sbm-line-item-amount">
+                                                    <div className="sbm-line-item-amount" style={{
+                                                        fontSize: '16px',
+                                                        fontWeight: '600',
+                                                        color: '#059669',
+                                                        textAlign: 'center'
+                                                    }}>
                                                     ${(item.amount || 0).toFixed(2)}
                                                 </div>
                                                 <div className="sbm-line-item-actions">
@@ -900,6 +1307,15 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                         className="sbm-remove-line-item-btn"
                                                         onClick={() => removeLineItem(item.id)}
                                                         disabled={lineItems.length === 1}
+                                                            style={{
+                                                                background: lineItems.length === 1 ? '#f3f4f6' : '#fee2e2',
+                                                                color: lineItems.length === 1 ? '#9ca3af' : '#dc2626',
+                                                                border: 'none',
+                                                                borderRadius: '6px',
+                                                                padding: '8px',
+                                                                cursor: lineItems.length === 1 ? 'not-allowed' : 'pointer',
+                                                                fontSize: '14px'
+                                                            }}
                                                     >
                                                         <FaTrash />
                                                     </button>
@@ -907,12 +1323,191 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             </div>
                                         </div>
                                     ))}
+                                    </div>
                                 </div>
 
+                                {/* Add-ons Section */}
+                                <div style={{
+                                    background: 'white',
+                                    padding: '20px',
+                                    borderRadius: '8px',
+                                    marginBottom: '20px',
+                                    border: '1px solid #e5e7eb'
+                                }}>
+                                    <div style={{
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center',
+                                        marginBottom: '16px'
+                                    }}>
+                                        <h5 style={{ margin: 0, fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+                                            ✨ Optional Add-ons
+                                        </h5>
+                                        <button 
+                                            type="button"
+                                            onClick={addAddOn}
+                                            style={{
+                                                background: '#7c3aed',
+                                                color: 'white',
+                                                border: 'none',
+                                                borderRadius: '8px',
+                                                padding: '8px 16px',
+                                                fontSize: '14px',
+                                                fontWeight: '500',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                gap: '8px'
+                                            }}
+                                        >
+                                            <FaPlus /> Add Add-on
+                                        </button>
+                                    </div>
+                                    <p style={{ margin: '0 0 16px 0', fontSize: '14px', color: '#6b7280', fontStyle: 'italic' }}>
+                                        These are optional services that clients can choose to add when they view your bid
+                                    </p>
+                                    
+                                    <div className="sbm-line-items-list">
+                                        {/* Column Headers */}
+                                        <div className="sbm-line-item-header" style={{
+                                            display: 'grid',
+                                            gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                                            gap: '16px',
+                                            padding: '12px 16px',
+                                            background: '#f8fafc',
+                                            borderBottom: '2px solid #e5e7eb',
+                                            borderRadius: '8px 8px 0 0',
+                                            fontWeight: '600',
+                                            fontSize: '13px',
+                                            color: '#6b7280',
+                                            textTransform: 'uppercase',
+                                            letterSpacing: '0.5px'
+                                        }}>
+                                            <div>Service</div>
+                                            <div>Qty</div>
+                                            <div>Rate</div>
+                                            <div>Total</div>
+                                            <div></div>
+                                        </div>
+                                        
+                                        {addOns.map((addon, index) => (
+                                            <div key={addon.id} className="sbm-line-item" style={{
+                                                background: 'white',
+                                                borderBottom: '1px solid #f3f4f6',
+                                                borderRadius: index === addOns.length - 1 ? '0 0 8px 8px' : '0'
+                                            }}>
+                                                <div className="sbm-line-item-row" style={{
+                                                    display: 'grid',
+                                                    gridTemplateColumns: '2fr 1fr 1fr 1fr auto',
+                                                    gap: '16px',
+                                                    alignItems: 'center',
+                                                    padding: '16px'
+                                                }}>
+                                                    <div className="sbm-line-item-description">
+                                                        <input
+                                                            type="text"
+                                                            placeholder="Add-on service name..."
+                                                            value={addon.description}
+                                                            onChange={(e) => updateAddOn(addon.id, 'description', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '6px',
+                                                                fontSize: '14px',
+                                                                background: 'white'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="sbm-line-item-quantity">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="1"
+                                                            min="1"
+                                                            value={addon.quantity}
+                                                            onChange={(e) => updateAddOn(addon.id, 'quantity', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '6px',
+                                                                fontSize: '14px',
+                                                                textAlign: 'center',
+                                                                background: 'white'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="sbm-line-item-rate">
+                                                        <input
+                                                            type="number"
+                                                            placeholder="0.00"
+                                                            min="0"
+                                                            step="0.01"
+                                                            value={addon.rate}
+                                                            onChange={(e) => updateAddOn(addon.id, 'rate', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '10px 12px',
+                                                                border: '1px solid #d1d5db',
+                                                                borderRadius: '6px',
+                                                                fontSize: '14px',
+                                                                textAlign: 'center',
+                                                                background: 'white'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                    <div className="sbm-line-item-amount" style={{
+                                                        fontSize: '16px',
+                                                        fontWeight: '600',
+                                                        color: '#059669',
+                                                        textAlign: 'center'
+                                                    }}>
+                                                        ${(addon.amount || 0).toFixed(2)}
+                                                    </div>
+                                                    <div className="sbm-line-item-actions">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeAddOn(addon.id)}
+                                                            disabled={addOns.length === 1}
+                                                            style={{
+                                                                background: addOns.length === 1 ? '#f3f4f6' : '#fee2e2',
+                                                                color: addOns.length === 1 ? '#9ca3af' : '#dc2626',
+                                                                border: 'none',
+                                                                borderRadius: '6px',
+                                                                padding: '8px',
+                                                                cursor: addOns.length === 1 ? 'not-allowed' : 'pointer',
+                                                                fontSize: '14px'
+                                                            }}
+                                                        >
+                                                            <FaTrash />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
                                 {/* Tax Section */}
-                                <div className="sbm-tax-section">
-                                    <div className="sbm-tax-input">
-                                        <label>Tax Rate (%)</label>
+                        <div className="sbm-tax-section" style={{
+                            background: 'white',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            marginTop: '20px',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <div className="sbm-tax-input" style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '16px',
+                                flexWrap: 'wrap',
+                                flexDirection: 'row'
+                            }}>
+                                <label style={{ fontSize: '14px', fontWeight: '500', color: '#374151', minWidth: '80px' }}>
+                                    Tax Rate:
+                                </label>
                                         <input
                                             type="number"
                                             placeholder="0"
@@ -921,173 +1516,123 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                             step="0.01"
                                             value={taxRate}
                                             onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)}
-                                        />
-                                        <small>Leave as 0 if no tax applies</small>
+                                    style={{
+                                        padding: '8px 12px',
+                                        border: '1px solid #d1d5db',
+                                        borderRadius: '6px',
+                                        fontSize: '14px',
+                                        width: '80px',
+                                        textAlign: 'center',
+                                        background: 'white'
+                                    }}
+                                />
+                                <span style={{ fontSize: '14px', color: '#6b7280' }}>%</span>
+                                <small style={{ fontSize: '12px', color: '#9ca3af', fontStyle: 'italic' }}>
+                                    Leave as 0 if no tax applies
+                                </small>
                                     </div>
                                 </div>
 
                                 {/* Payment Summary */}
-                                <div className="sbm-payment-summary">
-                                    <h4>Payment Summary</h4>
+                        <div className="sbm-payment-summary" style={{
+                            background: 'white',
+                            padding: '20px',
+                            borderRadius: '8px',
+                            marginTop: '20px',
+                            border: '1px solid #e5e7eb'
+                        }}>
+                            <h4 style={{ margin: '0 0 16px 0', fontSize: '16px', fontWeight: '600', color: '#374151' }}>
+                                Summary
+                            </h4>
+                            
+                            {/* Core Services */}
                                     {lineItems.filter(item => item.amount > 0).map((item, index) => (
-                                        <div key={index} className="sbm-summary-row">
-                                            <span>{item.description || `Item ${index + 1}`} - {item.quantity} x ${item.rate}</span>
+                                <div key={index} className="sbm-summary-row" style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #f3f4f6',
+                                    fontSize: '14px',
+                                    color: '#6b7280'
+                                }}>
+                                    <span>{item.description || `Core Service ${index + 1}`}</span>
                                             <span>${item.amount.toFixed(2)}</span>
                                         </div>
                                     ))}
+                            
+                            {/* Selected Add-ons */}
+                            {addOns.filter(addon => addon.amount > 0).map((addon, index) => (
+                                <div key={index} className="sbm-summary-row" style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #f3f4f6',
+                                    fontSize: '14px',
+                                    color: '#6b7280'
+                                }}>
+                                    <span>✨ {addon.description || `Add-on ${index + 1}`}</span>
+                                    <span>${addon.amount.toFixed(2)}</span>
+                                </div>
+                            ))}
+                            
+                            {/* Subtotal */}
+                            <div className="sbm-summary-row" style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                padding: '12px 0 8px 0',
+                                fontSize: '14px',
+                                fontWeight: '600',
+                                color: '#374151',
+                                borderBottom: '1px solid #e5e7eb'
+                            }}>
+                                <span>Subtotal</span>
+                                <span>${(lineItems.reduce((sum, item) => sum + (item.amount || 0), 0) + 
+                                           addOns.reduce((sum, addon) => sum + (addon.amount || 0), 0)).toFixed(2)}</span>
+                            </div>
+                            
                                     {taxRate > 0 && (
-                                        <div className="sbm-summary-row">
+                                <div className="sbm-summary-row" style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #f3f4f6',
+                                    fontSize: '14px',
+                                    color: '#6b7280'
+                                }}>
                                             <span>Tax ({taxRate}%)</span>
                                             <span>${calculateTax().toFixed(2)}</span>
                                         </div>
                                     )}
                                     {discountType && discountValue && (
-                                        <div className="sbm-summary-row sbm-discount">
+                                <div className="sbm-summary-row sbm-discount" style={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 0',
+                                    borderBottom: '1px solid #f3f4f6',
+                                    fontSize: '14px',
+                                    color: '#6b7280'
+                                }}>
                                             <span>Discount ({discountType === 'percentage' ? `${discountValue}%` : `$${discountValue}`})</span>
-                                            <span>-${calculateDiscount().toFixed(2)}</span>
+                                    <span style={{ color: '#dc2626' }}>-${calculateDiscount().toFixed(2)}</span>
                                         </div>
                                     )}
-                                    <div className="sbm-summary-row sbm-total">
+                            <div className="sbm-summary-row sbm-total" style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                padding: '12px 0 0 0',
+                                fontSize: '16px',
+                                fontWeight: '700',
+                                color: '#059669',
+                                borderTop: '2px solid #e5e7eb',
+                                marginTop: '8px'
+                            }}>
                                         <span>Total Amount:</span>
                                         <span>${calculateTotal().toFixed(2)}</span>
                                     </div>
                                 </div>
-                            </div>
-                        ) : (
-                            /* Simple Bid Amount Input */
-                            <input
-                                className="sbm-input"
-                                id="bidAmount"
-                                name="bidAmount"
-                                type="number"
-                                placeholder="Enter Price"
-                                value={bidAmount}
-                                onChange={(e) => setBidAmount(e.target.value)}
-                                required
-                            />
-                        )}
 
-                        {/* Toolbox Toggle */}
-                        <div
-                            className="rdm-collapsible-header sbm-toolbox-toggle"
-                            onClick={() => setIsToolboxOpen((open) => !open)}
-                        >
-                            <span style={{ fontSize: 20, marginRight: 8 }}>🧰</span>
-                            <span>Bid Options</span>
-                            <span style={{ marginLeft: 'auto', transition: 'transform 0.2s', color: '#9633eb', display: 'flex', alignItems: 'center' }}>
-                                <svg
-                                    width="20"
-                                    height="20"
-                                    viewBox="0 0 24 24"
-                                    fill="none"
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    style={{
-                                        transform: isToolboxOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                                        transition: 'transform 0.3s ease'
-                                    }}
-                                >
-                                    <path
-                                        d="M6 9L12 15L18 9"
-                                        stroke="currentColor"
-                                        strokeWidth="2"
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                    />
-                                </svg>
-                            </span>
-                        </div>
-                        {/* Toolbox for Expiration Date and Discount */}
-                        <div
-                            className="sbm-toolbox"
-                            style={{
-                                maxHeight: isToolboxOpen ? 500 : 0,
-                                overflow: 'hidden',
-                                transition: 'max-height 0.3s cubic-bezier(0.4,0,0.2,1), padding 0.3s',
-                                padding: isToolboxOpen ? undefined : '0 16px',
-                                opacity: isToolboxOpen ? 1 : 0.5
-                            }}
-                        >
-                            <div className="sbm-discount-label">Expiration Date</div>
-                            <input
-                                className="sbm-input"
-                                id="bidExpirationDate"
-                                name="bidExpirationDate"
-                                type="date"
-                                value={bidExpirationDate}
-                                onChange={(e) => setBidExpirationDate(e.target.value)}
-                                min={new Date().toISOString().split('T')[0]}
-                            />
-                                                            <div style={{ marginTop: "12px" }} className="sbm-discount-label">Discount (Optional)</div>
-                            <div className="sbm-discount-section">
-
-                                <div className="sbm-discount-row" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                        <IPhoneToggle
-                                            checked={!!discountType}
-                                            onChange={() => setDiscountType(discountType ? '' : 'percentage')}
-                                            disabled={!connectedAccountId && !Bidi_Plus}
-                                        />
-                                        <span style={{ fontSize: 16 }}>{discountType ? 'Yes' : 'No'}</span>
-                                    </label>
-                                    {discountType && (
-                                        <>
-                                            <select
-                                                value={discountType}
-                                                onChange={e => setDiscountType(e.target.value)}
-                                                style={{
-                                                    padding: '8px 12px',
-                                                    borderRadius: '6px',
-                                                    border: '1px solid #ddd',
-                                                    fontSize: '14px',
-                                                    backgroundColor: 'white'
-                                                }}
-                                            >
-                                                <option value="percentage">%</option>
-                                                <option value="flat">$</option>
-                                            </select>
-                                            <input
-                                                className="sbm-discount-value"
-                                                id="discountValue"
-                                                name="discountValue"
-                                                type="number"
-                                                min="0"
-                                                step="0.01"
-                                                placeholder={discountType === 'percentage' ? '%' : '$'}
-                                                value={discountValue}
-                                                onChange={e => setDiscountValue(e.target.value)}
-                                                required
-                                            />
-                                            <span className="sbm-discount-percent">
-                                                {discountType === 'percentage' ? '%' : ''}
-                                            </span>
-                                        </>
-                                    )}
-                                </div>
-                                {discountType && (
-                                    <div style={{ width: '100%', marginTop: 12 }}>
-                                        <div className="sbm-discount-label">Discount Deadline (Optional)</div>
-                                        <input
-                                            className="sbm-input"
-                                            id="discountDeadline"
-                                            name="discountDeadline"
-                                            type="date"
-                                            value={discountDeadline}
-                                            onChange={e => setDiscountDeadline(e.target.value)}
-                                            min={new Date().toISOString().split('T')[0]}
-                                            required
-                                            style={{
-                                                padding: '8px 12px',
-                                                borderRadius: '6px',
-                                                border: '1px solid #ddd',
-                                                fontSize: '14px'
-                                            }}
-                                        />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
                         {/* Message Section */}
-                        <div className="sbm-discount-label">Message</div>
+                        <div className="sbm-discount-label tw-mt-4">Message</div>
                         <ReactQuill
                             className="sbm-quill"
                             theme="snow"
@@ -1095,6 +1640,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                             onChange={handleBidDescriptionChange}
                             modules={{ toolbar: [] }}
                         />
+                        </div>
                         {/* Bottom Buttons */}
                         <div className="sbm-btn-row">
                             <button 

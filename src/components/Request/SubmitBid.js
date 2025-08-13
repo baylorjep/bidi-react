@@ -479,7 +479,7 @@ useEffect(() => {
                 </button>
                 <h4 style={{ textAlign: 'center', color: '#9633eb', marginBottom: 24 }}>Bid Preview</h4>
                 <div className="request-display" style={{ width: '100%', maxWidth: 600, margin: '0 auto' }}>
-                    <BidDisplay bid={previewBid} showActions={false} />
+                    <BidDisplay bid={previewBid} showActions={false} isIndividualUser={false} />
                 </div>
             </div>
             {!showPreview && (

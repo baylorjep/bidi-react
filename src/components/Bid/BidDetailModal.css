@@ -214,12 +214,12 @@
   align-items: center;
   gap: 4px;
   padding: 2px 6px;
-  background: #f0f9ff;
-  border: 1px solid #0ea5e9;
+  background: #fff;
+  border: 1px solid #9633eb;
   border-radius: 12px;
   font-size: 10px;
   font-weight: 500;
-  color: #0ea5e9;
+  color: #9633eb;
 }
 
 .bdm-verified-badge img {
@@ -243,7 +243,7 @@
 .bdm-amount {
   font-size: 24px;
   font-weight: 700;
-  color: #059669;
+  color: #ec4899;
 }
 
 /* Payment Status Indicator */
@@ -376,6 +376,37 @@
   color: #059669;
 }
 
+/* Discount Integration Styles */
+.bdm-original-total {
+  background: #f3f4f6;
+  font-weight: 600;
+  border-top: 2px solid #d1d5db;
+}
+
+.bdm-discount-applied {
+  font-weight: 600;
+  border-top: 2px solid #9633eb;
+}
+
+.bdm-discount-applied .discount-amount {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.bdm-final-total {
+  background: #f5cfe6;
+  font-weight: 700;
+  font-size: 18px;
+  color: #ec4899;
+  border-top: 2px solid #ec4899;
+}
+
+.bdm-final-total .final-amount {
+  color: #ec4899;
+  font-weight: 700;
+  font-size: 18px;
+}
+
 /* Actions */
 .bdm-actions {
   display: flex;
@@ -429,12 +460,12 @@
 }
 
 .bdm-btn-pay {
-  background: #3b82f6;
+  background: #ec4899;
   color: white;
 }
 
 .bdm-btn-pay:hover {
-  background: #2563eb;
+  background: #ec4899;
 }
 
 .bdm-btn-secondary {
@@ -446,6 +477,15 @@
 .bdm-btn-secondary:hover {
   background: #e5e7eb;
   border-color: #9ca3af;
+}
+
+.bdm-btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.bdm-btn-primary:hover {
+  background: #2563eb;
 }
 
 .bdm-btn svg {
@@ -498,4 +538,130 @@
   .bdm-btn {
     min-width: 140px;
   }
+}
+
+/* Discount Styles */
+.bdm-discount-info {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.bdm-discount-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.bdm-discount-note {
+  background: #f3dfeb;
+  border: 1px solid #ec4899;
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-align: center;
+  color: #ec4899;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.bdm-discount-badge {
+  background: #ec4899;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bdm-discount-deadline.active {
+  background: #f5cfe6;
+  color: #ec4899;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bdm-discount-deadline.expired {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bdm-discount-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bdm-discount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bdm-discount-row:last-child {
+  border-bottom: none;
+}
+
+.bdm-original-price {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.bdm-discount-amount {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.bdm-final-price {
+  font-weight: 700;
+  font-size: 18px;
+  color: #059669;
+}
+
+.bdm-discounted-price {
+  color: #059669;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Combined Section Styles */
+.bdm-section h5 {
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.bdm-description h5 {
+  margin-top: 0;
+}
+
+.bdm-breakdown h5 {
+  margin-top: 0;
+}
+
+/* Improved spacing for combined section */
+.bdm-discount-info {
+  margin-bottom: 24px;
+}
+
+.bdm-description {
+  margin-bottom: 24px;
+}
+
+.bdm-breakdown {
+  margin-top: 16px;
 }

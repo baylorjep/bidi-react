@@ -9,6 +9,7 @@ import { FaCreditCard, FaPlus, FaTrash, FaCheckCircle, FaCreditCard as FaPay } f
 import PaymentCard from '../Messaging/PaymentCard';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
+import { formatTimestamp } from '../../utils/dateTimeUtils';
 import './BidMessaging.css';
 
 const BidMessaging = ({ 
@@ -747,12 +748,7 @@ const BidMessaging = ({
                     </div>
                   )}
                   <div className="message-time">
-                    {new Date(msg.createdAt).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true,
-                      timeZone: 'America/Denver'
-                    })}
+                    {formatTimestamp(msg.createdAt, 'datetime')}
                     {msg.senderId === currentUserId && !msg.isVirtual && (
                       <span className="seen-indicator">
                         {msg.seen ? "✓✓" : "✓"}

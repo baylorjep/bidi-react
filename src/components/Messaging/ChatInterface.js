@@ -5,6 +5,7 @@ import StartNewChatModal from "./StartNewChatModal";
 import "../../styles/chat.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import { formatTimestamp, isToday, isYesterday } from "../../utils/dateTimeUtils";
 
 // Skeleton components for loading states
 const ChatListSkeleton = () => (
@@ -219,7 +220,15 @@ export default function ChatInterface({ initialChat }) {
         last_message_time: latestMap[p.id]?.created_at
       }));
 
-      setChats(formatted);
+      // Sort chats by most recent message time (newest first)
+      const sortedChats = formatted.sort((a, b) => {
+        if (!a.last_message_time && !b.last_message_time) return 0;
+        if (!a.last_message_time) return 1;
+        if (!b.last_message_time) return -1;
+        return new Date(b.last_message_time) - new Date(a.last_message_time);
+      });
+
+      setChats(sortedChats);
     })();
   }, [currentUserId, userType]);
 
@@ -273,46 +282,54 @@ export default function ChatInterface({ initialChat }) {
         </header>
 
         <ul>
-          {chats.length === 0 ? (
-            <div style={{
-              padding: "2rem",
-              textAlign: "center",
-              color: "var(--bidi-muted)"
-            }}>
-              <div style={{ marginBottom: "1rem" }}>
-                No messages yet
-              </div>
-              <div style={{ fontSize: "0.9rem" }}>
-                Browse vendors to start conversations and get quotes
-              </div>
+                  {chats.length === 0 ? (
+          <div style={{
+            padding: "2rem",
+            textAlign: "center",
+            color: "var(--bidi-muted)"
+          }}>
+            <div style={{ marginBottom: "1rem" }}>
+              No messages yet
             </div>
-          ) : (
-            chats.map((c) => (
-            <li
-              key={c.business_id}
-              className={activeBusiness === c.business_id ? "active" : ""}
-              onClick={() => handleChatSelect(c)}
-            >
-              <div className="chat-list-item-content">
-                <div className="chat-list-header">
-                  <span className="chat-name">{c.business_name}</span>
-                  {c.unseen_count > 0 && (
-                    <span className="unseen-badge">{c.unseen_count}</span>
-                  )}
-                </div>
-                <div className="chat-list-footer">
-                  <div className="message-preview">{c.last_message}</div>
-                  <div className="message-time" style={{ color: "black"}}>
-                    {new Date(c.last_message_time).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
+            <div style={{ fontSize: "0.9rem" }}>
+              Browse vendors to start conversations and get quotes
+            </div>
+          </div>
+        ) : (
+          chats.map((c, index) => {
+            const showDateSeparator = index === 0 || 
+              !isToday(chats[index - 1].last_message_time) || 
+              !isToday(c.last_message_time);
+            
+            return (
+              <React.Fragment key={c.business_id}>
+                {showDateSeparator && (
+                  <li className="date-separator">
+                    <span>{formatTimestamp(c.last_message_time, 'date')}</span>
+                  </li>
+                )}
+                <li
+                  className={activeBusiness === c.business_id ? "active" : ""}
+                  onClick={() => handleChatSelect(c)}
+                >
+                  <div className="chat-list-item-content">
+                    <div className="chat-list-header">
+                      <span className="chat-name">{c.business_name}</span>
+                      {c.unseen_count > 0 && (
+                        <span className="unseen-badge">{c.unseen_count}</span>
+                      )}
+                    </div>
+                    <div className="chat-list-footer">
+                      <div className="message-preview">{c.last_message}</div>
+                      <div className="message-time" style={{ color: "black"}}>
+                        {formatTimestamp(c.last_message_time, 'datetime')}
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </li>
-          )))}
+                </li>
+              </React.Fragment>
+            );
+          }))}
         </ul>
       </aside>
 
