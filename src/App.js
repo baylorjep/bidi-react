@@ -66,6 +66,7 @@ import SuccessSignup from "./components/Profile/SuccessSignup";
 import ResetPassword from "./components/Profile/ResetPassword";
 import UpdatePassword from "./components/Profile/UpdatePassword";
 import ProfilePage from "./components/Profile/Profile";
+import AuthCallback from "./components/AuthCallback";
 
 // Individual Imports
 
@@ -335,6 +336,7 @@ function AppContent() {
           <Route path="/reset-password" element={<UpdatePassword />} />
           <Route path="/createaccount" element={<CreateAccount />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/auth-callback" element={<AuthCallback />} />
           
           {/* Dashboard Routes */}
           <Route path="/individual-dashboard/*" element={
