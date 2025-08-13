@@ -21,7 +21,7 @@ import BusinessBids from "./BusinessBids.js";
 // import ProfilePage from "../Profile/Profile.js";
 import BusinessSettings from "./BusinessSettings.js";
 import PortfolioPage from "../Business/Portfolio/Portfolio.js";
-import Onboarding from "../../components/Stripe/Onboarding.js";
+import Onboarding from "../../components/Stripe/EnhancedStripeOnboarding.js";
 import OpenRequests from "../../components/Request/OpenRequests.js";
 import LoadingSpinner from "../LoadingSpinner.js";
 import ChatInterface from "../Messaging/ChatInterface.js";

@@ -1360,7 +1360,7 @@ const PricingSetup = () => {
         <div className="header-content">
           <button 
             className="back-button"
-            onClick={() => navigate('/dashboard')}
+            onClick={() => navigate('/business-dashboard')}
           >
             ← Back to Dashboard
           </button>

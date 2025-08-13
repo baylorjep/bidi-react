@@ -25,6 +25,11 @@ const ONBOARDING_STEPS = [
     description: 'Provide required verification information',
   },
   {
+    id: 'verification_required',
+    title: 'Additional Verification',
+    description: 'Complete required verification steps',
+  },
+  {
     id: 'banking',
     title: 'Banking Details',
     description: 'Set up your bank account for payouts',
@@ -40,6 +45,8 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [savedProgress, setSavedProgress] = useState(null);
+  const [verificationRequirements, setVerificationRequirements] = useState(null);
+  const [isVerificationRequired, setIsVerificationRequired] = useState(false);
   const stripeConnectInstance = useStripeConnect(connectedAccountId);
   const navigate = useNavigate();
 
@@ -198,8 +205,24 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
                        exitData?.type === 'account_updated' ||
                        (exitData && Object.keys(exitData).length === 0); // Sometimes Stripe sends empty object on success
     
+    // Check if additional verification is required
+    const needsVerification = exitData?.status === 'incomplete' || 
+                             exitData?.type === 'verification_required' ||
+                             exitData?.requirements?.currently_due?.length > 0 ||
+                             exitData?.requirements?.eventually_due?.length > 0;
+    
     console.log('Is completed:', isCompleted);
+    console.log('Needs verification:', needsVerification);
     console.log('Has connectedAccountId:', !!connectedAccountId);
+    
+    if (needsVerification && connectedAccountId) {
+      console.log('Additional verification required, saving requirements');
+      setVerificationRequirements(exitData?.requirements || {});
+      setIsVerificationRequired(true);
+      setCurrentStep('verification_required');
+      await saveProgress('verification_required');
+      return;
+    }
     
     if (isCompleted && connectedAccountId) {
       console.log('Saving completed account to database:', connectedAccountId);
@@ -242,12 +265,40 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
     }
   };
 
+  const handleBack = () => {
+    switch (currentStep) {
+      case 'intro':
+        // Go back to previous page
+        navigate(-1);
+        break;
+      case 'account':
+        setCurrentStep('intro');
+        break;
+      case 'verification':
+        setCurrentStep('account');
+        break;
+      case 'verification_required':
+        setCurrentStep('verification');
+        break;
+      case 'banking':
+        setCurrentStep('verification_required');
+        break;
+      default:
+        break;
+    }
+  };
+
+  const canGoBack = () => {
+    return true; // Always show back button, even on intro step
+  };
+
   const renderStep = () => {
     switch (currentStep) {
       case 'intro':
         return (
           <div className="onboarding-step-stripe-onboarding">
-            <h2>Welcome to Stripe Payment Setup</h2>
+            <h2 style={{fontFamily:'Outfit', fontWeight: 600, fontSize: '24px'}}>Welcome to Stripe Payment Setup</h2>
+            <h6 style={{fontFamily:'Outfit', fontWeight: 400, fontSize: '14px', color: '#6b7280'}}>This is how Bidi pays you, this information will not be shared with users and will never be used to pay Bidi</h6>
             <div className="setup-info-stripe-onboarding">
               <div className="info-card-stripe-onboarding">
                 <h3>What You'll Need</h3>
@@ -262,15 +313,25 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
                 <p>5-10 minutes</p>
               </div>
             </div>
-            <button 
-              className="btn-primary-stripe-onboarding"
-              onClick={() => {
-                console.log('Moving to account step');
-                setCurrentStep('account');
-              }}
-            >
-              Get Started
-            </button>
+            <div className="button-group-stripe-onboarding">
+              {canGoBack() && (
+                <button 
+                  className="btn-secondary-stripe-onboarding"
+                  onClick={handleBack}
+                >
+                  ← Back
+                </button>
+              )}
+              <button 
+                className="btn-primary-stripe-onboarding"
+                onClick={() => {
+                  console.log('Moving to account step');
+                  setCurrentStep('account');
+                }}
+              >
+                Get Started
+              </button>
+            </div>
           </div>
         );
 
@@ -285,11 +346,12 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
                 once reconnected.
               </p>
             ) : (
-              <p className="mb-4">
-                To receive payments for the jobs you win, you'll need to set up a payment account.
-                Bidi will never charge you to talk to users or place bids — a small service fee is
-                only deducted after you've been paid.
-              </p>
+                          <p className="mb-4">
+              To receive payments for the jobs you win, you'll need to set up a payment account.
+              This Stripe account is only used to help you get paid for your services — it is NOT used
+              for you to pay Bidi. Bidi will never charge you to talk to users or place bids — a small 
+              service fee is only deducted after you've been paid.
+            </p>
             )}
             
             {error && (
@@ -304,14 +366,23 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
               </div>
             )}
 
-            <div>
-            <button 
-              className="btn-primary-stripe-onboarding"
-              onClick={createAccount}
-              disabled={isLoading || accountCreatePending}
-            >
-              {isLoading || accountCreatePending ? 'Connecting...' : 'Connect'}
-            </button>
+            <div className="button-group-stripe-onboarding">
+              {canGoBack() && (
+                <button 
+                  className="btn-secondary-stripe-onboarding"
+                  onClick={handleBack}
+                >
+                  ← Back
+                </button>
+              )}
+              <button 
+                className="btn-primary-stripe-onboarding"
+                onClick={createAccount}
+                disabled={isLoading || accountCreatePending}
+              >
+                {isLoading || accountCreatePending ? 'Connecting...' : 'Connect'}
+              </button>
+            </div>
 
             {accountCreatePending && (
               <div className="loading-state-stripe-onboarding">
@@ -320,15 +391,24 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
               </div>
             )}
 
-            </div>
-
-
           </div>
         );
 
       case 'verification':
         return (
           <div className="onboarding-step-stripe-onboarding">
+            {isVerificationRequired && (
+              <div className="verification-notice-stripe-onboarding">
+                <div className="info-card-stripe-onboarding">
+                  <h3>Completing Additional Verification</h3>
+                  <p>
+                    You're returning to complete additional verification requirements from Stripe. 
+                    Please provide all the requested information to complete your account setup.
+                  </p>
+                </div>
+              </div>
+            )}
+            
             {stripeConnectInstance && (
               <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                 <ConnectAccountOnboarding
@@ -349,11 +429,83 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
               <p style={{ color: '#666', marginBottom: '1rem' }}>
                 If you've completed the verification but are still seeing this page, click the button below:
               </p>
+              <div className="button-group-stripe-onboarding">
+                {canGoBack() && (
+                  <button 
+                    className="btn-secondary-stripe-onboarding"
+                    onClick={handleBack}
+                  >
+                    ← Back
+                  </button>
+                )}
+                <button 
+                  className="btn-secondary-stripe-onboarding"
+                  onClick={() => handleOnboardingExit({ status: 'completed' })}
+                >
+                  I've Completed Verification
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+
+      case 'verification_required':
+        return (
+          <div className="onboarding-step-stripe-onboarding">
+            <h2 style={{fontFamily:'Outfit', fontWeight: 600, fontSize: '24px'}}>Additional Verification Required</h2>
+            <div className="verification-requirements-stripe-onboarding">
+              <div className="info-card-stripe-onboarding">
+                <h3>Stripe needs additional information</h3>
+                <p>
+                  To complete your account setup, Stripe requires additional verification. 
+                  This is a standard security measure to protect both you and your customers.
+                </p>
+                
+                {verificationRequirements && (
+                  <div className="requirements-list-stripe-onboarding">
+                    <h4>What's needed:</h4>
+                    <ul>
+                      {verificationRequirements.currently_due?.map((requirement, index) => (
+                        <li key={index} className="requirement-item-stripe-onboarding">
+                          <strong>{requirement.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>
+                        </li>
+                      ))}
+                      {verificationRequirements.eventually_due?.map((requirement, index) => (
+                        <li key={index} className="requirement-item-stripe-onboarding">
+                          <em>{requirement.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())} (required later)</em>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                
+                <div className="verification-actions-stripe-onboarding">
+                  <p>
+                    <strong>Next steps:</strong> Click the button below to continue with Stripe's 
+                    verification process. You'll be able to provide the required information.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="button-group-stripe-onboarding">
+              {canGoBack() && (
+                <button 
+                  className="btn-secondary-stripe-onboarding"
+                  onClick={handleBack}
+                >
+                  ← Back
+                </button>
+              )}
               <button 
-                className="btn-secondary-stripe-onboarding"
-                onClick={() => handleOnboardingExit({ status: 'completed' })}
+                className="btn-primary-stripe-onboarding"
+                onClick={() => {
+                  // Re-open Stripe onboarding for additional verification
+                  setCurrentStep('verification');
+                  setIsVerificationRequired(false);
+                }}
               >
-                I've Completed Verification
+                Continue Verification
               </button>
             </div>
           </div>
@@ -372,6 +524,16 @@ export default function EnhancedStripeOnboarding({ onOnboardingComplete }) {
               <div className="redirecting-message-stripe-onboarding">
                 <p>Redirecting to your dashboard...</p>
               </div>
+              {canGoBack() && (
+                <div style={{ marginTop: '2rem' }}>
+                  <button 
+                    className="btn-secondary-stripe-onboarding"
+                    onClick={handleBack}
+                  >
+                    ← Back to Verification
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         );

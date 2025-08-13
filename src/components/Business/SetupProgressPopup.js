@@ -239,7 +239,7 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
                   <div style={{ 
                     fontSize: window.innerWidth <= 768 ? '13px' : '12px', 
                     color: '#6b21a8'
-                  }}>Connect your Stripe account</div>
+                  }}>This is how Bidi pays you</div>
                 </div>
                 <div style={{
                   color: '#7c3aed',

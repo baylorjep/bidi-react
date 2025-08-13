@@ -348,6 +348,27 @@
   background: #fff0f7;
 }
 
+/* Button Group */
+.button-group-stripe-onboarding {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .button-group-stripe-onboarding {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .button-group-stripe-onboarding .btn-primary-stripe-onboarding,
+  .button-group-stripe-onboarding .btn-secondary-stripe-onboarding {
+    width: 100%;
+  }
+}
+
 /* Loading State */
 .loading-state-stripe-onboarding {
   text-align: center;
@@ -466,4 +487,72 @@
   .completion-message-stripe-onboarding p {
     font-size: 1rem;
   }
+}
+
+/* Verification Requirements Styles */
+.verification-requirements-stripe-onboarding {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.requirements-list-stripe-onboarding {
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #ffc107;
+}
+
+.requirements-list-stripe-onboarding h4 {
+  color: #856404;
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.requirements-list-stripe-onboarding ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.requirement-item-stripe-onboarding {
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e9ecef;
+  color: #495057;
+}
+
+.requirement-item-stripe-onboarding:last-child {
+  border-bottom: none;
+}
+
+.verification-actions-stripe-onboarding {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #e7f3ff;
+  border-radius: 8px;
+  border-left: 4px solid #007bff;
+}
+
+.verification-actions-stripe-onboarding p {
+  color: #004085;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.verification-notice-stripe-onboarding {
+  margin-bottom: 2rem;
+}
+
+.verification-notice-stripe-onboarding .info-card-stripe-onboarding {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-left: 4px solid #ffc107;
+}
+
+.verification-notice-stripe-onboarding .info-card-stripe-onboarding h3 {
+  color: #856404;
+}
+
+.verification-notice-stripe-onboarding .info-card-stripe-onboarding p {
+  color: #856404;
 }
