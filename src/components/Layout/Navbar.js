@@ -230,15 +230,6 @@ function Navbar() {
 
                 {/* Main Navigation */}
                 <div className="menu-section">
-                  <Link 
-                    className="menu-item" 
-                    to="/wedding-planner-homepage"
-                    onClick={closeMenu}
-                  >
-                    <i className="bi bi-heart me-3"></i>
-                    <span>Wedding Planner</span>
-                    <span className="new-tag">New</span>
-                  </Link>
 
                   {/* Dashboard Links */}
                   {userRole === "individual" && (
@@ -274,17 +265,6 @@ function Navbar() {
                     </Link>
                   )}
 
-                  {user && (userRole === "individual" || userRole === "both") && (
-                    <Link 
-                      className="menu-item" 
-                      to="/wedding-planner/overview"
-                      onClick={closeMenu}
-                    >
-                      <i className="bi bi-list-check me-3"></i>
-                      <span>Wedding Planning Tool</span>
-                    </Link>
-                  )}
-
                   {(!user || (userRole !== "business" && userRole !== "individual")) && (
                     <Link 
                       className="menu-item" 
@@ -313,7 +293,7 @@ function Navbar() {
                     onClick={closeMenu}
                   >
                     <i className="bi bi-book me-3"></i>
-                    <span>Wedding Guides</span>
+                    <span>Articles</span>
                   </Link>
 
                   <Link 

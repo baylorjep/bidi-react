@@ -285,13 +285,14 @@ function VendorManagerDemo() {
     const [isVendorDropdownOpen, setIsVendorDropdownOpen] = useState(false);
     const [selectedVendors, setSelectedVendors] = useState([]);
     const vendorOptions = [
-        { value: 'photographer', label: 'Photographer' },
-        { value: 'dj', label: 'DJ' },
+
         { value: 'caterer', label: 'Caterer' },
+        { value: 'dj', label: 'DJ' },
         { value: 'florist', label: 'Florist' },
+        { value: 'beauty', label: 'Hair & Makeup' },
+        { value: 'photographer', label: 'Photographer' },
         { value: 'planner', label: 'Planner' },
-        { value: 'videographer', label: 'Videographer' },
-        { value: 'beauty', label: 'Hair & Makeup' }
+        { value: 'videographer', label: 'Videographer' }
     ];
 
     const toggleVendor = (value) => {
@@ -501,7 +502,6 @@ function VendorManagerDemo() {
     const [screenSize, setScreenSize] = useState('large');
     const [windowWidth, setWindowWidth] = useState(typeof window !== 'undefined' ? window.innerWidth : 1200);
     const [searchFormData, setSearchFormData] = useState({
-        eventType: '',
         date: '',
         time: '',
         location: '',
@@ -667,28 +667,7 @@ function VendorManagerDemo() {
                                     className="search-bar tw-flex tw-items-center tw-w-full tw-rounded-full tw-shadow-md">
                                     <div className="search-bar-inner tw-flex tw-w-full tw-items-center tw-gap-0" style={{ overflow: 'visible' }}>  
 
-                                        <div style={{ 
-                                            borderRight: `1px solid ${colors.primary}`,
-                                            paddingLeft: '12px',
-                                            paddingRight: '12px'
-                                        }} className="search-field tw-flex tw-flex-col tw-flex-1 tw-min-w-0">
-                                            <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Event Type</div>
-                                            <select 
-                                                value={searchFormData.eventType}
-                                                onChange={(e) => setSearchFormData({...searchFormData, eventType: e.target.value})}
-                                                className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0"
-                                                style={{ color: colors.gray[600] }}
-                                            >
-                                                <option value="">Select Event Type</option>
-                                                <option value="Wedding">Wedding</option>
-                                                <option value="Corporate Event">Corporate Event</option>
-                                                <option value="Birthday Party">Birthday Party</option>
-                                                <option value="Anniversary">Anniversary</option>
-                                                <option value="Baby Shower">Baby Shower</option>
-                                                <option value="Graduation">Graduation</option>
-                                                <option value="Other">Other</option>
-                                            </select>
-                                        </div>
+
 
                                         <div style={{ 
                                             borderRight: `1px solid ${colors.primary}`,
@@ -760,7 +739,8 @@ function VendorManagerDemo() {
                                             type="date" 
                                             value={searchFormData.date}
                                             onChange={(e) => setSearchFormData({...searchFormData, date: e.target.value})}
-                                                className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0"
+                                            onClick={(e) => e.target.showPicker()}
+                                            className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0 tw-cursor-pointer"
                                             style={{ color: colors.gray[600] }}
                                             placeholder="Add Date"
                                         />
@@ -776,7 +756,8 @@ function VendorManagerDemo() {
                                             type="time"
                                             value={searchFormData.time}
                                             onChange={(e) => setSearchFormData({...searchFormData, time: e.target.value})}
-                                                className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0"
+                                            onClick={(e) => e.target.showPicker()}
+                                            className="tw-text-sm tw-bg-transparent focus:tw-outline-none tw-border-none tw-appearance-none tw-w-full tw-text-left tw-min-w-0 tw-cursor-pointer"
                                             style={{ color: colors.gray[600] }}
                                             placeholder="hh : mm XM"
                                         />
@@ -1277,12 +1258,13 @@ function VendorManagerDemo() {
 // Mobile Search Modal Component
 function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, vendorOptions, colors, onSubmit }) {
     const [formData, setFormData] = useState({
-        eventType: '',
         date: '',
         time: '',
         location: '',
         guestCount: ''
     });
+
+
 
     if (!isOpen) return null;
 
@@ -1308,27 +1290,6 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                 {/* Content */}
                 <div className="tw-p-4 tw-overflow-y-auto tw-max-h-[calc(90vh-120px)]">
                     <div className="tw-space-y-6">
-                        {/* Event Type */}
-                        <div>
-                            <label className="tw-block tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-3">
-                                What type of event is this?
-                            </label>
-                            <select 
-                                value={formData.eventType}
-                                onChange={(e) => setFormData({...formData, eventType: e.target.value})}
-                                className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent"
-                            >
-                                <option value="">Select Event Type</option>
-                                <option value="Wedding">Wedding</option>
-                                <option value="Corporate Event">Corporate Event</option>
-                                <option value="Birthday Party">Birthday Party</option>
-                                <option value="Anniversary">Anniversary</option>
-                                <option value="Baby Shower">Baby Shower</option>
-                                <option value="Graduation">Graduation</option>
-                                <option value="Other">Other</option>
-                            </select>
-                        </div>
-
                         {/* Vendor Services */}
                         <div>
                             <label className="tw-block tw-text-lg tw-font-medium tw-text-gray-900 tw-mb-3">
@@ -1362,7 +1323,8 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                                     type="date" 
                                     value={formData.date}
                                     onChange={(e) => setFormData({...formData, date: e.target.value})}
-                                    className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent"
+                                    onClick={(e) => e.target.showPicker()}
+                                    className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent tw-cursor-pointer"
                                 />
                             </div>
                             <div>
@@ -1373,7 +1335,8 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                                     type="time"
                                     value={formData.time}
                                     onChange={(e) => setFormData({...formData, time: e.target.value})}
-                                    className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent"
+                                    onClick={(e) => e.target.showPicker()}
+                                    className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent tw-cursor-pointer"
                                 />
                             </div>
                         </div>
@@ -1588,7 +1551,7 @@ function PhoneHowItWorks() {
             Full-day coverage, engagement session, and online gallery delivery.
           </div>
         </Section>
-        <Section title="What’s Included">
+        <Section title="What's Included">
           <ul style={{ margin: 0, paddingLeft: 18, fontSize: 14, color: colors.gray?.[700] || '#374151' }}>
             <li>8 hours of coverage</li>
             <li>2 photographers</li>
@@ -1658,7 +1621,7 @@ function PhoneHowItWorks() {
       <div style={{ padding: 24, textAlign: 'center' }}>
         <FiCheckCircle size={48} color={colors.primary} />
         <div style={{ marginTop: 12, fontWeight: 700, fontSize: 18 }}>You're all set!</div>
-        <div style={{ marginTop: 6, color: colors.gray?.[600] || '#4b5563' }}>We’ve sent a confirmation to your email.</div>
+        <div style={{ marginTop: 6, color: colors.gray?.[600] || '#4b5563' }}>We've sent a confirmation to your email.</div>
       </div>
     </div>
   );

@@ -50,6 +50,24 @@ const Signup = ({ onSuccess, initialUserType }) => {
         setErrorMessage('');
         
         try {
+            // Store request context if we're in a RequestModal
+            const requestModal = document.querySelector('.request-modal');
+            if (requestModal) {
+                // Get the request data from the modal's state
+                const requestData = {
+                    formData: window.requestModalFormData || {},
+                    selectedVendors: window.requestModalSelectedVendors || [],
+                    vendor: window.requestModalVendor || null,
+                    isEditMode: window.requestModalIsEditMode || false,
+                    existingRequestData: window.requestModalExistingRequestData || null,
+                    timestamp: Date.now()
+                };
+                
+                // Store in sessionStorage for retrieval after OAuth
+                sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestData));
+                console.log('Stored request context before Google OAuth:', requestData);
+            }
+            
             const { error } = await supabase.auth.signInWithOAuth({
                 provider: 'google',
                 options: {
@@ -751,29 +769,6 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                 display: 'block',
                                                 marginBottom: '8px',
                                                 fontWeight: '500'
-                                            }}>Last Name</label>
-                                            <input
-                                                type="text"
-                                                name="lastName"
-                                                value={formData.lastName}
-                                                onChange={handleChange}
-                                                required
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #ddd',
-                                                    fontSize: '1rem'
-                                                }}
-                                                placeholder="Enter your last name"
-                                            />
-                                        </div>
-
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <label style={{
-                                                display: 'block',
-                                                marginBottom: '8px',
-                                                fontWeight: '500'
                                             }}>Phone Number</label>
                                             <input
                                                 type="tel"
@@ -789,32 +784,6 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                     fontSize: '1rem'
                                                 }}
                                                 placeholder="Enter your phone number"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div>
-                                            <label style={{
-                                                display: 'block',
-                                                marginBottom: '8px',
-                                                fontWeight: '500'
-                                            }}>Email</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                required
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #ddd',
-                                                    fontSize: '1rem',
-                                                    marginBottom:'20px'
-                                                }}
-                                                placeholder="name@example.com"
                                             />
                                         </div>
 
@@ -838,6 +807,54 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                     fontSize: '1rem'
                                                 }}
                                                 placeholder="Create a password"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Last Name</label>
+                                            <input
+                                                type="text"
+                                                name="lastName"
+                                                value={formData.lastName}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Enter your last name"
+                                            />
+                                        </div>
+
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Email</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="name@example.com"
                                             />
                                         </div>
 

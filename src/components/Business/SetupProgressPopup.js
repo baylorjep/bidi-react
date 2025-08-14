@@ -1133,7 +1133,6 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
                 justifyContent: 'center',
                 position: 'fixed',
                 top: '20px',
-                right: '20px',
                 zIndex: 10000
               }}
               onClick={() => setIsMinimized(false)}

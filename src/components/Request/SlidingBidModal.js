@@ -2048,6 +2048,30 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                             onChange={handleBidDescriptionChange}
                             modules={{ toolbar: [] }}
                         />
+                        {/* Validation Error Display */}
+                        {bidDescriptionError && (
+                            <div style={{
+                                marginTop: '12px',
+                                padding: '12px 16px',
+                                backgroundColor: '#fef2f2',
+                                border: '1px solid #fecaca',
+                                borderRadius: '8px',
+                                color: '#dc2626',
+                                fontSize: '14px',
+                                lineHeight: '1.5'
+                            }}>
+                                <div style={{
+                                    display: 'flex',
+                                    alignItems: 'flex-start',
+                                    gap: '8px'
+                                }}>
+                                    <span style={{ fontSize: '16px' }}>⚠️</span>
+                                    <div style={{ whiteSpace: 'pre-line' }}>
+                                        {bidDescriptionError}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                         {/* Bottom Buttons */}
                         <div className="sbm-btn-row" style={{
                             display: 'flex',

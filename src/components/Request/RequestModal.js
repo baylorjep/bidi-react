@@ -129,7 +129,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       if (isEditMode && existingRequestData) {
         // Edit mode: populate with existing request data
         setFormData({
-          eventType: existingRequestData.event_type || existingRequestData.eventType || 'Wedding',
+          eventType: existingRequestData.event_type || existingRequestData.eventType || 'Event',
           eventDate: existingRequestData.service_date || existingRequestData.eventDate || '',
           eventTime: existingRequestData.service_time || existingRequestData.eventTime || '',
           location: existingRequestData.location || '',
@@ -140,7 +140,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       } else if (searchFormData) {
         // New request mode: populate with search form data
         setFormData({
-          eventType: searchFormData.eventType || 'Wedding',
+          eventType: 'Event', // Always set to "Event" for new requests
           eventDate: searchFormData.date || '',
           eventTime: searchFormData.time || '',
           location: searchFormData.location || '',
@@ -152,7 +152,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       } else if (vendor) {
         // Portfolio.js flow: no search form data, but vendor provided
         setFormData({
-          eventType: 'Wedding', // Default value
+          eventType: 'Event', // Default value
           eventDate: '',
           eventTime: '',
           location: '',
@@ -163,7 +163,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       } else {
         // Fallback: no data provided
         setFormData({
-          eventType: 'Wedding',
+          eventType: 'Event',
           eventDate: '',
           eventTime: '',
           location: '',
@@ -174,6 +174,27 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       }
     }
   }, [isOpen, searchFormData, isEditMode, existingRequestData, vendor]);
+
+  // Expose modal state globally for Google OAuth context preservation
+  useEffect(() => {
+    if (isOpen) {
+      // Store modal state in window object for Google OAuth to access
+      window.requestModalFormData = formData;
+      window.requestModalSelectedVendors = selectedVendors;
+      window.requestModalVendor = vendor;
+      window.requestModalIsEditMode = isEditMode;
+      window.requestModalExistingRequestData = existingRequestData;
+      
+      // Cleanup function to remove global references when modal closes
+      return () => {
+        delete window.requestModalFormData;
+        delete window.requestModalSelectedVendors;
+        delete window.requestModalVendor;
+        delete window.requestModalIsEditMode;
+        delete window.requestModalExistingRequestData;
+      };
+    }
+  }, [isOpen, formData, selectedVendors, vendor, isEditMode, existingRequestData]);
 
   // Check for authenticated user when modal opens
   useEffect(() => {
@@ -194,7 +215,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       id: 'eventType',
       type: 'select',
       question: 'What type of event are you planning?',
-      options: ['Wedding', 'Corporate Event', 'Birthday Party', 'Anniversary', 'Graduation', 'Other']
+      options: ['Event', 'Wedding', 'Corporate Event', 'Birthday Party', 'Anniversary', 'Graduation', 'Other']
     },
     {
       id: 'eventDate',
@@ -811,8 +832,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         const baseRequestData = {
           user_id: authenticatedUser.id,
           status: 'pending',
-          event_type: formData.eventType || 'Wedding',
-          event_title: `${formData.eventType || 'Wedding'} - ${category.charAt(0).toUpperCase() + category.slice(1)} Request`,
+          event_type: 'Event', // Always set to "Event"
+          event_title: `Event - ${category.charAt(0).toUpperCase() + category.slice(1)} Request`,
           location: formData.location,
           date_flexibility: formData.dateFlexibility,
           date_timeframe: formData.dateTimeframe,
@@ -947,7 +968,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
           case 'dj':
             categorySpecificData = {
-              title: `${formData.eventType || 'Wedding'} - DJ Request`,
+              title: `Event - DJ Request`,
               event_duration: parseInt(categoryResponses.duration) || null,
               estimated_guests: parseInt(formData.guestCount) || null,
               music_preferences: categoryResponses.musicStyle ? JSON.stringify([categoryResponses.musicStyle]) : null, // Maps to musicStyle question
@@ -1497,6 +1518,33 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                 </div>
               </div>
             )}
+            
+            {/* Pinterest Link Input */}
+            <div className="tw-mt-6 tw-p-4 tw-bg-gray-50 tw-rounded-lg tw-border tw-border-gray-200">
+              <label className="tw-block tw-text-sm tw-font-medium tw-text-gray-700 tw-mb-2">
+                Pinterest or Inspiration Link (Optional)
+              </label>
+              <div className="tw-flex tw-items-center tw-space-x-2">
+                <input
+                  type="url"
+                  placeholder="https://pinterest.com/... or any inspiration link"
+                  value={formData.pinterestLink || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, pinterestLink: e.target.value }))}
+                  className="tw-flex-1 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-purple-500"
+                />
+                <button
+                  type="button"
+                  onClick={() => setFormData(prev => ({ ...prev, pinterestLink: '' }))}
+                  className="tw-px-3 tw-py-2 tw-text-gray-500 hover:tw-text-gray-700 tw-transition-colors tw-border-none tw-rounded-lg"
+                  title="Clear link"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="tw-text-xs tw-text-gray-500 tw-mt-1">
+                Share a Pinterest board, Instagram post, or any other inspiration link to help vendors understand your style
+              </p>
+            </div>
           </div>
         )}
 
@@ -1864,7 +1912,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
   const modalContent = (
     <div className="tw-fixed tw-inset-0 tw-bg-black tw-bg-opacity-50 tw-flex tw-items-center tw-justify-center tw-z-[9999] tw-p-4">
-      <div className="tw-bg-white tw-rounded-lg tw-w-full tw-max-w-2xl tw-max-h-[90vh] tw-overflow-hidden">
+      <div className="tw-bg-white tw-rounded-lg tw-w-full tw-max-w-2xl tw-overflow-hidden">
         {/* Header */}
         <div className="tw-flex tw-items-center tw-justify-between tw-p-6 tw-border-b tw-border-gray-200">
           <h2 className="tw-text-2xl tw-font-bold" style={{ color: colors.gray[800] }}>

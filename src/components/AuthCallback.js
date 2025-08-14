@@ -12,6 +12,27 @@ const AuthCallback = () => {
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
+    // Helper function to check if user has existing data
+    const checkForExistingData = async (userId, tableName) => {
+        try {
+            const { data, error } = await supabase
+                .from(tableName)
+                .select('id')
+                .eq('user_id', userId)
+                .limit(1);
+            
+            if (error) {
+                console.error(`Error checking ${tableName}:`, error);
+                return false;
+            }
+            
+            return data && data.length > 0;
+        } catch (error) {
+            console.error(`Error checking ${tableName}:`, error);
+            return false;
+        }
+    };
+
     useEffect(() => {
         const handleAuthCallback = async () => {
             try {
@@ -72,15 +93,57 @@ const AuthCallback = () => {
 
     const redirectToDashboard = async (userId, userRole) => {
         try {
+            // Check for pending request context before redirecting
+            const pendingRequestContext = sessionStorage.getItem('pendingRequestContext');
+            if (pendingRequestContext) {
+                try {
+                    const requestData = JSON.parse(pendingRequestContext);
+                    const now = Date.now();
+                    const timeDiff = now - requestData.timestamp;
+                    
+                    // Only restore if request context is less than 10 minutes old
+                    if (timeDiff < 10 * 60 * 1000) {
+                        console.log('Found pending request context, redirecting back to request flow');
+                        sessionStorage.removeItem('pendingRequestContext');
+                        
+                        // Redirect to a special route that will restore the request modal
+                        navigate('/restore-request', { 
+                            state: { 
+                                pendingRequestContext: requestData,
+                                fromOAuth: true 
+                            } 
+                        });
+                        return;
+                    } else {
+                        console.log('Pending request context expired, removing');
+                        sessionStorage.removeItem('pendingRequestContext');
+                    }
+                } catch (error) {
+                    console.error('Error parsing pending request context:', error);
+                    sessionStorage.removeItem('pendingRequestContext');
+                }
+            }
+            
+            // Normal redirect based on user type
             if (userRole === 'both') {
                 navigate('/wedding-planner-dashboard/home');
-            } else if (userRole === 'individual') {
-                navigate('/individual-dashboard/bids');
             } else if (userRole === 'business') {
                 navigate('/business-dashboard/dashboard');
             } else {
-                // Fallback to individual dashboard
-                navigate('/individual-dashboard/bids');
+                // Individual user - check if they have existing data
+                const hasWeddingPlan = await checkForExistingData(userId, 'wedding_plans');
+                const hasRequests = await checkForExistingData(userId, 'photography_requests') ||
+                                   await checkForExistingData(userId, 'catering_requests') ||
+                                   await checkForExistingData(userId, 'dj_requests') ||
+                                   await checkForExistingData(userId, 'florist_requests') ||
+                                   await checkForExistingData(userId, 'beauty_requests') ||
+                                   await checkForExistingData(userId, 'wedding_planning_requests');
+                
+                if (hasWeddingPlan || hasRequests) {
+                    navigate('/individual-dashboard/bids');
+                } else {
+                    navigate('/individual-dashboard/bids');
+                }
             }
         } catch (error) {
             console.error('Navigation error:', error);

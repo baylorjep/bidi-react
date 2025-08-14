@@ -139,43 +139,97 @@ function AdminDashboard() {
 
     const fetchUsers = async () => {
         try {
+            console.log('Starting fetchUsers...');
+            
             // First get all profiles with their roles
             const { data: profiles, error: profilesError } = await supabaseAdmin
                 .from('profiles')
                 .select('id, email, role')
                 .order('email');
 
-            if (profilesError) throw profilesError;
+            if (profilesError) {
+                console.error('Error fetching profiles:', profilesError);
+                throw profilesError;
+            }
 
-            // Get all user IDs
-            const userIds = profiles.map(profile => profile.id);
+            console.log('Profiles found:', profiles);
+            console.log('Number of profiles:', profiles?.length || 0);
 
-            // Fetch individual profiles
-            const { data: individualProfiles, error: individualError } = await supabaseAdmin
-                .from('individual_profiles')
-                .select('id, first_name, last_name')
-                .in('id', userIds);
+            if (!profiles || profiles.length === 0) {
+                console.log('No profiles found');
+                setUsers([]);
+                setLoading(false);
+                return;
+            }
 
-            if (individualError) throw individualError;
+            // Fetch all individual profiles (not just those matching profile IDs)
+            let individualProfiles = [];
+            try {
+                const { data: individualData, error: individualError } = await supabaseAdmin
+                    .from('individual_profiles')
+                    .select('id, first_name, last_name');
 
-            // Fetch business profiles
-            const { data: businessProfiles, error: businessError } = await supabaseAdmin
-                .from('business_profiles')
-                .select('id, business_name')
-                .in('id', userIds);
+                if (individualError) {
+                    console.warn('Warning fetching individual profiles:', individualError);
+                } else {
+                    individualProfiles = individualData || [];
+                    console.log('Successfully fetched all individual profiles:', individualProfiles);
+                }
+            } catch (error) {
+                console.warn('Could not fetch individual profiles:', error);
+            }
 
-            if (businessError) throw businessError;
+            // Fetch all business profiles (not just those matching profile IDs)
+            let businessProfiles = [];
+            try {
+                const { data: businessData, error: businessError } = await supabaseAdmin
+                    .from('business_profiles')
+                    .select('id, business_name');
 
-            // Combine all the information
+                if (businessError) {
+                    console.warn('Warning fetching business profiles:', businessError);
+                } else {
+                    businessProfiles = businessData || [];
+                    console.log('Successfully fetched all business profiles:', businessProfiles);
+                }
+            } catch (error) {
+                console.warn('Could not fetch business profiles:', error);
+            }
+
+            console.log('Individual profiles found:', individualProfiles);
+            console.log('Business profiles found:', businessProfiles);
+
+            // Combine all the information with better name handling
             const usersWithDetails = profiles.map(profile => {
                 let displayName = '';
+                
                 if (profile.role === 'individual') {
+                    // Find individual profile by matching the profile ID
                     const individualProfile = individualProfiles.find(p => p.id === profile.id);
-                    displayName = individualProfile ? `${individualProfile.first_name} ${individualProfile.last_name}` : 'N/A';
+                    console.log(`Looking for individual profile with ID ${profile.id}:`, individualProfile);
+                    
+                    if (individualProfile && individualProfile.first_name && individualProfile.last_name) {
+                        displayName = `${individualProfile.first_name} ${individualProfile.last_name}`;
+                    } else if (individualProfile && individualProfile.first_name) {
+                        displayName = individualProfile.first_name;
+                    } else {
+                        displayName = `Individual User (${profile.email})`;
+                    }
                 } else if (profile.role === 'business') {
+                    // Find business profile by matching the profile ID
                     const businessProfile = businessProfiles.find(p => p.id === profile.id);
-                    displayName = businessProfile ? businessProfile.business_name : 'N/A';
+                    console.log(`Looking for business profile with ID ${profile.id}:`, businessProfile);
+                    
+                    if (businessProfile && businessProfile.business_name) {
+                        displayName = businessProfile.business_name;
+                    } else {
+                        displayName = `Business User (${profile.email})`;
+                    }
+                } else {
+                    displayName = `User (${profile.email})`;
                 }
+
+                console.log(`Profile ${profile.id} (${profile.role}): ${displayName}`);
 
                 return {
                     ...profile,
@@ -183,9 +237,11 @@ function AdminDashboard() {
                 };
             });
 
+            console.log('Final users with details:', usersWithDetails);
             setUsers(usersWithDetails);
         } catch (error) {
             console.error('Error fetching users:', error.message);
+            setUsers([]);
         } finally {
             setLoading(false);
         }
@@ -403,6 +459,42 @@ function AdminDashboard() {
         }
     };
 
+    // Add database testing function
+    const handleTestDatabase = async () => {
+        try {
+            console.log('Testing database connections...');
+            
+            // Test profiles table
+            const { data: profilesData, error: profilesError } = await supabaseAdmin
+                .from('profiles')
+                .select('*')
+                .limit(3);
+            
+            console.log('Profiles table test:', { data: profilesData, error: profilesError });
+            
+            // Test individual_profiles table
+            const { data: individualData, error: individualError } = await supabaseAdmin
+                .from('individual_profiles')
+                .select('*')
+                .limit(3);
+            
+            console.log('Individual profiles table test:', { data: individualData, error: individualError });
+            
+            // Test business_profiles table
+            const { data: businessData, error: businessError } = await supabaseAdmin
+                .from('business_profiles')
+                .select('*')
+                .limit(3);
+            
+            console.log('Business profiles table test:', { data: businessData, error: businessError });
+            
+            alert('Database test completed! Check console for results.');
+        } catch (error) {
+            console.error('Database test error:', error);
+            alert('Database test failed: ' + error.message);
+        }
+    };
+
     // Tab groups configuration
     const tabGroups = {
         requests: {
@@ -501,14 +593,34 @@ function AdminDashboard() {
         console.log('Active group changed to:', activeGroup);
     }, [activeGroup]);
 
+    // Add useEffect to log when users state changes
+    useEffect(() => {
+        console.log('Users state updated:', users);
+        console.log('Number of users in state:', users.length);
+    }, [users]);
+
+    // Add useEffect to log when filtered users change
+    useEffect(() => {
+        console.log('Filtered users:', filteredUsers);
+        console.log('Number of filtered users:', filteredUsers.length);
+    }, [filteredUsers, searchQuery]);
+
     return (
         <div className="admin-dashboard-container">
-            <button
-                style={{ margin: '16px 0', background: '#A328F4', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
-                onClick={handleSendTestEmail}
-            >
-                Send Test Payment Receipt Emails
-            </button>
+            <div style={{ margin: '16px 0', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <button
+                    style={{ background: '#A328F4', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
+                    onClick={handleSendTestEmail}
+                >
+                    Send Test Payment Receipt Emails
+                </button>
+                <button
+                    style={{ background: '#28a745', color: 'white', border: 'none', padding: '12px 24px', borderRadius: '6px', fontWeight: 600, fontSize: '16px', cursor: 'pointer' }}
+                    onClick={handleTestDatabase}
+                >
+                    Test Database Connections
+                </button>
+            </div>
             <div className="admin-dashboard-content">
                 <h2 className="admin-dashboard-title">Admin Dashboard</h2>
 
@@ -570,6 +682,10 @@ function AdminDashboard() {
                                     <p>Loading users...</p>
                                 ) : (
                                     <>
+                                        <div className="debug-info" style={{ marginBottom: '20px', padding: '10px', backgroundColor: '#f8f9fa', borderRadius: '4px', fontSize: '14px' }}>
+                                            <strong>Debug Info:</strong> Total users: {users.length}, Filtered users: {filteredUsers.length}, Search query: "{searchQuery}"
+                                        </div>
+                                        
                                         <div className="search-container">
                                             <input
                                                 type="text"
@@ -588,57 +704,69 @@ function AdminDashboard() {
                                             )}
                                         </div>
                                         
-                                        {/* Desktop Table View */}
-                                        <div className="admin-table-container desktop-view">
-                                            <table className="admin-table">
-                                                <thead>
-                                                    <tr>
-                                                        <th>Name</th>
-                                                        <th>Email</th>
-                                                        <th>Type</th>
-                                                        <th>Action</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody>
+                                        {filteredUsers.length === 0 ? (
+                                            <div style={{ textAlign: 'center', padding: '40px', color: '#666' }}>
+                                                {users.length === 0 ? (
+                                                    <p>No users found in the system.</p>
+                                                ) : (
+                                                    <p>No users match your search criteria.</p>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            <>
+                                                {/* Desktop Table View */}
+                                                <div className="admin-table-container desktop-view">
+                                                    <table className="admin-table">
+                                                        <thead>
+                                                            <tr>
+                                                                <th>Name</th>
+                                                                <th>Email</th>
+                                                                <th>Type</th>
+                                                                <th>Action</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {filteredUsers.map(user => (
+                                                                <tr key={user.id}>
+                                                                    <td className="user-name">{user.displayName}</td>
+                                                                    <td className="user-email">{user.email}</td>
+                                                                    <td className="user-type">{user.role}</td>
+                                                                    <td>
+                                                                        <button 
+                                                                            onClick={() => handleSignInAsUser(user.id)}
+                                                                            className="sign-in-button"
+                                                                        >
+                                                                            👤 Sign in as user
+                                                                        </button>
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+
+                                                {/* Mobile Card View */}
+                                                <div className="mobile-view">
                                                     {filteredUsers.map(user => (
-                                                        <tr key={user.id}>
-                                                            <td className="user-name">{user.displayName}</td>
-                                                            <td className="user-email">{user.email}</td>
-                                                            <td className="user-type">{user.role}</td>
-                                                            <td>
+                                                        <div key={user.id} className="user-card">
+                                                            <div className="user-card-header">
+                                                                <h6 className="user-name">{user.displayName}</h6>
+                                                                <span className="user-type-badge">{user.role}</span>
+                                                            </div>
+                                                            <div className="user-card-body">
+                                                                <p className="user-email">{user.email}</p>
                                                                 <button 
                                                                     onClick={() => handleSignInAsUser(user.id)}
                                                                     className="sign-in-button"
                                                                 >
                                                                     👤 Sign in as user
                                                                 </button>
-                                                            </td>
-                                                        </tr>
+                                                            </div>
+                                                        </div>
                                                     ))}
-                                                </tbody>
-                                            </table>
-                                        </div>
-
-                                        {/* Mobile Card View */}
-                                        <div className="mobile-view">
-                                            {filteredUsers.map(user => (
-                                                <div key={user.id} className="user-card">
-                                                    <div className="user-card-header">
-                                                        <h6 className="user-name">{user.displayName}</h6>
-                                                        <span className="user-type-badge">{user.role}</span>
-                                                    </div>
-                                                    <div className="user-card-body">
-                                                        <p className="user-email">{user.email}</p>
-                                                        <button 
-                                                            onClick={() => handleSignInAsUser(user.id)}
-                                                            className="sign-in-button"
-                                                        >
-                                                            👤 Sign in as user
-                                                        </button>
-                                                    </div>
                                                 </div>
-                                            ))}
-                                        </div>
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </div>

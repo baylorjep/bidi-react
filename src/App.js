@@ -67,6 +67,7 @@ import ResetPassword from "./components/Profile/ResetPassword";
 import UpdatePassword from "./components/Profile/UpdatePassword";
 import ProfilePage from "./components/Profile/Profile";
 import AuthCallback from "./components/AuthCallback";
+import RestoreRequest from "./components/RestoreRequest";
 
 // Individual Imports
 
@@ -337,6 +338,7 @@ function AppContent() {
           <Route path="/createaccount" element={<CreateAccount />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/auth-callback" element={<AuthCallback />} />
+          <Route path="/restore-request" element={<RestoreRequest />} />
           
           {/* Dashboard Routes */}
           <Route path="/individual-dashboard/*" element={
