@@ -75,3 +75,193 @@
 .current-categories .badge:hover {
   background-color: #7a29bc;
 } 
+
+/* Individual signup form mobile reordering */
+.sign-up-grid-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.individual-input-group {
+  width: 100%;
+}
+
+/* Mobile reordering - single column layout */
+@media (max-width: 768px) {
+  .sign-up-grid-container {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  
+  /* Reorder inputs for mobile: First Name, Last Name, Phone, Email, Password, Confirm Password */
+  .first-name-group {
+    order: 1;
+  }
+  
+  .last-name-group {
+    order: 2;
+  }
+  
+  .phone-group {
+    order: 3;
+  }
+  
+  .email-group {
+    order: 4;
+  }
+  
+  .password-group {
+    order: 5;
+  }
+  
+  .confirm-password-group {
+    order: 6;
+  }
+} 
+
+/* Modal-specific styling for Signup component */
+.modal-signup {
+  /* Override page-specific styles when used in modal */
+  max-height: 80vh;
+  overflow-y: auto;
+  margin: 0;
+  box-shadow: none;
+}
+
+.modal-signup .pricing-header {
+  margin-bottom: 20px;
+}
+
+.modal-signup .modal-title {
+  font-size: 24px !important;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.modal-signup .sign-up-grid-container {
+  gap: 15px;
+}
+
+.modal-signup .individual-input-group {
+  margin-bottom: 15px;
+}
+
+.modal-signup .individual-input-group > div {
+  margin-bottom: 15px;
+}
+
+/* Responsive adjustments for modal */
+@media (max-width: 768px) {
+  .modal-signup {
+    padding: 15px;
+    max-height: 85vh;
+  }
+  
+  .modal-signup .modal-title {
+    font-size: 20px !important;
+  }
+  
+  .modal-signup .sign-up-grid-container {
+    gap: 10px;
+  }
+} 
+
+/* Form input styling for modal context */
+.modal-signup input[type="text"],
+.modal-signup input[type="email"],
+.modal-signup input[type="tel"],
+.modal-signup input[type="password"] {
+  font-size: 14px;
+  padding: 10px 12px;
+}
+
+.modal-signup .plan-button {
+  font-size: 14px;
+  padding: 12px 20px;
+  height: 44px;
+}
+
+/* Google sign-in button adjustments for modal */
+.modal-signup button[onClick*="handleGoogleSignUp"] {
+  font-size: 14px;
+  padding: 10px 12px;
+  height: 44px;
+}
+
+/* Terms and conditions section for modal */
+.modal-signup .terms-expanded {
+  font-size: 12px;
+  padding: 10px;
+}
+
+/* Ensure proper spacing in modal */
+.modal-signup .pricing-container > div:last-child {
+  margin-bottom: 0;
+}
+
+/* Modal close button styling */
+.modal-close-button {
+  transition: all 0.2s ease;
+}
+
+.modal-close-button:hover {
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  transform: scale(1.1);
+}
+
+.modal-close-button:active {
+  transform: scale(0.95);
+}
+
+/* Modal-specific styling for SignIn component */
+.modal-signin {
+  /* Override page-specific styles when used in modal */
+  max-height: 80vh;
+  overflow-y: auto;
+  margin: 0;
+  box-shadow: none;
+}
+
+.modal-signin .pricing-header {
+  margin-bottom: 15px;
+}
+
+.modal-signin .modal-title {
+  font-size: 24px !important;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.modal-signin .plan-card {
+  padding: 20px !important;
+  max-width: 100% !important;
+}
+
+/* Ensure close button is visible in SignIn modal */
+.modal-signin .modal-close-button {
+  position: absolute !important;
+  top: 10px !important;
+  right: 10px !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  background-color: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+}
+
+/* Responsive adjustments for SignIn modal */
+@media (max-width: 768px) {
+  .modal-signin {
+    padding: 15px;
+    max-height: 85vh;
+  }
+  
+  .modal-signin .modal-title {
+    font-size: 20px !important;
+  }
+  
+  .modal-signin .plan-card {
+    padding: 15px !important;
+  }
+} 

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
 import HearAboutUsModal from '../Modals/HearAboutUsModal';
 import './ChoosePricingPlan.css';
 
-const SignIn = ({ onSuccess }) => {
+const SignIn = ({ onSuccess, isModal = false }) => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
@@ -184,14 +184,62 @@ const SignIn = ({ onSuccess }) => {
 
     return (
         <>
-            <Helmet>
-                <title>Sign In to Bidi</title>
-                <meta name="description" content="Sign in to Bidi for a smart bidding platform that connects you with top professionals. Request services with ease and simplify your search today." />
-            </Helmet>
+            {!isModal && (
+                <Helmet>
+                    <title>Sign In to Bidi</title>
+                    <meta name="description" content="Sign in to Bidi for a smart bidding platform that connects you with top professionals. Request services with ease and simplify your search today." />
+                </Helmet>
+            )}
 
-            <div className="pricing-container" style={{ height: '70vh', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection:'column' }}>
+            <div className={`pricing-container ${isModal ? 'modal-signin' : ''}`} style={{ 
+                height: isModal ? 'auto' : '70vh', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                flexDirection: 'column',
+                width: isModal ? '100%' : 'auto',
+                maxWidth: isModal ? '100%' : 'none',
+                position: isModal ? 'relative' : 'static'
+            }}>
+                {console.log('SignIn component - isModal:', isModal)}
+                {isModal && (
+                    <button 
+                                                onClick={() => {
+                            console.log('Close button clicked in SignIn modal');
+                            // Find the parent modal and close it
+                            const modal = document.querySelector('.sign-up-modal');
+                            if (modal) {
+                                const closeEvent = new Event('closeModal');
+                                modal.dispatchEvent(closeEvent);
+                            }
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: '#ff0000',
+                            border: '2px solid #fff',
+                            cursor: 'pointer',
+                            padding: '8px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 1000,
+                            width: '32px',
+                            height: '32px',
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                            color: '#fff'
+                        }}
+                        title="Close modal"
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+                )}
                 <div className="pricing-header" style={{ marginBottom:'20px' }}>
-                    <h1 className="pricing-title landing-page-title heading-reset">
+                    <h1 className={`pricing-title landing-page-title heading-reset ${isModal ? 'modal-title' : ''}`}>
                         Welcome Back to Bidi
                     </h1>
                 </div>
@@ -204,9 +252,9 @@ const SignIn = ({ onSuccess }) => {
                     marginTop: '20px'
                 }}>
                     <div className="plan-card" style={{
-                        maxWidth: '400px',
+                        maxWidth: isModal ? '100%' : '400px',
                         width: '100%',
-                        padding: '40px'
+                        padding: isModal ? '20px' : '40px'
                     }}>
                         {(error || errorMessage) && (
                             <div style={{

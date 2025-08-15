@@ -2406,3 +2406,181 @@
     font-size: 14px;
   }
 }
+
+/* Portfolio Empty State Styles */
+.portfolio-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 16px;
+  border: 2px dashed #cbd5e1;
+  margin: 20px 0;
+  min-height: 300px;
+}
+
+.portfolio-empty-state.customer-view {
+  background: linear-gradient(135deg, #fef3f2 0%, #fee4e2 100%);
+  border-color: #fecaca;
+}
+
+.portfolio-empty-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  opacity: 0.7;
+}
+
+.portfolio-empty-title {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0 0 12px 0;
+  font-family: 'Outfit', sans-serif;
+}
+
+.portfolio-empty-description {
+  font-size: 16px;
+  color: #64748b;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+  max-width: 500px;
+  font-family: 'Outfit', sans-serif;
+}
+
+.portfolio-empty-action {
+  background: linear-gradient(135deg, #a328f4 0%, #8c1ecc 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-family: 'Outfit', sans-serif;
+}
+
+.portfolio-empty-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(163, 40, 244, 0.3);
+}
+
+.portfolio-empty-note {
+  background: rgba(163, 40, 244, 0.1);
+  border: 1px solid rgba(163, 40, 244, 0.2);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-top: 16px;
+  font-size: 14px;
+  color: #7c3aed;
+  font-style: italic;
+  max-width: 400px;
+}
+
+/* Mobile-specific empty state styles */
+@media (max-width: 768px) {
+  .portfolio-empty-state {
+    padding: 40px 20px;
+    min-height: 250px;
+    margin: 15px 0;
+  }
+
+  .portfolio-empty-icon {
+    font-size: 36px;
+    margin-bottom: 12px;
+  }
+
+  .portfolio-empty-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+  }
+
+  .portfolio-empty-description {
+    font-size: 14px;
+    margin-bottom: 20px;
+    max-width: 100%;
+  }
+
+  .portfolio-empty-action {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+
+  .portfolio-empty-note {
+    font-size: 13px;
+    padding: 10px 14px;
+    margin-top: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .portfolio-empty-state {
+    padding: 30px 16px;
+    min-height: 200px;
+  }
+
+  .portfolio-empty-icon {
+    font-size: 32px;
+  }
+
+  .portfolio-empty-title {
+    font-size: 18px;
+  }
+
+  .portfolio-empty-description {
+    font-size: 13px;
+  }
+}
+
+/* Portfolio Status Message Styles */
+.portfolio-status-message {
+  margin-top: 16px;
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.status-message-owner {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(163, 40, 244, 0.1);
+  border: 1px solid rgba(163, 40, 244, 0.2);
+  color: #7c3aed;
+}
+
+.status-message-customer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #dc2626;
+}
+
+.status-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+}
+
+.status-text {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 500;
+}
+
+/* Mobile responsive styles for status message */
+@media (max-width: 768px) {
+  .portfolio-status-message {
+    margin-top: 12px;
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  
+  .status-icon {
+    font-size: 14px;
+  }
+}

@@ -218,6 +218,38 @@ const EmptyStateGuidance = ({ title, description, actionText, onClick, icon, isO
   );
 };
 
+// Enhanced empty state component for when there are no portfolio images
+const PortfolioEmptyState = ({ isOwner, onAddImages, businessName }) => {
+  if (isOwner) {
+    return (
+      <div className="portfolio-empty-state">
+        <div className="portfolio-empty-icon">📸</div>
+        <h3 className="portfolio-empty-title">No Portfolio Images Yet</h3>
+        <p className="portfolio-empty-description">
+          Show potential customers your best work by adding photos and videos to your portfolio. 
+          This helps them understand your style and quality.
+        </p>
+        <button className="portfolio-empty-action" onClick={onAddImages}>
+          Add Portfolio Images
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="portfolio-empty-state customer-view">
+      <div className="portfolio-empty-icon">📸</div>
+      <h3 className="portfolio-empty-title">Portfolio Coming Soon</h3>
+      <p className="portfolio-empty-description">
+        {businessName} hasn't added portfolio images yet. Check back later to see examples of their work!
+      </p>
+      <div className="portfolio-empty-note">
+        💡 Tip: You can still contact this vendor to discuss your needs and see if they're a good fit.
+      </div>
+    </div>
+  );
+};
+
 // Add this component before the Portfolio component
 const ProfileCompletionSummary = ({ business, portfolioPics, portfolioVideos, packages, isOwner }) => {
   if (!isOwner) return null;
@@ -833,6 +865,12 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
   const handleImageClick = (media) => {
     console.log('handleImageClick called with:', media);
     
+    // Validate media object
+    if (!media || !media.url) {
+      console.warn('Invalid media object provided to handleImageClick:', media);
+      return;
+    }
+    
     // Check if it's a video and handle full screen
     if (media && typeof media === 'object' && media.isVideo) {
       // Create full screen video element
@@ -1232,6 +1270,18 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
   };
 
   const handleGalleryClick = () => {
+    // Don't allow gallery navigation if there are no images
+    if (portfolioVideos.length + portfolioPics.length === 0) {
+      if (isOwner) {
+        // For business owners, open the edit modal to add images
+        openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio');
+      } else {
+        // For customers, show a toast or message
+        toast.info("This vendor hasn't added portfolio images yet. Check back later!");
+      }
+      return;
+    }
+
     if (onOpenGallery) {
       onOpenGallery(business);
     } else {
@@ -1501,38 +1551,46 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
               </div>
             </div>
             
-            <Slider {...settings}>
-              {[...portfolioVideos, ...portfolioPics].map((item, index) => {
-                const isVideo = portfolioVideos.includes(item);
-                return (
-                  <div key={index} className="portfolio-slide">
-                    {isVideo ? (
-                      <video
-                        src={item}
-                        className="portfolio-image video"
-                        controls
-                        muted
-                        autoPlay
-                        loop
-                        playsInline
-                        onClick={() => handleImageClick({ url: item, isVideo: true })}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    ) : (
-                      <img
-                        src={item}
-                        alt={`Portfolio ${index + 1}`}
-                        className="portfolio-image"
-                        onClick={() => handleImageClick({ url: item, isVideo: false })}
-                        loading="lazy"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </Slider>
+            {portfolioVideos.length + portfolioPics.length > 0 ? (
+              <Slider {...settings}>
+                {[...portfolioVideos, ...portfolioPics].map((item, index) => {
+                  const isVideo = portfolioVideos.includes(item);
+                  return (
+                    <div key={index} className="portfolio-slide">
+                      {isVideo ? (
+                        <video
+                          src={item}
+                          className="portfolio-image video"
+                          controls
+                          muted
+                          autoPlay
+                          loop
+                          playsInline
+                          onClick={() => handleImageClick({ url: item, isVideo: true })}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <img
+                          src={item}
+                          alt={`Portfolio ${index + 1}`}
+                          className="portfolio-image"
+                          onClick={() => handleImageClick({ url: item, isVideo: false })}
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </Slider>
+            ) : (
+              <PortfolioEmptyState
+                isOwner={isOwner}
+                onAddImages={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
+                businessName={business.business_name}
+              />
+            )}
             
             {/* Mobile Gallery Button */}
             {portfolioVideos.length + portfolioPics.length > 0 && (
@@ -1591,13 +1649,10 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
                 return null;
               })()
             ) : (
-              <EmptyStateGuidance
-                title="No Portfolio Images Yet"
-                description="Show potential customers your best work by adding photos and videos to your portfolio. This helps them understand your style and quality."
-                actionText="Add Portfolio Images"
-                onClick={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
-                icon="📸"
+              <PortfolioEmptyState
                 isOwner={isOwner}
+                onAddImages={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
+                businessName={business.business_name}
               />
             )}
 
@@ -1719,6 +1774,27 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
                     icon="📝"
                     isOwner={isOwner}
                   />
+                )}
+                
+                {/* Show portfolio status message when no images */}
+                {portfolioVideos.length + portfolioPics.length === 0 && (
+                  <div className="portfolio-status-message">
+                    {isOwner ? (
+                      <div className="status-message-owner">
+                        <span className="status-icon">📸</span>
+                        <span className="status-text">
+                          Add portfolio images to showcase your work and attract more customers
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="status-message-customer">
+                        <span className="status-icon">📸</span>
+                        <span className="status-text">
+                          Portfolio images coming soon - contact this vendor to discuss your needs
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 )}
                 <div
                   style={{

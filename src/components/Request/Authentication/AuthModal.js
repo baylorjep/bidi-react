@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 // Update these import paths to be relative to the AuthModal location
 import SignIn from '../../../components/Profile/SignIn';
 import Signup from '../../../components/Profile/Signup';
@@ -18,6 +18,24 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
             navigate('/');
         }
     };
+
+    // Handle close event from Signup component
+    useEffect(() => {
+        const handleCloseEvent = () => {
+            handleClose();
+        };
+
+        const modal = document.querySelector('.sign-up-modal');
+        if (modal) {
+            modal.addEventListener('closeModal', handleCloseEvent);
+        }
+
+        return () => {
+            if (modal) {
+                modal.removeEventListener('closeModal', handleCloseEvent);
+            }
+        };
+    }, [location.pathname, location.state?.from]);
 
     const handleSignupSuccess = async (userData) => {
         try {
@@ -48,13 +66,15 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
     const renderContent = () => {
         switch (currentView) {
             case 'signin':
-                return <SignIn onSuccess={onSuccess} />;
+                console.log('Rendering SignIn component with isModal=true');
+                return <SignIn onSuccess={onSuccess} isModal={true} />;
             case 'signup':
                 return (
                     <Signup 
                         onSuccess={handleSignupSuccess} 
                         initialUserType="individual"
                         partnershipInfo={partnershipInfo}
+                        isModal={true}
                     />
                 );
             default:

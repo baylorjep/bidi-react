@@ -15271,6 +15271,20 @@ margin-bottom: -20px;
   }
 }
 
+/* Additional responsive adjustments for modal */
+@media screen and (max-width: 768px) {
+  .sign-up-modal-content {
+    width: 95%;
+    padding: 20px 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .sign-up-modal {
+    padding: 10px;
+  }
+}
+
 
 
 .sign-up-modal-title {

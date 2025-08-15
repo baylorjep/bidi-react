@@ -6,7 +6,7 @@ import { Helmet } from 'react-helmet';
 import './ChoosePricingPlan.css';
 import './Signup.css';
 
-const Signup = ({ onSuccess, initialUserType }) => {
+const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
     const [formData, setFormData] = useState({
         email: '',
         password: '',
@@ -290,15 +290,59 @@ const Signup = ({ onSuccess, initialUserType }) => {
 
     return (
         <>
-            <Helmet>
-                <title>Sign Up - Bidi</title>
-                <meta name="description" content="Create an account on Bidi to connect with top wedding vendors and services." />
-                <meta name="keywords" content="sign up, create account, wedding vendors, Bidi" />
-            </Helmet>
+            {!isModal && (
+                <Helmet>
+                    <title>Sign Up - Bidi</title>
+                    <meta name="description" content="Create an account on Bidi to connect with top wedding vendors and services." />
+                    <meta name="keywords" content="sign up, create account, wedding vendors, Bidi" />
+                </Helmet>
+            )}
             
-            <div className="pricing-container" style={{ backgroundColor: 'white' , borderRadius: '20px', padding: '40px', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection:'column' }}>
+            <div className={`pricing-container ${isModal ? 'modal-signup' : ''}`} style={{ 
+                backgroundColor: 'white', 
+                borderRadius: isModal ? '8px' : '20px', 
+                padding: isModal ? '20px' : '40px', 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                flexDirection: 'column',
+                width: isModal ? '100%' : 'auto',
+                maxWidth: isModal ? '100%' : 'none',
+                position: isModal ? 'relative' : 'static'
+            }}>
+                {isModal && (
+                    <button 
+                        className="modal-close-button"
+                        onClick={() => {
+                            // Find the parent modal and close it
+                            const modal = document.querySelector('.sign-up-modal');
+                            if (modal) {
+                                const closeEvent = new Event('closeModal');
+                                modal.dispatchEvent(closeEvent);
+                            }
+                        }}
+                        style={{
+                            position: 'absolute',
+                            top: '10px',
+                            right: '10px',
+                            background: 'none',
+                            border: 'none',
+                            cursor: 'pointer',
+                            padding: '8px',
+                            borderRadius: '50%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            zIndex: 10
+                        }}
+                    >
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                            <path d="M18 6L6 18M6 6L18 18" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                    </button>
+                )}
                 <div className="pricing-header">
-                    <h1 className="pricing-title landing-page-title heading-reset">
+                    <h1 className={`pricing-title landing-page-title heading-reset ${isModal ? 'modal-title' : ''}`}>
                         Create Your Account
                     </h1>
                 </div>
@@ -309,7 +353,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                     marginTop: '20px'
                 }}>
                     <div style={{
-                        maxWidth: '800px',
+                        maxWidth: isModal ? '100%' : '800px',
                         width: '100%',
                     }}>
                         {errorMessage && (
@@ -738,7 +782,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
 
                             {userType === 'individual' && (
                                 <div className='sign-up-grid-container'>
-                                    <div>
+                                    <div className="individual-input-group first-name-group">
                                         <div style={{ marginBottom: '20px' }}>
                                             <label style={{
                                                 display: 'block',
@@ -763,7 +807,34 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                 placeholder="Enter your first name"
                                             />
                                         </div>
+                                    </div>
 
+                                    <div className="individual-input-group last-name-group">
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Last Name</label>
+                                            <input
+                                                type="text"
+                                                name="lastName"
+                                                value={formData.lastName}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="Enter your last name"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="individual-input-group phone-group">
                                         <div style={{ marginBottom: '20px' }}>
                                             <label style={{
                                                 display: 'block',
@@ -786,7 +857,34 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                                 placeholder="Enter your phone number"
                                             />
                                         </div>
+                                    </div>
 
+                                    <div className="individual-input-group email-group">
+                                        <div style={{ marginBottom: '20px' }}>
+                                            <label style={{
+                                                display: 'block',
+                                                marginBottom: '8px',
+                                                fontWeight: '500'
+                                            }}>Email</label>
+                                            <input
+                                                type="email"
+                                                name="email"
+                                                value={formData.email}
+                                                onChange={handleChange}
+                                                required
+                                                style={{
+                                                    width: '100%',
+                                                    padding: '12px',
+                                                    borderRadius: '8px',
+                                                    border: '1px solid #ddd',
+                                                    fontSize: '1rem'
+                                                }}
+                                                placeholder="name@example.com"
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="individual-input-group password-group">
                                         <div style={{ marginBottom: '20px' }}>
                                             <label style={{
                                                 display: 'block',
@@ -811,53 +909,7 @@ const Signup = ({ onSuccess, initialUserType }) => {
                                         </div>
                                     </div>
 
-                                    <div>
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <label style={{
-                                                display: 'block',
-                                                marginBottom: '8px',
-                                                fontWeight: '500'
-                                            }}>Last Name</label>
-                                            <input
-                                                type="text"
-                                                name="lastName"
-                                                value={formData.lastName}
-                                                onChange={handleChange}
-                                                required
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #ddd',
-                                                    fontSize: '1rem'
-                                                }}
-                                                placeholder="Enter your last name"
-                                            />
-                                        </div>
-
-                                        <div style={{ marginBottom: '20px' }}>
-                                            <label style={{
-                                                display: 'block',
-                                                marginBottom: '8px',
-                                                fontWeight: '500'
-                                            }}>Email</label>
-                                            <input
-                                                type="email"
-                                                name="email"
-                                                value={formData.email}
-                                                onChange={handleChange}
-                                                required
-                                                style={{
-                                                    width: '100%',
-                                                    padding: '12px',
-                                                    borderRadius: '8px',
-                                                    border: '1px solid #ddd',
-                                                    fontSize: '1rem'
-                                                }}
-                                                placeholder="name@example.com"
-                                            />
-                                        </div>
-
+                                    <div className="individual-input-group confirm-password-group">
                                         <div style={{ marginBottom: '20px' }}>
                                             <label style={{
                                                 display: 'block',

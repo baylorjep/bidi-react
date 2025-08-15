@@ -97,6 +97,39 @@ const animations = `
 .mobile-timeline-container::-webkit-scrollbar {
     display: none;
 }
+
+/* iOS input styling fixes */
+input[type="date"],
+input[type="time"],
+input[type="text"],
+input[type="number"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    border-radius: 8px !important;
+    font-size: 16px !important;
+    line-height: 1.5 !important;
+}
+
+/* iOS specific focus styles */
+input[type="date"]:focus,
+input[type="time"]:focus,
+input[type="text"]:focus,
+input[type="number"]:focus {
+    outline: none !important;
+    border-color: #ec4899 !important;
+    box-shadow: 0 0 0 2px rgba(236, 72, 153, 0.2) !important;
+}
+
+/* Ensure consistent padding and sizing on iOS */
+input[type="date"],
+input[type="time"],
+input[type="text"],
+input[type="number"] {
+    padding: 12px !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+}
 `;
 
 // Add the keyframes to the document
@@ -1325,6 +1358,20 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                                     onChange={(e) => setFormData({...formData, date: e.target.value})}
                                     onClick={(e) => e.target.showPicker()}
                                     className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent tw-cursor-pointer"
+                                    style={{
+                                        WebkitAppearance: 'none',
+                                        MozAppearance: 'none',
+                                        appearance: 'none',
+                                        fontSize: '16px',
+                                        lineHeight: '1.5',
+                                        backgroundColor: '#ffffff',
+                                        color: '#374151',
+                                        borderRadius: '8px',
+                                        border: '1px solid #d1d5db',
+                                        padding: '12px',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
                                 />
                             </div>
                             <div>
@@ -1337,6 +1384,20 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                                     onChange={(e) => setFormData({...formData, time: e.target.value})}
                                     onClick={(e) => e.target.showPicker()}
                                     className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent tw-cursor-pointer"
+                                    style={{
+                                        WebkitAppearance: 'none',
+                                        MozAppearance: 'none',
+                                        appearance: 'none',
+                                        fontSize: '16px',
+                                        lineHeight: '1.5',
+                                        backgroundColor: '#ffffff',
+                                        color: '#374151',
+                                        borderRadius: '8px',
+                                        border: '1px solid #d1d5db',
+                                        padding: '12px',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
                                 />
                             </div>
                         </div>
@@ -1352,6 +1413,20 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                                     value={formData.location}
                                     onChange={(e) => setFormData({...formData, location: e.target.value})}
                                     className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent"
+                                    style={{
+                                        WebkitAppearance: 'none',
+                                        MozAppearance: 'none',
+                                        appearance: 'none',
+                                        fontSize: '16px',
+                                        lineHeight: '1.5',
+                                        backgroundColor: '#ffffff',
+                                        color: '#374151',
+                                        borderRadius: '8px',
+                                        border: '1px solid #d1d5db',
+                                        padding: '12px',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
                                 />
                             </div>
                             <div>
@@ -1364,6 +1439,20 @@ function MobileSearchModal({ isOpen, onClose, selectedVendors, toggleVendor, ven
                                     value={formData.guestCount}
                                     onChange={(e) => setFormData({...formData, guestCount: e.target.value})}
                                     className="tw-w-full tw-p-3 tw-border tw-border-gray-300 tw-rounded-lg focus:tw-outline-none focus:tw-ring-2 focus:tw-ring-pink-500 focus:tw-border-transparent"
+                                    style={{
+                                        WebkitAppearance: 'none',
+                                        MozAppearance: 'none',
+                                        appearance: 'none',
+                                        fontSize: '16px',
+                                        lineHeight: '1.5',
+                                        backgroundColor: '#ffffff',
+                                        color: '#374151',
+                                        borderRadius: '8px',
+                                        border: '1px solid #d1d5db',
+                                        padding: '12px',
+                                        width: '100%',
+                                        boxSizing: 'border-box'
+                                    }}
                                 />
                             </div>
                         </div>
