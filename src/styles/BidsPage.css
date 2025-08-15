@@ -330,6 +330,13 @@
     align-items: flex-start;
 }
 
+@media screen and (max-width: 768px) {
+    .bids-page .category-info {
+        flex-direction: row;
+        align-items: center;
+    }
+}
+
 .bids-page .category-name {
     font-size: 1.1rem;
     font-weight: 700;

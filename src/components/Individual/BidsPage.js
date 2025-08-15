@@ -2216,7 +2216,7 @@ export default function BidsPage({ onOpenChat }) {
     const renderRequestCard = (request, index) => {
         const isSelected = selectedRequestId === request.id;
         const hasBids = bids.some(bid => bid.request_id === request.id);
-        const bidCount = bids.filter(bid => bid.request_id === request.id).length;
+        const unseenBidCount = bids.filter(bid => bid.request_id === request.id && !bid.viewed).length;
         
         return (
             <div 
@@ -2228,9 +2228,9 @@ export default function BidsPage({ onOpenChat }) {
                     <div className="request-category">
                         <div className="category-icon-wrapper">
                             <i className={`${getCategoryIcon(request.type)} category-icon`}></i>
-                            {hasBids && (
+                            {unseenBidCount > 0 && (
                                 <div className="bid-count-badge">
-                                    {bidCount}
+                                    {unseenBidCount}
                                 </div>
                             )}
                         </div>
@@ -2458,6 +2458,7 @@ export default function BidsPage({ onOpenChat }) {
                             transition: all 0.3s ease;
                             position: relative;
                             overflow: hidden;
+                            min-height: 120px;
                         }
                         
                         .request-card:hover {
@@ -2477,14 +2478,39 @@ export default function BidsPage({ onOpenChat }) {
                             justify-content: space-between;
                             align-items: flex-start;
                             margin-bottom: 20px;
+                            gap: 16px;
                         }
                         
                         .request-category {
                             display: flex;
                             align-items: center;
                             gap: 16px;
+                            flex: 1;
                         }
                         
+                        .category-icon-wrapper {
+                            position: relative;
+                            flex-shrink: 0;
+                        }
+                        
+                        .category-icon {
+                            width: 60px;
+                            height: 60px;
+                            background: linear-gradient(135deg, #f8f5ff 0%, #f0ebff 100%);
+                            border-radius: 16px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: #9633eb;
+                            font-size: 24px;
+                            border: 2px solid #e9ecef;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        .request-card:hover .category-icon {
+                            border-color: #9633eb;
+                            background: linear-gradient(135deg, #f0ebff 0%, #e8e3ff 100%);
+                        }
                         
                         .bid-count-badge {
                             position: absolute;
@@ -2500,11 +2526,13 @@ export default function BidsPage({ onOpenChat }) {
                             justify-content: center;
                             font-size: 12px;
                             font-weight: bold;
+                            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
                         }
                         
                         .category-info {
                             flex: 1;
-                            margin:0px
+                            margin: 0;
+                            min-width: 0;
                         }
                         
                         .category-name {
@@ -2512,6 +2540,8 @@ export default function BidsPage({ onOpenChat }) {
                             font-weight: 600;
                             color: #2c3e50;
                             margin: 0 0 8px 0;
+                            line-height: 1.3;
+                            word-wrap: break-word;
                         }
                         
                         /* Mobile Status Dropdown Styles */
@@ -2543,6 +2573,7 @@ export default function BidsPage({ onOpenChat }) {
                             font-weight: 600;
                             text-transform: uppercase;
                             letter-spacing: 0.5px;
+                            white-space: nowrap;
                         }
                         
                         .status-badge.new {
@@ -2563,20 +2594,24 @@ export default function BidsPage({ onOpenChat }) {
                         .request-actions {
                             display: flex;
                             gap: 8px;
+                            flex-shrink: 0;
                         }
                         
                         .action-btn {
-                            padding: 10px 16px;
+                            padding: 12px 16px;
                             border-radius: 12px;
                             border: none;
                             cursor: pointer;
                             display: flex;
                             align-items: center;
+                            justify-content: center;
                             gap: 8px;
                             font-size: 14px;
                             font-weight: 500;
                             transition: all 0.2s ease;
-                            min-width: fit-content;
+                            min-width: 44px;
+                            min-height: 44px;
+                            touch-action: manipulation;
                         }
                         
                         .action-btn.primary {
@@ -2598,6 +2633,10 @@ export default function BidsPage({ onOpenChat }) {
                         .action-btn.secondary:hover {
                             background: #e9ecef;
                             border-color: #adb5bd;
+                        }
+                        
+                        .action-btn:active {
+                            transform: scale(0.95);
                         }
                         
                         .request-details {
@@ -2666,6 +2705,7 @@ export default function BidsPage({ onOpenChat }) {
                             font-weight: 600;
                             text-transform: uppercase;
                             letter-spacing: 0.5px;
+                            white-space: nowrap;
                         }
                         
                         .status-indicator.pending {
@@ -2869,17 +2909,117 @@ export default function BidsPage({ onOpenChat }) {
                         }
                         
                         @media (max-width: 768px) {
-                            .request-details {
-                                grid-template-columns: 1fr;
+                            .request-card {
+                                padding: 20px;
+                                margin-bottom: 16px;
+                                min-height: auto;
                             }
                             
                             .request-header {
                                 flex-direction: column;
                                 gap: 16px;
+                                margin-bottom: 16px;
+                            }
+                            
+                            .request-category {
+                                flex-direction: column;
+                                align-items: flex-start;
+                                gap: 12px;
+                            }
+                            
+                            .category-icon {
+                                width: 50px;
+                                height: 50px;
+                                font-size: 20px;
+                            }
+                            
+                            .category-name {
+                                font-size: 18px;
+                                margin-bottom: 6px;
+                            }
+                            
+                            .request-status-container {
+                                gap: 6px;
+                            }
+                            
+                            .status-badge {
+                                padding: 4px 10px;
+                                font-size: 11px;
                             }
                             
                             .request-actions {
                                 justify-content: center;
+                                width: 100%;
+                                gap: 12px;
+                            }
+                            
+                            .action-btn {
+                                flex: 1;
+                                max-width: 120px;
+                                padding: 14px 16px;
+                                font-size: 13px;
+                            }
+                            
+                            .request-details {
+                                grid-template-columns: 1fr;
+                                gap: 12px;
+                                margin-bottom: 16px;
+                            }
+                            
+                            .detail-item {
+                                padding: 12px;
+                            }
+                            
+                            .request-bids-summary {
+                                padding-top: 12px;
+                            }
+                            
+                            .bids-status-summary {
+                                gap: 6px;
+                            }
+                            
+                            .status-indicator {
+                                padding: 4px 10px;
+                                font-size: 11px;
+                            }
+                        }
+                        
+                        @media (max-width: 480px) {
+                            .request-card {
+                                padding: 16px;
+                                margin-bottom: 12px;
+                                border-radius: 12px;
+                            }
+                            
+                            .category-icon {
+                                width: 44px;
+                                height: 44px;
+                                font-size: 18px;
+                            }
+                            
+                            .category-name {
+                                font-size: 16px;
+                            }
+                            
+                            .request-actions {
+                                gap: 8px;
+                            }
+                            
+                            .action-btn {
+                                padding: 12px 14px;
+                                font-size: 12px;
+                                min-width: 40px;
+                                min-height: 40px;
+                            }
+                            
+                            .status-badge {
+                                padding: 3px 8px;
+                                font-size: 10px;
+                            }
+                            
+                            .status-indicator {
+                                padding: 3px 8px;
+                                font-size: 10px;
                             }
                         }
                         
@@ -3022,7 +3162,16 @@ export default function BidsPage({ onOpenChat }) {
                             align-items: center;
                             gap: 8px;
                             margin-bottom: 16px;
-                            padding: 0;
+                            padding: 12px;
+                            border-radius: 8px;
+                            transition: background-color 0.2s ease;
+                            min-height: 44px;
+                            touch-action: manipulation;
+                        }
+                        
+                        .mobile-back-button:hover,
+                        .mobile-back-button:active {
+                            background-color: rgba(150, 51, 235, 0.1);
                         }
                         
                         .mobile-bids-title {
@@ -3030,6 +3179,65 @@ export default function BidsPage({ onOpenChat }) {
                             font-weight: 700;
                             color: #2c3e50;
                             margin: 0;
+                        }
+                        
+                        /* Touch-friendly improvements */
+                        .request-card {
+                            -webkit-tap-highlight-color: transparent;
+                            touch-action: manipulation;
+                        }
+                        
+                        .request-card:active {
+                            transform: scale(0.98);
+                        }
+                        
+                        /* Better mobile spacing */
+                        @media (max-width: 768px) {
+                            .requests-header {
+                                padding: 20px;
+                                margin-bottom: 24px;
+                            }
+                            
+                            .requests-title {
+                                font-size: 24px;
+                                margin-bottom: 6px;
+                            }
+                            
+                            .requests-subtitle {
+                                font-size: 14px;
+                            }
+                            
+                            .quick-actions {
+                                padding: 12px;
+                                gap: 8px;
+                            }
+                            
+                            .quick-action-btn {
+                                padding: 10px 16px;
+                                font-size: 13px;
+                                min-height: 40px;
+                            }
+                        }
+                        
+                        @media (max-width: 480px) {
+                            .requests-header {
+                                padding: 16px;
+                                margin-bottom: 20px;
+                            }
+                            
+                            .requests-title {
+                                font-size: 22px;
+                            }
+                            
+                            .quick-actions {
+                                flex-direction: column;
+                                align-items: center;
+                            }
+                            
+                            .quick-action-btn {
+                                width: 100%;
+                                max-width: 200px;
+                            }
                         }
                         
                         /* Quick Actions Bar */
@@ -3085,10 +3293,25 @@ export default function BidsPage({ onOpenChat }) {
                             margin-top: 24px;
                         }
                         
+                        @media (max-width: 1024px) {
+                            .requests-list-bids-page {
+                                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                                gap: 20px;
+                            }
+                        }
+                        
                         @media (max-width: 768px) {
                             .requests-list-bids-page {
                                 grid-template-columns: 1fr;
                                 gap: 16px;
+                                margin-top: 16px;
+                            }
+                        }
+                        
+                        @media (max-width: 480px) {
+                            .requests-list-bids-page {
+                                gap: 12px;
+                                margin-top: 12px;
                             }
                         }
                         

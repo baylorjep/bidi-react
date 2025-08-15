@@ -158,7 +158,7 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
     <div 
       style={{
         position: 'fixed',
-        bottom: window.innerWidth <= 768 ? '10px' : '20px',
+        bottom: window.innerWidth <= 768 ? '10px' : '0',
         right: window.innerWidth <= 768 ? '10px' : '20px',
         left: window.innerWidth <= 768 ? '10px' : 'auto',
         width: window.innerWidth <= 768 ? 'calc(100vw - 20px)' : '320px',
@@ -1113,7 +1113,7 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
       {isMinimized && (
         <>
           {/* Mobile Minimized Button */}
-          {window.innerWidth <= 768 && (
+          {window.innerWidth <= 768 ? (
             <button 
               style={{
                 background: 'linear-gradient(135deg, #9333ea 0%, #ec4899 100%)',
@@ -1149,10 +1149,8 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
                 {getProgressPercentage()}%
               </span>
             </button>
-          )}
-
-          {/* Desktop Minimized Button */}
-          {window.innerWidth > 768 && (
+          ) : (
+            /* Desktop Minimized Button */
             <button 
               style={{
                 background: 'linear-gradient(135deg, #9333ea 0%, #ec4899 100%)',

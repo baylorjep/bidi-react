@@ -821,7 +821,7 @@ function VendorManagerDemo() {
                                 to={
                                     role === 'individual' ? "/individual-dashboard" :
                                     role === 'business' ? "/business-dashboard" :
-                                    role === 'both' ? "/wedding-planner-dashboard" :
+                                    role === 'both' ? "/wedding-planner-dashboard/home" :
                                     "/signin"
                                 }
                                 onClick={() => {

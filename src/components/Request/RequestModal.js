@@ -243,6 +243,9 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     }
   ];
 
+  // Check if we should show event details step
+  const shouldShowEventDetails = vendor && !searchFormData;
+
   // Handle event detail answers
   const handleEventDetailAnswer = (questionId, answer) => {
     setFormData(prev => ({
@@ -594,8 +597,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   };
 
   const handleNext = () => {
-    if (showEventDetails) {
-      // Handle navigation within event details
+    if (showEventDetails && shouldShowEventDetails) {
+      // Handle navigation within event details (Portfolio.js flow only)
       if (currentQuestionIndex < eventDetailQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
@@ -630,8 +633,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       const lastCategory = selectedVendors[selectedVendors.length - 1];
       const lastCategoryQuestions = getCategoryQuestions(lastCategory);
       setCurrentQuestionIndex(lastCategoryQuestions.length - 1);
-    } else if (showEventDetails) {
-      // Handle navigation within event details
+    } else if (showEventDetails && shouldShowEventDetails) {
+      // Handle navigation within event details (Portfolio.js flow only)
       if (currentQuestionIndex > 0) {
         setCurrentQuestionIndex(currentQuestionIndex - 1);
       } else {
@@ -645,8 +648,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       const prevCategory = selectedVendors[currentCategoryIndex - 1];
       const prevCategoryQuestions = getCategoryQuestions(prevCategory);
       setCurrentQuestionIndex(prevCategoryQuestions.length - 1);
-    } else if (vendor) {
-      // Go back to event details from first category question
+    } else if (vendor && shouldShowEventDetails) {
+      // Go back to event details from first category question (Portfolio.js flow only)
       handleBackToEventDetails();
     }
   };
@@ -1245,22 +1248,37 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   });
   const totalQuestions = useMemo(() => {
     let total = 0;
-    // Always include event detail questions in the total
-    total += eventDetailQuestions.length;
+    // Only include event detail questions if we're showing them (Portfolio.js flow)
+    if (shouldShowEventDetails) {
+      total += eventDetailQuestions.length;
+    }
     if (selectedVendors) {
       total += selectedVendors.reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0);
     }
     return total;
-  }, [selectedVendors, formData.responses, eventDetailQuestions.length]);
+  }, [selectedVendors, formData.responses, eventDetailQuestions.length, shouldShowEventDetails]);
+  
   const currentQuestionNumber = useMemo(() => {
     let questionNumber = 0;
-    if (showEventDetails) {
+    
+    // If we're showing event details (Portfolio.js flow), count those questions
+    if (showEventDetails && shouldShowEventDetails) {
       questionNumber = currentQuestionIndex + 1;
     } else if (selectedVendors) {
-      questionNumber = eventDetailQuestions.length + selectedVendors.slice(0, currentCategoryIndex).reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0) + currentQuestionIndex + 1;
+      // If we're past event details, add the completed event details to the count
+      if (shouldShowEventDetails) {
+        questionNumber += eventDetailQuestions.length;
+      }
+      
+      // Add completed vendor categories
+      questionNumber += selectedVendors.slice(0, currentCategoryIndex).reduce((total, vendor) => total + getCategoryQuestions(vendor).length, 0);
+      
+      // Add current question within current category
+      questionNumber += currentQuestionIndex + 1;
     }
+    
     return questionNumber;
-  }, [selectedVendors, currentCategoryIndex, currentQuestionIndex, formData.responses, showEventDetails]);
+  }, [selectedVendors, currentCategoryIndex, currentQuestionIndex, formData.responses, showEventDetails, shouldShowEventDetails, eventDetailQuestions.length]);
 
   if (!isOpen) return null;
 
@@ -1706,8 +1724,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
   const canGoNext = () => {
     if (isReviewStep) return false;
-    if (showEventDetails) {
-      // For event details, all questions are optional
+    if (showEventDetails && shouldShowEventDetails) {
+      // For event details, all questions are optional (Portfolio.js flow only)
       return true;
     }
     if (!currentQuestion) return false;
@@ -1718,10 +1736,10 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
   const canGoBack = () => {
     if (isReviewStep) return true;
-    if (showEventDetails) {
+    if (showEventDetails && shouldShowEventDetails) {
       return currentQuestionIndex > 0;
     }
-    return currentQuestionIndex > 0 || currentCategoryIndex > 0 || !!vendor;
+    return currentQuestionIndex > 0 || currentCategoryIndex > 0 || (vendor && shouldShowEventDetails);
   };
 
   // Helper function to get category icon
@@ -1962,23 +1980,26 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                 }}
               />
             </div>
-            <p className="tw-text-sm tw-text-gray-600 tw-mt-2">
-              {showEventDetails 
-                ? `Event Details • Question ${currentQuestionIndex + 1} of ${eventDetailQuestions.length}`
-                : `${currentCategory ? currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1) : 'Category'} • Question ${currentQuestionIndex + 1} of ${categoryQuestions?.length || 0}`
-              }
-              <br />
-              <small className="tw-text-xs tw-text-gray-500">
-                Overall Progress: {currentQuestionNumber} of {totalQuestions} questions
-              </small>
-            </p>
+                         <p className="tw-text-sm tw-text-gray-600 tw-mt-2">
+               {showEventDetails && shouldShowEventDetails
+                 ? `Event Details • Question ${currentQuestionIndex + 1} of ${eventDetailQuestions.length}`
+                 : `${currentCategory ? currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1) : 'Category'} • Question ${currentQuestionIndex + 1} of ${categoryQuestions?.length || 0}`
+               }
+               <br />
+               <small className="tw-text-xs tw-text-gray-500">
+                 {shouldShowEventDetails 
+                   ? `Overall Progress: ${currentQuestionNumber} of ${totalQuestions} questions`
+                   : `Vendor Questions: ${currentQuestionNumber} of ${totalQuestions} questions`
+                 }
+               </small>
+             </p>
           </div>
         )}
 
-        {/* Content */}
-        <div className="tw-p-6 tw-overflow-y-auto tw-max-h-[calc(90vh-300px)]">
-          {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : (showEventDetails ? renderEventDetails() : renderQuestion()))}
-        </div>
+                 {/* Content */}
+         <div className="tw-p-6 tw-overflow-y-auto tw-max-h-[calc(90vh-300px)]">
+           {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : ((showEventDetails && shouldShowEventDetails) ? renderEventDetails() : renderQuestion()))}
+         </div>
 
         {/* Footer */}
         {!isSuccess && (
@@ -2003,18 +2024,18 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               {isSubmitting ? 'Submitting...' : (user ? (isEditMode ? 'Update Request' : 'Submit Request') : 'Sign In & Submit')}
             </button>
           ) : (
-            <button
-              onClick={handleNext}
-              disabled={!canGoNext()}
-              className="tw-flex tw-items-center tw-px-6 tw-py-2 tw-rounded-lg tw-text-white tw-font-medium tw-transition-colors tw-disabled:opacity-50 tw-disabled:cursor-not-allowed tw-border-none"
-              style={{ backgroundColor: canGoNext() ? colors.primary : colors.gray[400] }}
-            >
-              {showEventDetails 
-                ? (currentQuestionIndex < eventDetailQuestions.length - 1 ? 'Next' : 'Finish Event Details')
-                : (formData.responses?.[currentCategory]?.[currentQuestion?.id] ? 'Next' : 'Skip')
-              }
-              <FiArrowRight className="tw-ml-2" size={16} />
-            </button>
+                         <button
+               onClick={handleNext}
+               disabled={!canGoNext()}
+               className="tw-flex tw-items-center tw-px-6 tw-py-2 tw-rounded-lg tw-text-white tw-font-medium tw-transition-colors tw-disabled:opacity-50 tw-disabled:cursor-not-allowed tw-border-none"
+               style={{ backgroundColor: canGoNext() ? colors.primary : colors.gray[400] }}
+             >
+               {(showEventDetails && shouldShowEventDetails)
+                 ? (currentQuestionIndex < eventDetailQuestions.length - 1 ? 'Next' : 'Finish Event Details')
+                 : (formData.responses?.[currentCategory]?.[currentQuestion?.id] ? 'Next' : 'Skip')
+               }
+               <FiArrowRight className="tw-ml-2" size={16} />
+             </button>
           )}
         </div>
         )}

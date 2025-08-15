@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../../App.css';
 import '../../styles/RequestDisplayMini.css';
+import { supabase } from '../../supabaseClient';
 
 function RequestDisplayMini({ 
     request, 
@@ -32,6 +33,59 @@ function RequestDisplayMini({
     // Mobile responsive state
     const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
     const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth <= 480);
+
+    // Function to mark request as seen
+    const markRequestAsSeen = async () => {
+        if (!currentVendorId || !request) return;
+
+        try {
+            // Determine the table name for this request
+            let tableName = request.table_name;
+            if (!tableName) {
+                const category = (request.service_category || '').toLowerCase();
+                switch (category) {
+                    case 'photography': tableName = 'photography_requests'; break;
+                    case 'videography': tableName = 'videography_requests'; break;
+                    case 'dj': tableName = 'dj_requests'; break;
+                    case 'catering': tableName = 'catering_requests'; break;
+                    case 'beauty': tableName = 'beauty_requests'; break;
+                    case 'florist': tableName = 'florist_requests'; break;
+                    case 'wedding planning': tableName = 'wedding_planning_requests'; break;
+                    default: tableName = 'requests';
+                }
+            }
+
+            // Check if this vendor has already seen this request
+            const hasSeen = Array.isArray(request.has_seen) && request.has_seen.includes(currentVendorId);
+            if (hasSeen) return; // Already seen
+
+            // Update the has_seen field in the database
+            const { error } = await supabase
+                .from(tableName)
+                .update({ 
+                    has_seen: supabase.sql`COALESCE(has_seen, '[]'::jsonb) || '["${currentVendorId}"]'::jsonb` 
+                })
+                .eq('id', request.id);
+
+            if (error) {
+                console.error('Error marking request as seen:', error);
+            } else {
+                // Update local state to reflect that the request has been seen
+                request.has_seen = Array.isArray(request.has_seen) 
+                    ? [...request.has_seen, currentVendorId]
+                    : [currentVendorId];
+            }
+        } catch (error) {
+            console.error('Error marking request as seen:', error);
+        }
+    };
+
+    // Mark request as seen when component mounts (when request is displayed)
+    useEffect(() => {
+        if (currentVendorId && request) {
+            markRequestAsSeen();
+        }
+    }, [currentVendorId, request]);
 
     // Helper to parse created_at as UTC if needed
     const parseUTCDate = (dateString) => {
@@ -242,6 +296,7 @@ function RequestDisplayMini({
             minHeight: isMobile ? 'auto' : '80px',
             gap: isMobile ? '12px' : '0'
         }}
+        data-request-id={request.id}
         onMouseEnter={(e) => {
             e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
             e.currentTarget.style.backgroundColor = '#fafafa';
@@ -250,7 +305,11 @@ function RequestDisplayMini({
             e.currentTarget.style.boxShadow = '0 1px 3px rgba(0, 0, 0, 0.05)';
             e.currentTarget.style.backgroundColor = 'white';
         }}
-        onClick={() => onViewMore && onViewMore(request.id)}
+        onClick={() => {
+            // Mark request as seen when clicked
+            markRequestAsSeen();
+            onViewMore && onViewMore(request.id);
+        }}
         >
             {/* Row Layout */}
             
@@ -302,19 +361,6 @@ function RequestDisplayMini({
                         wordWrap: 'break-word'
                     }}>
                         {request.event_type || request.service_category || 'Service Request'}
-                    </div>
-                    <div style={{
-                        fontSize: isSmallMobile ? '11px' : '12px',
-                        color: '#9ca3af',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '4px'
-                    }}>
-                        <i className="fas fa-gavel" style={{ fontSize: '10px' }}></i>
-                        <span>
-                            {request.bid_count || 0} 
-                            bid{request.bid_count !== 1 ? 's' : ''}
-                        </span>
                     </div>
                 </div>
                     </div>
@@ -590,6 +636,8 @@ function RequestDisplayMini({
                     }}
                     onClick={(e) => {
                         e.stopPropagation();
+                        // Mark request as seen when button is clicked
+                        markRequestAsSeen();
                         onViewMore && onViewMore(request.id);
                     }}
                     onMouseEnter={(e) => e.target.style.opacity = '0.9'}

@@ -471,7 +471,7 @@ const BidDetailModal = ({
                   {downPaymentDate && (
                     <div className="bdm-payment-status-item">
                       <span className="bdm-payment-label">Paid On:</span>
-                      <span className="bdm-payment-date">{downPaymentDate.toLocaleDateString()}</span>
+                      <span className="bdm-payment-date">{downPaymentDate.toLocaleDateString('en-US', { timeZone: 'America/Denver' })}</span>
                     </div>
                   )}
                   <div className="bdm-payment-status-item">

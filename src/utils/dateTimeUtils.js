@@ -1,19 +1,14 @@
 // Utility functions for timezone-aware date and time formatting
 
 /**
- * Get the user's timezone from browser or default to 'America/Denver'
+ * Get the user's timezone - always returns Mountain Standard Time (America/Denver)
  */
 export const getUserTimezone = () => {
-  try {
-    return Intl.DateTimeFormat().resolvedOptions().timeZone;
-  } catch (error) {
-    console.warn('Could not detect timezone, defaulting to America/Denver:', error);
-    return 'America/Denver';
-  }
+  return 'America/Denver';
 };
 
 /**
- * Format a timestamp for display in the user's timezone
+ * Format a timestamp for display in Mountain Standard Time (MST)
  * @param {string|Date} timestamp - ISO string or Date object
  * @param {string} format - 'time', 'date', 'datetime', or 'relative'
  * @returns {string} Formatted date/time string
@@ -26,9 +21,13 @@ export const formatTimestamp = (timestamp, format = 'time') => {
     const now = new Date();
     const userTimezone = getUserTimezone();
     
-    // Check if date is today, yesterday, or older
-    const isToday = date.toDateString() === now.toDateString();
-    const isYesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000).toDateString() === date.toDateString();
+    // Check if date is today, yesterday, or older (in MST)
+    const dateMST = date.toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+    const nowMST = now.toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+    const yesterdayMST = new Date(now.getTime() - 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+    
+    const isToday = dateMST === nowMST;
+    const isYesterday = dateMST === yesterdayMST;
     const isThisYear = date.getFullYear() === now.getFullYear();
     
     switch (format) {
@@ -141,22 +140,32 @@ export const formatTimestamp = (timestamp, format = 'time') => {
 };
 
 /**
- * Check if a timestamp is from today
+ * Check if a timestamp is from today (in MST)
  */
 export const isToday = (timestamp) => {
   if (!timestamp) return false;
   const date = new Date(timestamp);
   const now = new Date();
-  return date.toDateString() === now.toDateString();
+  
+  // Convert both dates to MST for comparison
+  const dateMST = date.toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+  const nowMST = now.toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+  
+  return dateMST === nowMST;
 };
 
 /**
- * Check if a timestamp is from yesterday
+ * Check if a timestamp is from yesterday (in MST)
  */
 export const isYesterday = (timestamp) => {
   if (!timestamp) return false;
   const date = new Date(timestamp);
   const now = new Date();
   const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-  return date.toDateString() === yesterday.toDateString();
+  
+  // Convert both dates to MST for comparison
+  const dateMST = date.toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+  const yesterdayMST = yesterday.toLocaleDateString('en-US', { timeZone: 'America/Denver' });
+  
+  return dateMST === yesterdayMST;
 };

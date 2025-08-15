@@ -7,7 +7,7 @@
 }
 
 
-.dashboard-main .chat-app {
+.dashboard-main .chat-app-chat-interface {
   height: auto; /* Let dashboard handle height */
   display: flex;
   background: transparent; /* Let dashboard control bg */
@@ -48,7 +48,7 @@
 }
 
 /* Main layout */
-.chat-app {
+.chat-app-chat-interface {
   display: flex;
   height: 100%;
   width: 100%;
@@ -110,6 +110,7 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  max-height: 80vh;
 }
 
 /* Chat header */
@@ -305,7 +306,7 @@
   }
 }
 @media (max-width: 600px) {
-  .chat-app {
+  .chat-app-chat-interface {
     flex-direction: column;
   }
   .chat-sidebar {
@@ -527,6 +528,7 @@
   flex: 1;
   position: relative;
   overflow: hidden;
+  max-height: 60vh;
 }
 
 

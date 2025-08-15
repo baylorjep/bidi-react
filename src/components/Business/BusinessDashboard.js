@@ -77,6 +77,19 @@ const BusinessDashSidebar = () => {
   const profileMenuRef = useRef(null);
   const [scrollToSection, setScrollToSection] = useState(null);
 
+  // Notification counts for sidebar tabs
+  const [notificationCounts, setNotificationCounts] = useState({
+    dashboard: 0,    // New requests
+    bids: 0,         // Bids needing follow-up
+    messages: 0,     // Unread messages
+    portfolio: 0,    // Portfolio updates
+    training: 0,     // New training content
+    settings: 0,     // Settings updates
+    admin: 0         // Admin notifications
+  });
+
+  const [isLoadingNotifications, setIsLoadingNotifications] = useState(false);
+
   // Initialize activeSection from URL path
   useEffect(() => {
     const path = location.pathname;
@@ -111,8 +124,86 @@ const BusinessDashSidebar = () => {
   const handleSectionChange = (section) => {
     setActiveSection(section);
     setScrollToSection(null); // Reset scrollToSection when manually changing sections
+    
+    // Clear notifications for the visited section
+    clearSectionNotifications(section);
+    
+    // If navigating to dashboard, also refresh notifications to get latest counts
+    if (section === 'dashboard') {
+      setTimeout(() => {
+        fetchNotificationCounts();
+      }, 500);
+    }
+    
     // Update URL to reflect the active section
     navigate(`/business-dashboard/${section}`, { replace: true });
+  };
+
+  // Function to clear notifications for a specific section
+  const clearSectionNotifications = async (section) => {
+    if (!user) return;
+
+    try {
+      switch (section) {
+        case 'dashboard':
+          // Mark all open requests as seen for this user
+          const requestTypes = ['beauty_requests', 'catering_requests', 'dj_requests', 'florist_requests', 'photography_requests', 'videography_requests', 'wedding_planning_requests'];
+          
+          for (const requestType of requestTypes) {
+            try {
+              // Update has_seen to include current user's ID
+              await supabase
+                .from(requestType)
+                .update({ 
+                  has_seen: supabase.sql`COALESCE(has_seen, '[]'::jsonb) || '["${user.id}"]'::jsonb` 
+                })
+                .not("hidden_by_vendor", "cs.{${user.id}}")
+                .or(`has_seen.is.null,not(has_seen.cs.{${user.id}})`)
+                .eq("status", "open");
+            } catch (error) {
+              console.error(`Error updating ${requestType} has_seen:`, error);
+            }
+          }
+          break;
+
+        case 'bids':
+          // Mark bids as followed up
+          await supabase
+            .from("bids")
+            .update({ followed_up: true })
+            .eq("user_id", user.id)
+            .eq("followed_up", false);
+          break;
+
+        case 'messages':
+          // Mark messages as seen
+          const { error: messagesError } = await supabase
+            .from("messages")
+            .update({ seen: true })
+            .eq("receiver_id", user.id)
+            .eq("seen", false);
+          
+          if (messagesError) {
+            console.error("Error marking messages as seen:", messagesError);
+          } else {
+            console.log("Messages marked as seen successfully");
+          }
+          break;
+
+        default:
+          break;
+      }
+
+      // Refresh notification counts immediately after clearing
+      await fetchNotificationCounts();
+      
+      // Also refresh again after a short delay to ensure database updates are reflected
+      setTimeout(() => {
+        fetchNotificationCounts();
+      }, 500);
+    } catch (error) {
+      console.error("Error clearing section notifications:", error);
+    }
   };
 
   useEffect(() => {
@@ -248,6 +339,8 @@ const BusinessDashSidebar = () => {
     } else {
       handleSectionChange("messages");
     }
+    // Clear notifications for messages section
+    clearSectionNotifications("messages");
   };
 
   useEffect(() => {
@@ -279,6 +372,8 @@ const BusinessDashSidebar = () => {
         if (targetSection) {
           setScrollToSection(targetSection);
         }
+        // Clear notifications for portfolio section
+        clearSectionNotifications("portfolio");
       }
     } catch (error) {
       console.error("Error loading portfolio:", error);
@@ -502,6 +597,188 @@ const BusinessDashSidebar = () => {
     }
   };
 
+  // Function to fetch notification counts for all sections
+  const fetchNotificationCounts = async () => {
+    if (!user) return;
+
+    setIsLoadingNotifications(true);
+    
+    try {
+      // 1. Fetch new requests count (dashboard) - check all request types
+      const requestTypes = ['beauty_requests', 'catering_requests', 'dj_requests', 'florist_requests', 'photography_requests', 'videography_requests', 'wedding_planning_requests'];
+      
+      let totalNewRequests = 0;
+      
+      for (const requestType of requestTypes) {
+        try {
+          const { count } = await supabase
+            .from(requestType)
+            .select("*", { count: "exact", head: true })
+            .not("hidden_by_vendor", "cs.{${user.id}}")
+            .or(`has_seen.is.null,not(has_seen.cs.{${user.id}})`)
+            .eq("status", "open");
+          
+          totalNewRequests += count || 0;
+        } catch (error) {
+          console.error(`Error fetching ${requestType}:`, error);
+        }
+      }
+
+      // 2. Fetch bids needing follow-up (bids that haven't been followed up on)
+      const { count: bidsNeedingFollowUp } = await supabase
+        .from("bids")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", user.id)
+        .eq("followed_up", false)
+        .not("status", "in", ["accepted", "rejected", "expired"]);
+
+      // 3. Fetch unread messages count
+      const { count: unreadMessages } = await supabase
+        .from("messages")
+        .select("*", { count: "exact", head: true })
+        .eq("receiver_id", user.id)
+        .eq("seen", false);
+
+      console.log('Notification counts:', {
+        requests: totalNewRequests,
+        bids: bidsNeedingFollowUp,
+        messages: unreadMessages
+      });
+
+      // Update notification counts
+      setNotificationCounts({
+        dashboard: totalNewRequests,
+        bids: bidsNeedingFollowUp || 0,
+        messages: unreadMessages || 0,
+        portfolio: 0, // No portfolio notifications for now
+        training: 0,  // No training notifications for now
+        settings: 0,  // No settings notifications for now
+        admin: 0      // No admin notifications for now
+      });
+
+    } catch (error) {
+      console.error("Error fetching notification counts:", error);
+    } finally {
+      setIsLoadingNotifications(false);
+    }
+  };
+
+  // Manual refresh function for notifications
+  const refreshNotifications = () => {
+    fetchNotificationCounts();
+  };
+
+  // Function to manually dismiss a specific notification type
+  const dismissNotification = async (section) => {
+    if (!user) return;
+
+    try {
+      switch (section) {
+        case 'dashboard':
+          // Mark all open requests as seen for this user
+          await clearSectionNotifications('dashboard');
+          break;
+        case 'bids':
+          // Mark all bids as followed up
+          await clearSectionNotifications('bids');
+          break;
+        case 'messages':
+          // Mark all messages as seen
+          await clearSectionNotifications('messages');
+          break;
+        default:
+          break;
+      }
+    } catch (error) {
+      console.error("Error dismissing notification:", error);
+    }
+  };
+
+  // Fetch notification counts when user changes or setup progress changes
+  useEffect(() => {
+    if (user) {
+      fetchNotificationCounts();
+    }
+  }, [user, setupProgress]);
+
+  // Set up interval to refresh notification counts
+  useEffect(() => {
+    if (user) {
+      const interval = setInterval(fetchNotificationCounts, 30000); // Refresh every 30 seconds
+      return () => clearInterval(interval);
+    }
+  }, [user]);
+
+  // Set up real-time subscriptions for notifications
+  useEffect(() => {
+    if (!user) return;
+
+    const subscriptions = [];
+
+    // Subscribe to new requests
+    const requestTypes = ['beauty_requests', 'catering_requests', 'dj_requests', 'florist_requests', 'photography_requests', 'videography_requests', 'wedding_planning_requests'];
+    
+    requestTypes.forEach(requestType => {
+      const subscription = supabase
+        .channel(`${requestType}_notifications`)
+        .on('postgres_changes', 
+          { 
+            event: '*', 
+            schema: 'public', 
+            table: requestType 
+          }, 
+          () => {
+            // Refresh notification counts when requests change
+            fetchNotificationCounts();
+          }
+        )
+        .subscribe();
+      
+      subscriptions.push(subscription);
+    });
+
+    // Subscribe to messages
+    const messagesSubscription = supabase
+      .channel('messages_notifications')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'messages' 
+        }, 
+        () => {
+          fetchNotificationCounts();
+        }
+      )
+      .subscribe();
+    
+    subscriptions.push(messagesSubscription);
+
+    // Subscribe to bids
+    const bidsSubscription = supabase
+      .channel('bids_notifications')
+      .on('postgres_changes', 
+        { 
+          event: '*', 
+          schema: 'public', 
+          table: 'bids' 
+        }, 
+        () => {
+          fetchNotificationCounts();
+        }
+      )
+      .subscribe();
+    
+    subscriptions.push(bidsSubscription);
+
+    // Cleanup subscriptions
+    return () => {
+      subscriptions.forEach(sub => {
+        supabase.removeChannel(sub);
+      });
+    };
+  }, [user]);
+
   // Add click outside handler for profile menu
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -577,6 +854,18 @@ const BusinessDashSidebar = () => {
             >
               <img src={dashboardIcon} alt="Requests" />
               <span className="sidebar-link-text">Requests</span>
+              {notificationCounts.dashboard > 0 && (
+                <div 
+                  className="notification-badge"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissNotification('dashboard');
+                  }}
+                  title="Click to dismiss"
+                >
+                  {notificationCounts.dashboard > 99 ? '99+' : notificationCounts.dashboard}
+                </div>
+              )}
             </li>
             <li 
               onClick={() => handleSectionChange("bids")}
@@ -584,6 +873,18 @@ const BusinessDashSidebar = () => {
             >
               <img src={bidsIcon} alt="Bids" />
               <span className="sidebar-link-text">Bids</span>
+              {notificationCounts.bids > 0 && (
+                <div 
+                  className="notification-badge"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissNotification('bids');
+                  }}
+                  title="Click to dismiss"
+                >
+                  {notificationCounts.bids > 99 ? '99+' : notificationCounts.bids}
+                </div>
+              )}
             </li>
             <li 
               onClick={handleMessagesClick}
@@ -591,8 +892,20 @@ const BusinessDashSidebar = () => {
             >
               <img src={messageIcon} alt="Message" />
               <span className="sidebar-link-text">Message</span>
+              {notificationCounts.messages > 0 && (
+                <div 
+                  className="notification-badge"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    dismissNotification('messages');
+                  }}
+                  title="Click to dismiss"
+                >
+                  {notificationCounts.messages > 99 ? '99+' : notificationCounts.messages}
+                </div>
+              )}
             </li>
-            <li
+            <li 
               onClick={() => {
                 handleViewPortfolio();
               }}
@@ -608,6 +921,7 @@ const BusinessDashSidebar = () => {
               <i className="fas fa-play-circle" style={{ width: '24px', height: '24px', marginRight: '12px', fontSize: '20px', color: '#9633eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}></i>
               <span className="sidebar-link-text">Training</span>
             </li>
+            {/* Settings Tab */}
             <li 
               onClick={() => handleSectionChange("settings")}
               className={activeSection === "settings" ? "active" : ""}
@@ -744,6 +1058,18 @@ const BusinessDashSidebar = () => {
                   <img src={dashboardIcon} alt="Dashboard" />
                   <span className="nav-label">Requests</span>
                 </div>
+                {notificationCounts.dashboard > 0 && (
+                  <div 
+                    className="notification-badge"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissNotification('dashboard');
+                    }}
+                    title="Click to dismiss"
+                  >
+                    {notificationCounts.dashboard > 99 ? '99+' : notificationCounts.dashboard}
+                  </div>
+                )}
               </button>
               <button 
                 onClick={() => handleSectionChange("bids")}
@@ -753,6 +1079,18 @@ const BusinessDashSidebar = () => {
                   <img src={bidsIcon} alt="Bids" />
                   <span className="nav-label">Bids</span>
                 </div>
+                {notificationCounts.bids > 0 && (
+                  <div 
+                    className="notification-badge"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissNotification('bids');
+                    }}
+                    title="Click to dismiss"
+                  >
+                    {notificationCounts.bids > 99 ? '99+' : notificationCounts.bids}
+                  </div>
+                )}
               </button>
               <button 
                 onClick={handleMessagesClick}
@@ -762,6 +1100,18 @@ const BusinessDashSidebar = () => {
                   <img src={messageIcon} alt="Message" />
                   <span className="nav-label">Messages</span>
                 </div>
+                {notificationCounts.messages > 0 && (
+                  <div 
+                    className="notification-badge"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      dismissNotification('messages');
+                    }}
+                    title="Click to dismiss"
+                  >
+                    {notificationCounts.messages > 99 ? '99+' : notificationCounts.messages}
+                  </div>
+                )}
               </button>
               <button 
                 onClick={handleViewPortfolio}
@@ -772,7 +1122,7 @@ const BusinessDashSidebar = () => {
                   <span className="nav-label">Portfolio</span>
                 </div>
               </button>
-              <button 
+              <button
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className={`mobile-settings-button ${showProfileMenu ? 'active' : ''}`}
               >

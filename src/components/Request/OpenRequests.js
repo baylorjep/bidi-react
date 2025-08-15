@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
 import RequestDisplayMini from "./RequestDisplayMini";
 import SlidingBidModal from "./SlidingBidModal";
@@ -1248,6 +1248,183 @@ function OpenRequests({ onMessageClick }) {
       );
     });
   };
+
+  // Function to mark requests as seen when they come into view
+  const markRequestAsSeenOnScroll = useCallback(async (requestId) => {
+    if (!businessId) return;
+
+    try {
+      // Find the request in our state
+      const request = [...openRequests, ...openPhotoRequests].find(req => req.id === requestId);
+      if (!request) return;
+
+      // Check if already seen
+      const hasSeen = Array.isArray(request.has_seen) && request.has_seen.includes(businessId);
+      if (hasSeen) return;
+
+      const tableName = getTableName(request);
+      
+      // Update the has_seen field
+      const { error } = await supabase
+        .from(tableName)
+        .update({ 
+          has_seen: supabase.sql`COALESCE(has_seen, '[]'::jsonb) || '["${businessId}"]'::jsonb` 
+        })
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Error marking request as seen on scroll:', error);
+      } else {
+        // Update local state
+        const updateState = (prevRequests) => 
+          prevRequests.map(req => 
+            req.id === requestId 
+              ? { ...req, has_seen: [...(req.has_seen || []), businessId] }
+              : req
+          );
+
+        if (openPhotoRequests.some(req => req.id === requestId)) {
+          setOpenPhotoRequests(updateState);
+        } else {
+          setOpenRequests(updateState);
+        }
+      }
+    } catch (error) {
+      console.error('Error marking request as seen on scroll:', error);
+    }
+  }, [businessId, openRequests, openPhotoRequests]);
+
+  // Function to mark requests as seen by the current vendor
+  const markRequestsAsSeen = useCallback(async (requests) => {
+    if (!businessId || !requests || requests.length === 0) return;
+
+    try {
+      // Group requests by table name for efficient updates
+      const requestsByTable = {};
+      
+      requests.forEach(request => {
+        const tableName = getTableName(request);
+        if (!requestsByTable[tableName]) {
+          requestsByTable[tableName] = [];
+        }
+        requestsByTable[tableName].push(request.id);
+      });
+
+      // Update each table's has_seen field
+      for (const [tableName, requestIds] of Object.entries(requestsByTable)) {
+        try {
+          // Update has_seen to include current user's ID for all requests in this table
+          const { error } = await supabase
+            .from(tableName)
+            .update({ 
+              has_seen: supabase.sql`COALESCE(has_seen, '[]'::jsonb) || '["${businessId}"]'::jsonb` 
+            })
+            .in('id', requestIds)
+            .not("hidden_by_vendor", "cs.{${businessId}}")
+            .or(`has_seen.is.null,not(has_seen.cs.{${businessId}})`)
+            .eq("status", "open");
+
+          if (error) {
+            console.error(`Error updating ${tableName} has_seen:`, error);
+          }
+        } catch (error) {
+          console.error(`Error updating ${tableName}:`, error);
+        }
+      }
+
+      // Update local state to reflect that requests have been seen
+      const updatedRequests = requests.map(request => ({
+        ...request,
+        has_seen: Array.isArray(request.has_seen) 
+          ? [...request.has_seen, businessId]
+          : [businessId]
+      }));
+
+      // Update the appropriate state array
+      if (openPhotoRequests.some(req => req.id === requests[0].id)) {
+        setOpenPhotoRequests(prev => 
+          prev.map(req => {
+            const updated = updatedRequests.find(u => u.id === req.id);
+            return updated || req;
+          })
+        );
+      } else {
+        setOpenRequests(prev => 
+          prev.map(req => {
+            const updated = updatedRequests.find(u => u.id === req.id);
+            return updated || req;
+          })
+        );
+      }
+
+    } catch (error) {
+      console.error("Error marking requests as seen:", error);
+    }
+  }, [businessId, openRequests, openPhotoRequests]);
+
+  // Set up Intersection Observer to mark requests as seen when they come into view
+  useEffect(() => {
+    if (!businessId) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const requestId = entry.target.getAttribute('data-request-id');
+            if (requestId) {
+              markRequestAsSeenOnScroll(requestId);
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of the element is visible
+        rootMargin: '50px' // Start observing 50px before the element comes into view
+      }
+    );
+
+    // Observe all request elements
+    const requestElements = document.querySelectorAll('[data-request-id]');
+    requestElements.forEach((element) => observer.observe(element));
+
+    return () => {
+      requestElements.forEach((element) => observer.unobserve(element));
+      observer.disconnect();
+    };
+  }, [businessId, openRequests, openPhotoRequests, markRequestAsSeenOnScroll]);
+
+  // Mark requests as seen when they're displayed
+  useEffect(() => {
+    if (businessId && (openRequests.length > 0 || openPhotoRequests.length > 0)) {
+      // Get the current page's requests that are visible
+      const allFilteredRequests = filterRequestsBySearch(
+        filterRequestsByCategory(
+          (() => {
+            const hasPhotoVideoCategory = businessCategories.some(cat => 
+              ["photography", "videography"].includes(normalizeCategory(cat))
+            );
+            
+            return hasPhotoVideoCategory
+              ? filterRequestsByHidden(openPhotoRequests)
+              : filterRequestsByHidden(openRequests);
+          })()
+            .filter((request) => !userSubmittedBids.has(String(request.id)))
+            .filter(meetsMinimumPrice)
+            .filter(request => !isDatePassed(request))
+            .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+          activeTab
+        ),
+        searchTerm
+      );
+      
+      const currentPageRequests = getPaginatedRequests(allFilteredRequests);
+      
+      // Mark only the current page's requests as seen
+      if (currentPageRequests.length > 0) {
+        markRequestsAsSeen(currentPageRequests);
+      }
+    }
+  }, [currentPage, activeTab, searchTerm, businessCategories, businessId, openRequests, openPhotoRequests, userSubmittedBids, isAdmin, markRequestsAsSeen]);
 
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;

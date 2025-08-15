@@ -5,7 +5,7 @@ import StartNewChatModal from "./StartNewChatModal";
 import "../../styles/chat.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
-import { formatTimestamp, isToday, isYesterday } from "../../utils/dateTimeUtils";
+import { formatTimestamp } from "../../utils/dateTimeUtils";
 
 // Skeleton components for loading states
 const ChatListSkeleton = () => (
@@ -31,7 +31,7 @@ const ChatInterfaceSkeleton = () => (
     <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>
       Chat with your clients and vendors
     </p>
-    <div className="chat-app" style={{ minHeight: "100vh" }}>
+    <div className="chat-app-chat-interface" style={{ minHeight: "100vh" }}>
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
@@ -275,61 +275,50 @@ export default function ChatInterface({ initialChat }) {
         Messages
       </h1>
       <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>Chat with your clients and vendors</p>
-    <div className="chat-app">
+    <div className="chat-app-chat-interface">
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
         </header>
 
         <ul>
-                  {chats.length === 0 ? (
-          <div style={{
-            padding: "2rem",
-            textAlign: "center",
-            color: "var(--bidi-muted)"
-          }}>
-            <div style={{ marginBottom: "1rem" }}>
-              No messages yet
+          {chats.length === 0 ? (
+            <div style={{
+              padding: "2rem",
+              textAlign: "center",
+              color: "var(--bidi-muted)"
+            }}>
+              <div style={{ marginBottom: "1rem" }}>
+                No messages yet
+              </div>
+              <div style={{ fontSize: "0.9rem" }}>
+                Browse vendors to start conversations and get quotes
+              </div>
             </div>
-            <div style={{ fontSize: "0.9rem" }}>
-              Browse vendors to start conversations and get quotes
-            </div>
-          </div>
-        ) : (
-          chats.map((c, index) => {
-            const showDateSeparator = index === 0 || 
-              !isToday(chats[index - 1].last_message_time) || 
-              !isToday(c.last_message_time);
-            
-            return (
-              <React.Fragment key={c.business_id}>
-                {showDateSeparator && (
-                  <li className="date-separator">
-                    <span>{formatTimestamp(c.last_message_time, 'date')}</span>
-                  </li>
-                )}
-                <li
-                  className={activeBusiness === c.business_id ? "active" : ""}
-                  onClick={() => handleChatSelect(c)}
-                >
-                  <div className="chat-list-item-content">
-                    <div className="chat-list-header">
-                      <span className="chat-name">{c.business_name}</span>
-                      {c.unseen_count > 0 && (
-                        <span className="unseen-badge">{c.unseen_count}</span>
-                      )}
-                    </div>
-                    <div className="chat-list-footer">
-                      <div className="message-preview">{c.last_message}</div>
-                      <div className="message-time" style={{ color: "black"}}>
-                        {formatTimestamp(c.last_message_time, 'datetime')}
-                      </div>
+          ) : (
+            chats.map((c) => (
+              <li
+                key={c.business_id}
+                className={activeBusiness === c.business_id ? "active" : ""}
+                onClick={() => handleChatSelect(c)}
+              >
+                <div className="chat-list-item-content">
+                  <div className="chat-list-header">
+                    <span className="chat-name">{c.business_name}</span>
+                    {c.unseen_count > 0 && (
+                      <span className="unseen-badge">{c.unseen_count}</span>
+                    )}
+                  </div>
+                  <div className="chat-list-footer">
+                    <div className="message-preview">{c.last_message}</div>
+                    <div className="message-time" style={{ color: "black"}}>
+                      {formatTimestamp(c.last_message_time, 'datetime')}
                     </div>
                   </div>
-                </li>
-              </React.Fragment>
-            );
-          }))}
+                </div>
+              </li>
+            ))
+          )}
         </ul>
       </aside>
 

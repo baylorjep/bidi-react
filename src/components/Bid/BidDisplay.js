@@ -1373,7 +1373,7 @@ function BidDisplay({
                         <div className="mobile-payment-item">
                           <span>Paid On:</span>
                           <span className="mobile-payment-date">
-                            {downPaymentDate.toLocaleDateString()}
+                            {downPaymentDate.toLocaleDateString('en-US', { timeZone: 'America/Denver' })}
                           </span>
                         </div>
                       )}

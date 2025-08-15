@@ -1,8 +1,8 @@
 /* Navbar button styles */
 .bids-button {
   background: none;
-  border: 1px solid #A328F4;
-  color: #A328F4;
+  border: 1px solid #FF008A;
+  color: #FF008A;
   padding: 8px 16px;
   border-radius: 20px;
   cursor: pointer;
@@ -18,7 +18,7 @@
 }
 
 .bids-button:hover {
-  background: #A328F4;
+  background: #FF008A;
   color: white;
 }
 
@@ -30,8 +30,8 @@
 
 .search-button {
     background: none;
-    border: 1px solid #FF008A;
-    color: #FF008A;
+    border: 1px solid #A328F4;
+    color: #A328F4;
     padding: 8px 16px;
     border-radius: 20px;
     cursor: pointer;
@@ -46,7 +46,7 @@
 }
 
 .search-button:hover {
-    background: #FF008A;
+    background: #A328F4;
     color: white;
 }
 

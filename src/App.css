@@ -14560,7 +14560,7 @@ line-height: normal;
   align-items: flex-start;
   gap: 8px;
   border-radius: 100px;
-  background: #A328F4;
+  background: #FF008A;
   color: var(--gray-50, #F9FAFB);
   text-align: center;
   font-family: Inter;
@@ -14586,14 +14586,14 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
   gap: 8px;
   border-radius: 100px;
   background: #FFFFFF;
-  color: #A328F4;
+  color: #FF008A;
   text-align: center;
   font-family: Inter;
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 24px;
-  border: 2px solid #A328F4;
+  border: 2px solid #FF008A;
   transition: all 0.3s ease;
   box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 60, 68, 0.16);
 }

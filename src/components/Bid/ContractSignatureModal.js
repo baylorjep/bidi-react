@@ -307,6 +307,7 @@ function ContractSignatureModal({
       const formatDate = (dateString) => {
         const date = new Date(dateString);
         return date.toLocaleDateString('en-US', {
+          timeZone: 'America/Denver',
           month: 'short',
           day: 'numeric',
           year: 'numeric',
@@ -1034,6 +1035,7 @@ function ContractSignatureModal({
       totalAmount: `$${bid.amount}`,
       downPaymentAmount: bid.down_payment ? `$${bid.down_payment}` : 'N/A',
       signatureDate: new Date().toLocaleDateString('en-US', {
+          timeZone: 'America/Denver',
         year: 'numeric',
         month: 'long',
         day: 'numeric'
@@ -1349,9 +1351,9 @@ function ContractSignatureModal({
                 Contract Signed
               </div>
               <div style={{ fontSize: '14px', color: '#666' }}>
-                Business signed on {new Date(bid.business_signed_at).toLocaleDateString()}
+                Business signed on {new Date(bid.business_signed_at).toLocaleDateString('en-US', { timeZone: 'America/Denver' })}
                 <br />
-                Client signed on {new Date(bid.client_signed_at).toLocaleDateString()}
+                Client signed on {new Date(bid.client_signed_at).toLocaleDateString('en-US', { timeZone: 'America/Denver' })}
               </div>
             </div>
             
