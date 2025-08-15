@@ -264,7 +264,7 @@ function UncontactedBusinesses() {
         }
         
         // Generate message template with request details
-        const message = `You have a new ${request.service_category} request to view on Bidi! Click here to view: https://savewithbidi.com/submit-bid/${request.id}`;
+        const message = `You have a new ${request.service_category} request to view on Bidi! Click here to view: https://bidievents.com/business-dashboard`;
         
         // Create the sms link
         const smsLink = `sms:${formattedPhone}?body=${encodeURIComponent(message)}`;

@@ -505,7 +505,7 @@ function UnviewedBids() {
     // Updated SMS template to include the number of bids
     const getSmsTemplate = (userData, bids) => {
         const bidCount = bids.length;
-        return `You have ${bidCount} new bid${bidCount > 1 ? 's' : ''} to view on Bidi! Click here to sign in and view:  https://www.savewithbidi.com/individual-dashboard`;
+        return `You have ${bidCount} new bid${bidCount > 1 ? 's' : ''} to view on Bidi! Click here to sign in and view:  https://www.bidievents.com/individual-dashboard`;
     };
 
     // Handle SMS button click for multiple bids
