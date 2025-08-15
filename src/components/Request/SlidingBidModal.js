@@ -64,7 +64,6 @@ const modules = {
     [{ 'header': [1, 2, 3, false] }],
     ['bold', 'italic', 'underline', 'strike'],
     [{ 'list': 'ordered'}, { 'list': 'bullet' }],
-    ['link', 'image'],
     ['clean']
   ],
 };
@@ -72,8 +71,7 @@ const modules = {
 const formats = [
   'header',
   'bold', 'italic', 'underline', 'strike',
-  'list', 'bullet',
-  'link', 'image'
+  'list', 'bullet'
 ];
 
 // Robust helper to parse various date formats as local date
