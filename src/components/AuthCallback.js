@@ -104,27 +104,24 @@ const AuthCallback = () => {
                 setUserEmail(currentUser.email || '');
                 setUserName(currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '');
 
-                // Check if user already has profiles - check both individual and business profiles
-                const [individualProfile, businessProfile] = await Promise.all([
-                    supabase
-                        .from('individual_profiles')
-                        .select('*')
-                        .eq('id', currentUser.id)
-                        .single(),
-                    supabase
-                        .from('business_profiles')
-                        .select('*')
-                        .eq('id', currentUser.id)
-                        .single()
-                ]);
+                // Check if user already has a profile
+                const { data: profile, error: profileError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', currentUser.id)
+                    .single();
 
-                // Check for profile errors (PGRST116 means no rows returned, which is expected for new users)
-                const hasIndividualProfile = individualProfile.data && !individualProfile.error;
-                const hasBusinessProfile = businessProfile.data && !businessProfile.error;
+                if (profileError && profileError.code !== 'PGRST116') {
+                    // PGRST116 means no rows returned, which is expected for new users
+                    console.error('Error checking profile:', profileError);
+                    setError('Failed to check profile status');
+                    setLoading(false);
+                    return;
+                }
 
-                if (hasIndividualProfile || hasBusinessProfile) {
-                    // User already has profiles, redirect to appropriate dashboard
-                    await redirectToDashboard(currentUser.id, hasIndividualProfile, hasBusinessProfile);
+                if (profile) {
+                    // User already has a profile, redirect to appropriate dashboard
+                    await redirectToDashboard(currentUser.id, profile.role);
                 } else {
                     // New user, show user type selection modal
                     setShowUserTypeModal(true);
@@ -141,7 +138,7 @@ const AuthCallback = () => {
         handleAuthCallback();
     }, [navigate]);
 
-    const redirectToDashboard = async (userId, hasIndividualProfile, hasBusinessProfile) => {
+    const redirectToDashboard = async (userId, userRole) => {
         try {
             // Check for pending request context before redirecting
             const pendingRequestContext = sessionStorage.getItem('pendingRequestContext');
@@ -175,13 +172,13 @@ const AuthCallback = () => {
             }
             
             // Determine user type and redirect accordingly
-            if (hasIndividualProfile && hasBusinessProfile) {
+            if (userRole === 'both') {
                 // User with both profiles (wedding planner vendor)
                 navigate('/wedding-planner-dashboard/home');
-            } else if (hasBusinessProfile && !hasIndividualProfile) {
+            } else if (userRole === 'business') {
                 // Business user only
                 navigate('/business-dashboard/dashboard');
-            } else if (hasIndividualProfile && !hasBusinessProfile) {
+            } else if (userRole === 'individual') {
                 // Individual user only - check their preferred dashboard
                 const { data: individualProfile } = await supabase
                     .from('individual_profiles')
@@ -199,7 +196,7 @@ const AuthCallback = () => {
                     navigate('/individual-dashboard/bids');
                 }
             } else {
-                // New user with no profiles, default to individual dashboard
+                // New user with no role set, default to individual dashboard
                 navigate('/individual-dashboard/bids');
             }
         } catch (error) {
