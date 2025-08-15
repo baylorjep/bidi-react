@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../supabaseClient";
 import RequestDisplayMini from "./RequestDisplayMini";
 import SlidingBidModal from "./SlidingBidModal";
@@ -80,12 +80,24 @@ function OpenRequests({ onMessageClick }) {
   const [user, setUser] = useState(null);
   const [isSlidingModalOpen, setIsSlidingModalOpen] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState(null);
-  const [showStripeModal, setShowStripeModal] = useState(false);
   
   // New state for bid readiness assessment
   const [bidCounts, setBidCounts] = useState({});
   const [userSubmittedBids, setUserSubmittedBids] = useState(new Set());
   const [allBidsUnfiltered, setAllBidsUnfiltered] = useState([]);
+  
+  // Sorting state
+  const [sortBy, setSortBy] = useState("newest");
+  const [sortOrder, setSortOrder] = useState("desc");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [requestsPerPage] = useState(20); // Process 20 requests at a time
+  const [totalPages, setTotalPages] = useState(1);
+  
+  // Mobile responsive state
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [isSmallMobile, setIsSmallMobile] = useState(window.innerWidth <= 480);
 
   // Add this new function to fetch user's bids
   const fetchUserBids = async (userId) => {
@@ -100,7 +112,8 @@ function OpenRequests({ onMessageClick }) {
     }
 
     // Create a Set of request_ids that the user has already bid on
-    const bidSet = new Set(bids.map((bid) => bid.request_id));
+    // Use string comparison to handle type mismatches
+    const bidSet = new Set(bids.map((bid) => String(bid.request_id)));
     setUserSubmittedBids(bidSet);
     return bidSet;
   };
@@ -108,71 +121,68 @@ function OpenRequests({ onMessageClick }) {
   // New function to fetch bid counts for requests
   const fetchBidCounts = async () => {
     console.log('=== fetchBidCounts called ===');
+    console.log('Current openRequests length:', openRequests.length);
+    console.log('Current openPhotoRequests length:', openPhotoRequests.length);
+    console.log('Current bidCounts state:', bidCounts);
+    
     try {
       console.log('Fetching bid counts...');
       
-      // First, let's check if there are any bids at all
-      const { data: allBids, error: allBidsError } = await supabase
+      // Get ALL bids without any filtering to see what's there
+      const { data: allBidsData, error: allBidsError } = await supabase
         .from("bids")
-        .select("id, request_id, user_id, category, hidden")
-        .limit(10);
+        .select("request_id, id, user_id, category");
 
       if (allBidsError) {
         console.error("Error fetching all bids:", allBidsError);
-      } else {
-        console.log('Sample of all bids in database:', allBids);
-        console.log('Total bids in database:', allBids?.length || 0);
-      }
-      
-      // Also check total count
-      const { count: totalBidCount, error: countError } = await supabase
-        .from("bids")
-        .select("*", { count: 'exact', head: true });
-
-      if (countError) {
-        console.error("Error counting bids:", countError);
-      } else {
-        console.log('Total bids in database (count):', totalBidCount);
-      }
-      
-      // First, let's get ALL bids without any filtering to see what's there
-      const { data: allBidsUnfiltered, error: allBidsUnfilteredError } = await supabase
-        .from("bids")
-        .select("request_id, id, user_id, category, hidden")
-        .limit(50);
-
-      if (allBidsUnfilteredError) {
-        console.error("Error fetching all bids (unfiltered):", allBidsUnfilteredError);
-      } else {
-        console.log('All bids (unfiltered):', allBidsUnfiltered);
-        console.log('Total unfiltered bids:', allBidsUnfiltered?.length || 0);
-        setAllBidsUnfiltered(allBidsUnfiltered || []);
-      }
-
-      const { data: bidCountsData, error } = await supabase
-        .from("bids")
-        .select("request_id, id, user_id, category, hidden")
-        .not("hidden", "eq", true);
-
-      if (error) {
-        console.error("Error fetching bid counts:", error);
         return;
       }
 
-      console.log('Raw bid data (not hidden):', bidCountsData);
-      console.log('Total bids found:', bidCountsData?.length || 0);
+      console.log('All bids data:', allBidsData);
+      console.log('Total bids found:', allBidsData?.length || 0);
 
+      // Process the bid counts
       const counts = {};
-      bidCountsData.forEach(bid => {
-        const requestId = bid.request_id;
-        if (requestId) {
-          counts[requestId] = (counts[requestId] || 0) + 1;
-        }
-      });
+      if (allBidsData && allBidsData.length > 0) {
+        allBidsData.forEach(bid => {
+          const requestId = bid.request_id;
+          if (requestId) {
+            // Log the data types for debugging
+            console.log(`Bid ${bid.id}: request_id = ${requestId} (type: ${typeof requestId})`);
+            // Use string comparison to handle type mismatches
+            const stringRequestId = String(requestId);
+            counts[stringRequestId] = (counts[stringRequestId] || 0) + 1;
+          }
+        });
+      }
 
       console.log('Processed bid counts:', counts);
       console.log('Unique request IDs with bids:', Object.keys(counts));
+      console.log('Sample counts:', Object.entries(counts).slice(0, 5));
+      
+      // Check if any of our current requests have bids
+      const allRequestIds = [...openRequests, ...openPhotoRequests].map(r => String(r.id));
+      console.log('All current request IDs:', allRequestIds);
+      
+      const requestsWithBids = allRequestIds.filter(reqId => counts[reqId]);
+      const requestsWithoutBids = allRequestIds.filter(reqId => !counts[reqId]);
+      
+      console.log('Requests WITH bids:', requestsWithBids);
+      console.log('Requests WITHOUT bids:', requestsWithoutBids);
+      console.log('Bid counts for current requests:', allRequestIds.map(reqId => ({
+        requestId: reqId,
+        bidCount: counts[reqId] || 0
+      })));
+      
       setBidCounts(counts);
+      setAllBidsUnfiltered(allBidsData || []);
+      
+      // Debug bid counting after setting state
+      setTimeout(() => {
+        if (openRequests.length > 0 || openPhotoRequests.length > 0) {
+          
+        }
+      }, 100);
     } catch (error) {
       console.error("Error in fetchBidCounts:", error);
     }
@@ -482,6 +492,20 @@ function OpenRequests({ onMessageClick }) {
           console.log('All Requests:', allRequests);
           console.log('Total requests fetched:', allRequests.length);
           console.log('Sample request IDs:', allRequests.slice(0, 5).map(r => ({ id: r.id, type: r.service_category, title: r.service_title })));
+          
+          // Debug: Show the actual request IDs and their types
+          if (allRequests.length > 0) {
+            console.log('=== REQUEST ID DEBUGGING ===');
+            allRequests.slice(0, 10).forEach((req, index) => {
+              console.log(`Request ${index + 1}:`, {
+                id: req.id,
+                id_type: typeof req.id,
+                service_category: req.service_category,
+                title: req.service_title || req.event_title
+              });
+            });
+          }
+          
           setOpenRequests(allRequests);
           setOpenPhotoRequests([]);
           return;
@@ -605,6 +629,20 @@ function OpenRequests({ onMessageClick }) {
         // Combine all requests
         const allRequests = [...photoVideoRequests, ...otherRequests];
         
+        // Debug: Show the actual request IDs and their types for non-admin users
+        if (allRequests.length > 0) {
+          console.log('=== NON-ADMIN REQUEST ID DEBUGGING ===');
+          allRequests.slice(0, 10).forEach((req, index) => {
+            console.log(`Request ${index + 1}:`, {
+              id: req.id,
+              id_type: typeof req.id,
+              service_category: req.service_category,
+              title: req.service_title || req.event_title,
+              table_name: req.table_name
+            });
+          });
+        }
+        
         // Set the appropriate state based on whether we have photo/video categories
         if (photoVideoCategories.length > 0) {
           setOpenPhotoRequests(allRequests);
@@ -622,16 +660,13 @@ function OpenRequests({ onMessageClick }) {
       }
     };
 
-    fetchRequests();
-    
-    // Fetch vendor interests and bid counts after requests are loaded
-    console.log('About to call fetchBidCounts, businessId:', businessId);
-    if (businessId) {
+    // Fetch requests first, then bid counts to ensure proper order
+    fetchRequests().then(() => {
+      // Always fetch bid counts - they're needed for all users including admins
+      console.log('About to call fetchBidCounts, businessId:', businessId);
       console.log('Calling fetchBidCounts...');
       fetchBidCounts();
-    } else {
-      console.log('No businessId, skipping fetchBidCounts');
-    }
+    });
   }, [businessCategories, isAdmin, businessId]);
 
   // Add debugging to see when the component mounts and what the values are
@@ -641,6 +676,29 @@ function OpenRequests({ onMessageClick }) {
     console.log('isAdmin:', isAdmin);
     console.log('businessId:', businessId);
   }, [businessCategories, isAdmin, businessId]);
+
+  // Add a separate effect to fetch bid counts when requests change
+  useEffect(() => {
+    if ((openRequests.length > 0 || openPhotoRequests.length > 0) && Object.keys(bidCounts).length === 0) {
+      console.log('Requests loaded, fetching bid counts...');
+      console.log('Sample request IDs:', [
+        ...openRequests.slice(0, 3).map(r => ({ id: r.id, type: typeof r.id, table: r.table_name })),
+        ...openPhotoRequests.slice(0, 3).map(r => ({ id: r.id, type: typeof r.id, table: r.table_name }))
+      ]);
+      fetchBidCounts();
+    }
+  }, [openRequests, openPhotoRequests, bidCounts]);
+
+  // Force re-render when bid counts change to update the UI
+  useEffect(() => {
+    if (Object.keys(bidCounts).length > 0) {
+      console.log('Bid counts updated, forcing re-render...');
+      console.log('Updated bid counts:', bidCounts);
+      // This will trigger a re-render of the component with updated bid counts
+    }
+  }, [bidCounts]);
+
+
 
   const isDatePassed = (request) => {
     // If date is flexible or a range, don't hide
@@ -669,6 +727,90 @@ function OpenRequests({ onMessageClick }) {
     if (aIsNew && !bIsNew) return -1;
     if (!aIsNew && bIsNew) return 1;
     return new Date(b.created_at) - new Date(a.created_at);
+  };
+
+  // Enhanced sorting functions
+  const sortRequests = (requests, sortBy, sortOrder) => {
+    const sorted = [...requests].sort((a, b) => {
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case "newest":
+          comparison = new Date(b.created_at) - new Date(a.created_at);
+          break;
+        case "oldest":
+          comparison = new Date(a.created_at) - new Date(b.created_at);
+          break;
+        case "budget_high":
+          const budgetA = parseBudget(a.price_range || a.budget_range || '0');
+          const budgetB = parseBudget(b.price_range || b.budget_range || '0');
+          comparison = budgetB - budgetA;
+          break;
+        case "budget_low":
+          const budgetA2 = parseBudget(a.price_range || a.budget_range || '0');
+          const budgetB2 = parseBudget(b.price_range || b.budget_range || '0');
+          comparison = budgetA2 - budgetB2;
+          break;
+        case "event_date_nearest":
+          const dateA = new Date(a.start_date || a.event_date || '2099-12-31');
+          const dateB = new Date(b.start_date || b.event_date || '2099-12-31');
+          comparison = dateA - dateB;
+          break;
+        case "event_date_farthest":
+          const dateA2 = new Date(a.start_date || a.event_date || '1970-01-01');
+          const dateB2 = new Date(b.start_date || b.event_date || '1970-01-01');
+          comparison = dateB2 - dateA2;
+          break;
+        case "location":
+          const locationA = (a.venue_city || a.location || '').toLowerCase();
+          const locationB = (b.venue_city || b.location || '').toLowerCase();
+          comparison = locationA.localeCompare(locationB);
+          break;
+        case "urgency":
+          const urgencyA = calculateRequestUrgency(a);
+          const urgencyB = calculateRequestUrgency(b);
+          const urgencyOrder = { 'urgent': 3, 'soon': 2, 'normal': 1, null: 0 };
+          comparison = (urgencyOrder[urgencyB] || 0) - (urgencyOrder[urgencyA] || 0);
+          break;
+        case "bids":
+          const bidsA = bidCounts[a.id] || 0;
+          const bidsB = bidCounts[b.id] || 0;
+          comparison = bidsA - bidsB;
+          break;
+        default:
+          return sortByNewAndDate(a, b);
+      }
+      
+      return sortOrder === "desc" ? comparison : -comparison;
+    });
+    
+    return sorted;
+  };
+
+  // Helper function to filter requests by search term
+  const filterRequestsBySearch = (requests, searchTerm) => {
+    if (!searchTerm.trim()) return requests;
+    
+    const term = searchTerm.toLowerCase();
+    return requests.filter(request => {
+      const title = (request.service_title || request.title || request.event_title || '').toLowerCase();
+      const location = (request.venue_city || request.location || '').toLowerCase();
+      const description = (request.description || request.special_requests || '').toLowerCase();
+      const category = (request.service_category || '').toLowerCase();
+      
+      return title.includes(term) || 
+             location.includes(term) || 
+             description.includes(term) ||
+             category.includes(term);
+    });
+  };
+
+  // Helper function to parse budget from string
+  const parseBudget = (budgetString) => {
+    if (!budgetString) return 0;
+    const matches = budgetString.toString().match(/\d+/g);
+    if (!matches) return 0;
+    return parseInt(matches[0]) || 0;
   };
 
   // Helper to update hidden_by_vendor in the DB
@@ -715,12 +857,12 @@ function OpenRequests({ onMessageClick }) {
       console.log('Current hidden array:', hidden);
       
       if (hide) {
-        if (!hidden.includes(businessId)) {
-          hidden.push(businessId);
+        if (!hidden.includes(String(businessId))) {
+          hidden.push(String(businessId));
           console.log('Added businessId to hidden array');
         }
       } else {
-        hidden = hidden.filter(id => id !== businessId);
+        hidden = hidden.filter(id => id !== String(businessId));
         console.log('Removed businessId from hidden array');
       }
       console.log('Updated hidden array:', hidden);
@@ -776,7 +918,7 @@ function OpenRequests({ onMessageClick }) {
                 const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
                 return {
                   ...req,
-                  hidden_by_vendor: [...currentHidden, businessId]
+                  hidden_by_vendor: [...currentHidden, String(businessId)]
                 };
               }
               return req;
@@ -790,7 +932,7 @@ function OpenRequests({ onMessageClick }) {
                 const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
                 return {
                   ...req,
-                  hidden_by_vendor: [...currentHidden, businessId]
+                  hidden_by_vendor: [...currentHidden, String(businessId)]
                 };
               }
               return req;
@@ -825,7 +967,7 @@ function OpenRequests({ onMessageClick }) {
               const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
               return {
                 ...req,
-                hidden_by_vendor: currentHidden.filter(id => id !== businessId)
+                hidden_by_vendor: currentHidden.filter(id => id !== String(businessId))
               };
             }
             return req;
@@ -838,7 +980,7 @@ function OpenRequests({ onMessageClick }) {
               const currentHidden = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
               return {
                 ...req,
-                hidden_by_vendor: currentHidden.filter(id => id !== businessId)
+                hidden_by_vendor: currentHidden.filter(id => id !== String(businessId))
               };
             }
             return req;
@@ -862,11 +1004,11 @@ function OpenRequests({ onMessageClick }) {
     const filtered = showHidden
       ? requests.filter(req => {
           const hiddenArray = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
-          return hiddenArray.includes(businessId);
+          return hiddenArray.includes(String(businessId));
         })
       : requests.filter(req => {
           const hiddenArray = Array.isArray(req.hidden_by_vendor) ? req.hidden_by_vendor : [];
-          return !hiddenArray.includes(businessId);
+          return !hiddenArray.includes(String(businessId));
         });
     
     console.log('Filtered requests:', {
@@ -943,6 +1085,17 @@ function OpenRequests({ onMessageClick }) {
     getUser();
   }, []);
 
+  // Handle window resize for mobile responsiveness
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+      setIsSmallMobile(window.innerWidth <= 480);
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const meetsMinimumPrice = (request) => {
     // Extract price/budget from request
     const budget = parseFloat(request.price_range || request.budget_range || '0');
@@ -957,24 +1110,12 @@ function OpenRequests({ onMessageClick }) {
   };
 
   const handleViewMore = async (requestId) => {
-    // Check if user has Stripe account set up
-    const { data: { user } } = await supabase.auth.getUser();
-    if (user) {
-      const { data: profile } = await supabase
-        .from('business_profiles')
-        .select('stripe_account_id, Bidi_Plus')
-        .eq('id', user.id)
-        .single();
-
-      const needsStripeSetup = !profile?.stripe_account_id && !profile?.Bidi_Plus;
-      
-      if (needsStripeSetup) {
-        // Show Stripe setup modal instead of bid modal
-        setShowStripeModal(true);
-        return;
-      }
-    }
+    console.log('=== handleViewMore called ===');
+    console.log('requestId:', requestId);
+    console.log('requestId type:', typeof requestId);
+  
     
+    console.log('Setting selectedRequestId to:', requestId);
     setSelectedRequestId(requestId);
     setIsSlidingModalOpen(true);
   };
@@ -984,48 +1125,396 @@ function OpenRequests({ onMessageClick }) {
     setSelectedRequestId(null);
   };
 
+  // Helper function to get paginated requests
+  const getPaginatedRequests = (requests) => {
+    const startIndex = (currentPage - 1) * requestsPerPage;
+    const endIndex = startIndex + requestsPerPage;
+    return requests.slice(startIndex, endIndex);
+  };
+
+  // Calculate total pages when requests change
+  useEffect(() => {
+    const allRequests = [...openRequests, ...openPhotoRequests];
+    const filteredRequests = filterRequestsBySearch(
+      filterRequestsByCategory(
+        (() => {
+          const hasPhotoVideoCategory = businessCategories.some(cat => 
+            ["photography", "videography"].includes(normalizeCategory(cat))
+          );
+          
+          return hasPhotoVideoCategory
+            ? filterRequestsByHidden(openPhotoRequests)
+            : filterRequestsByHidden(openRequests);
+        })()
+          .filter((request) => !userSubmittedBids.has(String(request.id)))
+          .filter(meetsMinimumPrice)
+          .filter(request => !isDatePassed(request))
+          .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+        activeTab
+      ),
+      searchTerm
+    );
+    
+    const total = Math.ceil(filteredRequests.length / requestsPerPage);
+    setTotalPages(total);
+    
+    // Reset to first page if current page is out of bounds
+    if (currentPage > total && total > 0) {
+      setCurrentPage(1);
+    }
+  }, [openRequests, openPhotoRequests, currentPage, activeTab, searchTerm, businessCategories, isAdmin, userSubmittedBids]);
+
+  // Handle page changes
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    // Scroll to top when changing pages
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, searchTerm, businessCategories]);
+
+  // Function to render requests with proper bid counts
+  const renderRequests = () => {
+    if (Object.keys(bidCounts).length === 0) {
+      return null;
+    }
+
+    // Get all filtered and sorted requests first
+    const allFilteredRequests = sortRequests(
+      filterRequestsBySearch(
+        filterRequestsByCategory(
+          (() => {
+            const hasPhotoVideoCategory = businessCategories.some(cat => 
+              ["photography", "videography"].includes(normalizeCategory(cat))
+            );
+            
+            return hasPhotoVideoCategory
+              ? filterRequestsByHidden(openPhotoRequests)
+              : filterRequestsByHidden(openRequests);
+          })()
+            .filter((request) => !userSubmittedBids.has(String(request.id)))
+            .filter(meetsMinimumPrice)
+            .filter(request => !isDatePassed(request))
+            .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+          activeTab
+        ),
+        searchTerm
+      ),
+      sortBy,
+      sortOrder
+    );
+    
+    // Get only the current page's requests
+    const currentPageRequests = getPaginatedRequests(allFilteredRequests);
+    
+    // console.log(`=== RENDERING PAGE ${currentPage} ===`);
+    // console.log(`Total filtered requests: ${allFilteredRequests.length}`);
+    // console.log(`Current page requests: ${currentPageRequests.length}`);
+    // console.log(`Requests per page: ${requestsPerPage}`);
+    // console.log(`Total pages: ${totalPages}`);
+    
+    return currentPageRequests.map((request) => {
+      // Use string comparison to handle type mismatches
+      const stringRequestId = String(request.id);
+      const bidCount = bidCounts[stringRequestId] || 0;
+      
+      // Create a new request object with the bid count attached
+      const requestWithBidCount = {
+        ...request,
+        bid_count: bidCount,
+        has_bids: bidCount > 0  // Ensure has_bids matches the actual bid count
+      };
+      
+      return (
+        <RequestDisplayMini
+          key={request.id}
+          request={requestWithBidCount}
+          isPhotoRequest={request.service_category === "photography"}
+          onHide={() => hideRequest(request.id, getTableName(request))}
+          onShow={() => showRequest(request.id, getTableName(request))}
+          isHidden={Array.isArray(request.hidden_by_vendor) ? request.hidden_by_vendor.includes(String(businessId)) : false}
+          currentVendorId={businessId}
+          onMessageClick={onMessageClick}
+          onViewMore={handleViewMore}
+
+          hasSubmittedBid={userSubmittedBids.has(String(request.id))}
+          requestUrgency={calculateRequestUrgency(request)}
+          budgetMatch={assessBudgetMatch(request, { average_bid_amount: minimumPrice })}
+          serviceMatch={assessServiceMatch(request, businessCategories)}
+        />
+      );
+    });
+  };
+
+  // Function to mark requests as seen when they come into view
+  const markRequestAsSeenOnScroll = useCallback(async (requestId) => {
+    if (!businessId) return;
+
+    try {
+      // Find the request in our state
+      const request = [...openRequests, ...openPhotoRequests].find(req => req.id === requestId);
+      if (!request) return;
+
+      // Check if already seen
+      const hasSeen = Array.isArray(request.has_seen) && request.has_seen.includes(businessId);
+      if (hasSeen) return;
+
+      const tableName = getTableName(request);
+      
+      // Update the has_seen field
+      const { error } = await supabase
+        .from(tableName)
+        .update({ 
+          has_seen: supabase.sql`COALESCE(has_seen, '[]'::jsonb) || '["${businessId}"]'::jsonb` 
+        })
+        .eq('id', requestId);
+
+      if (error) {
+        console.error('Error marking request as seen on scroll:', error);
+      } else {
+        // Update local state
+        const updateState = (prevRequests) => 
+          prevRequests.map(req => 
+            req.id === requestId 
+              ? { ...req, has_seen: [...(req.has_seen || []), businessId] }
+              : req
+          );
+
+        if (openPhotoRequests.some(req => req.id === requestId)) {
+          setOpenPhotoRequests(updateState);
+        } else {
+          setOpenRequests(updateState);
+        }
+      }
+    } catch (error) {
+      console.error('Error marking request as seen on scroll:', error);
+    }
+  }, [businessId, openRequests, openPhotoRequests]);
+
+  // Function to mark requests as seen by the current vendor
+  const markRequestsAsSeen = useCallback(async (requests) => {
+    if (!businessId || !requests || requests.length === 0) return;
+
+    try {
+      // Group requests by table name for efficient updates
+      const requestsByTable = {};
+      
+      requests.forEach(request => {
+        const tableName = getTableName(request);
+        if (!requestsByTable[tableName]) {
+          requestsByTable[tableName] = [];
+        }
+        requestsByTable[tableName].push(request.id);
+      });
+
+      // Update each table's has_seen field
+      for (const [tableName, requestIds] of Object.entries(requestsByTable)) {
+        try {
+          // Update has_seen to include current user's ID for all requests in this table
+          const { error } = await supabase
+            .from(tableName)
+            .update({ 
+              has_seen: supabase.sql`COALESCE(has_seen, '[]'::jsonb) || '["${businessId}"]'::jsonb` 
+            })
+            .in('id', requestIds)
+            .not("hidden_by_vendor", "cs.{${businessId}}")
+            .or(`has_seen.is.null,not(has_seen.cs.{${businessId}})`)
+            .eq("status", "open");
+
+          if (error) {
+            console.error(`Error updating ${tableName} has_seen:`, error);
+          }
+        } catch (error) {
+          console.error(`Error updating ${tableName}:`, error);
+        }
+      }
+
+      // Update local state to reflect that requests have been seen
+      const updatedRequests = requests.map(request => ({
+        ...request,
+        has_seen: Array.isArray(request.has_seen) 
+          ? [...request.has_seen, businessId]
+          : [businessId]
+      }));
+
+      // Update the appropriate state array
+      if (openPhotoRequests.some(req => req.id === requests[0].id)) {
+        setOpenPhotoRequests(prev => 
+          prev.map(req => {
+            const updated = updatedRequests.find(u => u.id === req.id);
+            return updated || req;
+          })
+        );
+      } else {
+        setOpenRequests(prev => 
+          prev.map(req => {
+            const updated = updatedRequests.find(u => u.id === req.id);
+            return updated || req;
+          })
+        );
+      }
+
+    } catch (error) {
+      console.error("Error marking requests as seen:", error);
+    }
+  }, [businessId, openRequests, openPhotoRequests]);
+
+  // Set up Intersection Observer to mark requests as seen when they come into view
+  useEffect(() => {
+    if (!businessId) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const requestId = entry.target.getAttribute('data-request-id');
+            if (requestId) {
+              markRequestAsSeenOnScroll(requestId);
+            }
+          }
+        });
+      },
+      {
+        threshold: 0.1, // Trigger when 10% of the element is visible
+        rootMargin: '50px' // Start observing 50px before the element comes into view
+      }
+    );
+
+    // Observe all request elements
+    const requestElements = document.querySelectorAll('[data-request-id]');
+    requestElements.forEach((element) => observer.observe(element));
+
+    return () => {
+      requestElements.forEach((element) => observer.unobserve(element));
+      observer.disconnect();
+    };
+  }, [businessId, openRequests, openPhotoRequests, markRequestAsSeenOnScroll]);
+
+  // Mark requests as seen when they're displayed
+  useEffect(() => {
+    if (businessId && (openRequests.length > 0 || openPhotoRequests.length > 0)) {
+      // Get the current page's requests that are visible
+      const allFilteredRequests = filterRequestsBySearch(
+        filterRequestsByCategory(
+          (() => {
+            const hasPhotoVideoCategory = businessCategories.some(cat => 
+              ["photography", "videography"].includes(normalizeCategory(cat))
+            );
+            
+            return hasPhotoVideoCategory
+              ? filterRequestsByHidden(openPhotoRequests)
+              : filterRequestsByHidden(openRequests);
+          })()
+            .filter((request) => !userSubmittedBids.has(String(request.id)))
+            .filter(meetsMinimumPrice)
+            .filter(request => !isDatePassed(request))
+            .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+          activeTab
+        ),
+        searchTerm
+      );
+      
+      const currentPageRequests = getPaginatedRequests(allFilteredRequests);
+      
+      // Mark only the current page's requests as seen
+      if (currentPageRequests.length > 0) {
+        markRequestsAsSeen(currentPageRequests);
+      }
+    }
+  }, [currentPage, activeTab, searchTerm, businessCategories, businessId, openRequests, openPhotoRequests, userSubmittedBids, isAdmin, markRequestsAsSeen]);
+
   if (isLoading) {
     return <LoadingSpinner color="#9633eb" size={50} />;
   }
 
   return (
-    <div className="requests-main-container">
-      <h1 style={{ fontFamily: "Outfit", fontWeight: "bold" }}>
+    <>
+      <style>
+        {`
+          .category-tabs::-webkit-scrollbar {
+            display: none;
+          }
+          .requests-main-container {
+            -webkit-overflow-scrolling: touch;
+          }
+        `}
+      </style>
+      <div className="requests-main-container" style={{
+      padding: isMobile ? '10px' : '20px',
+      maxWidth: '100%',
+      overflow: 'hidden'
+    }}>
+      <h1 style={{ 
+        fontFamily: "Outfit", 
+        fontWeight: "bold",
+        fontSize: isSmallMobile ? '1.5rem' : '2rem',
+        margin: isSmallMobile ? '10px 0 20px 0' : '20px 0',
+        textAlign: 'center'
+      }}>
         Open Requests
       </h1>
-      <div style={{ display: "flex", justifyContent: "center", width: "100%", marginBottom: "20px" }}>
+      <div style={{ 
+        display: "flex", 
+        justifyContent: "center", 
+        width: "100%", 
+        marginBottom: isSmallMobile ? "15px" : "20px",
+        padding: "0 10px"
+      }}>
         <button
           className="toggle-hidden-button"
           onClick={() => setShowHidden((prev) => !prev)}
+          style={{
+            padding: isSmallMobile ? '8px 16px' : '10px 20px',
+            fontSize: isSmallMobile ? '13px' : '14px',
+            touchAction: 'manipulation'
+          }}
         >
-          {showHidden ? "Show Active Requests" : "Show Hidden Requests"}
+          {showHidden ? 
+            (isSmallMobile ? "Show Active" : "Show Active Requests") : 
+            (isSmallMobile ? "Show Hidden" : "Show Hidden Requests")
+          }
         </button>
+        
+        {/* Debug button removed - issue has been fixed */}
       </div>
 
       {/* Only show category tabs if user is not admin */}
       {!isAdmin && (
-        <div className="category-tabs" style={{ 
-          display: 'flex', 
-          gap: '10px', 
-          marginBottom: '20px',
-          overflowX: 'auto',
-          padding: '0 10px'
-        }}>
+        <div 
+          className="category-tabs" 
+          style={{ 
+            display: 'flex', 
+            gap: '8px', 
+            marginBottom: '20px',
+            overflowX: 'auto',
+            padding: '0 15px',
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            scrollBehavior: 'smooth'
+          }}
+        >
           <button
             className={`category-tab ${activeTab === 'all' ? 'active' : ''}`}
             onClick={() => setActiveTab('all')}
             style={{
-              padding: '8px 16px',
+              padding: '6px 12px',
               border: 'none',
-              borderRadius: '20px',
+              borderRadius: '18px',
               backgroundColor: activeTab === 'all' ? '#9633eb' : '#f0f0f0',
               color: activeTab === 'all' ? 'white' : '#333',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              transition: 'all 0.2s ease'
+              transition: 'all 0.2s ease',
+              fontSize: '13px',
+              fontWeight: '500',
+              minWidth: 'fit-content',
+              touchAction: 'manipulation'
             }}
           >
-            All Requests
+            All
           </button>
           {businessCategories.map(category => (
             <button
@@ -1033,14 +1522,18 @@ function OpenRequests({ onMessageClick }) {
               className={`category-tab ${activeTab === category ? 'active' : ''}`}
               onClick={() => setActiveTab(category)}
               style={{
-                padding: '8px 16px',
+                padding: '6px 12px',
                 border: 'none',
-                borderRadius: '20px',
+                borderRadius: '18px',
                 backgroundColor: activeTab === category ? '#9633eb' : '#f0f0f0',
                 color: activeTab === category ? 'white' : '#333',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                fontSize: '13px',
+                fontWeight: '500',
+                minWidth: 'fit-content',
+                touchAction: 'manipulation'
               }}
             >
               {getCategoryDisplayName(category)}
@@ -1049,57 +1542,278 @@ function OpenRequests({ onMessageClick }) {
         </div>
       )}
 
-      <div className="request-grid-container">
-        <div className="request-grid">
-          {error && <p>Error: {error}</p>}
-          {filterRequestsByCategory(
-            (() => {
-              // Check if user has photo/video categories
-              const hasPhotoVideoCategory = businessCategories.some(cat => 
-                ["photography", "videography"].includes(normalizeCategory(cat))
-              );
-              
-              return hasPhotoVideoCategory
-                ? filterRequestsByHidden(openPhotoRequests)
-                : filterRequestsByHidden(openRequests);
-            })()
-              .filter((request) => !userSubmittedBids.has(request.id))
-              .filter(meetsMinimumPrice)
-              .filter(request => !isDatePassed(request))
-              .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories))
-              .sort(sortByNewAndDate),
-            activeTab
-          ).map((request) => {
-            const bidCount = bidCounts[request.id] || 0;
-            console.log(`Request ${request.id} (${request.event_title || request.title}) - bid count: ${bidCount}`);
-            
-            // If bid count is 0, let's check if this request ID exists in the unfiltered bids
-            if (bidCount === 0 && allBidsUnfiltered) {
-              const matchingBids = allBidsUnfiltered.filter(bid => bid.request_id === request.id);
-              console.log(`Request ${request.id} - found ${matchingBids.length} bids in unfiltered data:`, matchingBids);
-            }
-            
-            return (
-              <RequestDisplayMini
-                key={request.id}
-                request={request}
-                isPhotoRequest={request.service_category === "photography"}
-                onHide={() => hideRequest(request.id, getTableName(request))}
-                onShow={() => showRequest(request.id, getTableName(request))}
-                isHidden={Array.isArray(request.hidden_by_vendor) ? request.hidden_by_vendor.includes(businessId) : false}
-                currentVendorId={businessId}
-                onMessageClick={onMessageClick}
-                onViewMore={handleViewMore}
-
-                hasSubmittedBid={userSubmittedBids.has(request.id)}
-                requestUrgency={calculateRequestUrgency(request)}
-                budgetMatch={assessBudgetMatch(request, { average_bid_amount: minimumPrice })}
-                serviceMatch={assessServiceMatch(request, businessCategories)}
-              />
-            );
-          })}
+      {/* Search and Sorting Controls */}
+      <div className="search-and-sort-container" style={{
+        display: 'flex',
+        gap: '15px',
+        marginBottom: '20px',
+        flexDirection: 'column'
+      }}>
+        {/* Search Bar */}
+        <div style={{ width: '100%' }}>
+          <SearchBar
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            placeholder="Search requests..."
+          />
         </div>
       </div>
+
+      {/* Sorting Controls */}
+      <div className="sorting-controls" style={{
+        display: 'flex',
+        alignItems: 'stretch',
+        gap: '10px',
+        marginBottom: '20px',
+        padding: '12px 15px',
+        backgroundColor: '#f8f9fa',
+        borderRadius: '10px',
+        border: '1px solid #e5e7eb',
+        flexWrap: 'wrap',
+        '@media (max-width: 768px)': {
+          padding: '10px 12px',
+          gap: '8px'
+        }
+      }}>
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          gap: '8px',
+          flex: '1',
+          minWidth: '200px'
+        }}>
+          <span style={{ 
+            fontWeight: '600', 
+            color: '#374151',
+            fontSize: '13px',
+            whiteSpace: 'nowrap',
+            display: !isSmallMobile ? 'block' : 'none'
+          }}>
+            Sort:
+          </span>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            style={{
+              padding: '8px 10px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: 'white',
+              fontSize: '13px',
+              cursor: 'pointer',
+              flex: '1',
+              minWidth: '140px',
+              maxWidth: '200px'
+            }}
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="budget_high">Highest Budget</option>
+            <option value="budget_low">Lowest Budget</option>
+            <option value="event_date_nearest">Event Date (Nearest)</option>
+            <option value="event_date_farthest">Event Date (Farthest)</option>
+            <option value="location">Location (A-Z)</option>
+            <option value="urgency">Most Urgent</option>
+            <option value="bids">Fewest Bids</option>
+          </select>
+        </div>
+        
+        <button
+          onClick={() => setSortOrder(sortOrder === "desc" ? "asc" : "desc")}
+          style={{
+            padding: '8px 10px',
+            border: '1px solid #d1d5db',
+            borderRadius: '6px',
+            backgroundColor: 'white',
+            cursor: 'pointer',
+            fontSize: '13px',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '4px',
+            minWidth: '60px',
+            justifyContent: 'center'
+          }}
+          title={`Currently sorting ${sortOrder === 'desc' ? 'descending' : 'ascending'}`}
+        >
+          <i className={`fas ${sortOrder === 'desc' ? 'fa-sort-amount-down' : 'fa-sort-amount-up'}`} 
+             style={{ fontSize: '12px' }}></i>
+          <span style={{ display: !isSmallMobile ? 'inline' : 'none' }}>
+            {sortOrder === 'desc' ? 'Desc' : 'Asc'}
+          </span>
+        </button>
+        
+        <div style={{ 
+          fontSize: '11px', 
+          color: '#6b7280',
+          whiteSpace: 'nowrap',
+          alignSelf: 'center',
+          minWidth: 'fit-content'
+        }}>
+          {(() => {
+            const totalRequests = filterRequestsBySearch(
+              filterRequestsByCategory(
+                (() => {
+                  const hasPhotoVideoCategory = businessCategories.some(cat => 
+                    ["photography", "videography"].includes(normalizeCategory(cat))
+                  );
+                  return hasPhotoVideoCategory
+                    ? filterRequestsByHidden(openPhotoRequests)
+                    : filterRequestsByHidden(openRequests);
+                })()
+                  .filter((request) => !userSubmittedBids.has(String(request.id)))
+                  .filter(meetsMinimumPrice)
+                  .filter(request => !isDatePassed(request))
+                  .filter(request => isAdmin || hasMatchingCategory(request.service_category, businessCategories)),
+                activeTab
+              ),
+              searchTerm
+            ).length;
+            
+            const startIndex = (currentPage - 1) * requestsPerPage + 1;
+            const endIndex = Math.min(currentPage * requestsPerPage, totalRequests);
+            
+            return `${startIndex}-${endIndex} of ${totalRequests} request${totalRequests !== 1 ? 's' : ''}${searchTerm ? ' (filtered)' : ''}${totalPages > 1 ? ` • Page ${currentPage} of ${totalPages}` : ''}`;
+          })()}
+        </div>
+      </div>
+
+      <div className="request-list-container" style={{
+        width: '100%',
+        maxWidth: '1200px',
+        margin: '0 auto',
+        padding: isMobile ? '0 5px' : '0 10px'
+      }}>
+        {/* Show loading message if bid counts aren't ready yet */}
+        {Object.keys(bidCounts).length === 0 && (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '20px',
+            color: '#666',
+            fontSize: '14px'
+          }}>
+            Loading bid counts...
+          </div>
+        )}
+        
+        <div className="request-list" style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: isSmallMobile ? '6px' : '8px'
+        }}>
+          {error && <p>Error: {error}</p>}
+          {/* Render requests using the dedicated function */}
+          {renderRequests()}
+        </div>
+      </div>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          gap: '10px',
+          marginTop: '20px',
+          padding: '15px',
+          backgroundColor: '#f8f9fa',
+          borderRadius: '10px',
+          border: '1px solid #e5e7eb'
+        }}>
+          <button
+            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: currentPage === 1 ? '#f3f4f6' : 'white',
+              color: currentPage === 1 ? '#9ca3af' : '#374151',
+              cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <i className="fas fa-chevron-left" style={{ fontSize: '12px' }}></i>
+            Previous
+          </button>
+          
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '14px',
+            color: '#374151'
+          }}>
+            <span>Page</span>
+            <span style={{ fontWeight: '600' }}>{currentPage}</span>
+            <span>of</span>
+            <span style={{ fontWeight: '600' }}>{totalPages}</span>
+          </div>
+          
+          {/* Page Jump Input */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            fontSize: '12px'
+          }}>
+            <span>Go to:</span>
+            <input
+              type="number"
+              min="1"
+              max={totalPages}
+              value=""
+              onChange={(e) => {
+                const page = parseInt(e.target.value);
+                if (page >= 1 && page <= totalPages) {
+                  handlePageChange(page);
+                  e.target.value = '';
+                }
+              }}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter') {
+                  const page = parseInt(e.target.value);
+                  if (page >= 1 && page <= totalPages) {
+                    handlePageChange(page);
+                    e.target.value = '';
+                  }
+                }
+              }}
+              style={{
+                width: '50px',
+                padding: '4px 6px',
+                border: '1px solid #d1d5db',
+                borderRadius: '4px',
+                fontSize: '12px',
+                textAlign: 'center'
+              }}
+              placeholder="Page #"
+            />
+          </div>
+          
+          <button
+            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages}
+            style={{
+              padding: '8px 12px',
+              border: '1px solid #d1d5db',
+              borderRadius: '6px',
+              backgroundColor: currentPage === totalPages ? '#f3f4f6' : 'white',
+              color: currentPage === totalPages ? '#9ca3af' : '#374151',
+              cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            Next
+            <i className="fas fa-chevron-right" style={{ fontSize: '12px' }}></i>
+          </button>
+        </div>
+      )}
 
       {/* Sliding Bid Modal */}
       <SlidingBidModal
@@ -1107,20 +1821,13 @@ function OpenRequests({ onMessageClick }) {
         onClose={handleCloseSlidingModal}
         requestId={selectedRequestId}
       />
-
-      {/* Stripe Setup Modal */}
-      <Modal show={showStripeModal} onHide={() => setShowStripeModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Stripe Account Setup Required</Modal.Title>
-        </Modal.Header>
-        <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
-          <p className="text-center">
-            To place bids and get paid for jobs you win, you'll need to set up a payment account. Bidi won't charge you to talk to users or bid — a small fee is only deducted after you've been paid.
-          </p>
-          <Button className="btn-secondary" onClick={() => navigate("/stripe-setup")}>Set Up Account</Button>
-        </Modal.Body>
-      </Modal>
-    </div>
+      {isSlidingModalOpen && (
+        <div style={{ display: 'none' }}>
+          {console.log('=== Modal opened with selectedRequestId ===', selectedRequestId)}
+        </div>
+      )}
+      </div>
+    </>
   );
 }
 

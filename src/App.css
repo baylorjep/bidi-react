@@ -420,6 +420,7 @@ button,
 [type=reset],
 [type=submit] {
   -webkit-appearance: button;
+  appearance: button;
 }
 button:not(:disabled),
 [type=button]:not(:disabled),
@@ -478,6 +479,7 @@ legend + * {
 [type=search] {
   outline-offset: -2px;
   -webkit-appearance: textfield;
+  appearance: textfield;
 }
 
 /* rtl:raw:
@@ -499,6 +501,7 @@ legend + * {
 ::file-selector-button {
   font: inherit;
   -webkit-appearance: button;
+  appearance: button;
 }
 
 output {
@@ -4317,9 +4320,6 @@ background: linear-gradient(246deg, rgba(255, 0, 138, 0.79) 15.35%, #A328F4 85.5
   .navbar-expand-lg .navbar-collapse {
     display: flex !important;
     flex-basis: auto;
-  }
-  .navbar-expand-lg .navbar-toggler {
-    display: none;
   }
   .navbar-expand-lg .offcanvas {
     position: static;
@@ -12221,7 +12221,6 @@ line-height: normal;
   line-height: normal;
   text-align: center;
   margin-top: 40px;
-  margin-bottom: 20px;
 }
 
 .how-to-sub-title {
@@ -12232,7 +12231,7 @@ font-style: normal;
 font-weight: 400;
 line-height: normal;
 text-align: center;
-margin-top: 80px;
+margin-top: 40px;
 }
 
 .how-to-description {
@@ -12243,7 +12242,6 @@ margin-top: 80px;
   font-weight: 400;
   line-height: 1.6;
   text-align: center;
-  margin: 20px 0 40px 0;
   max-width: 500px;
 }
 
@@ -12417,6 +12415,7 @@ line-height: normal;
   border-radius: 181px;
   justify-content: center;
   align-items: center;
+  min-width: 144px;
 }
 
 .review-name {
@@ -13994,8 +13993,7 @@ text-align: left;
   .about-us-text {
     padding: 0
   }
-}
-  @media (max-width:380px) {
+}  @media (max-width:380px) {
     .team-member-container img {
       width: 300px;
     }
@@ -14562,7 +14560,7 @@ line-height: normal;
   align-items: flex-start;
   gap: 8px;
   border-radius: 100px;
-  background: #A328F4;
+  background: #FF008A;
   color: var(--gray-50, #F9FAFB);
   text-align: center;
   font-family: Inter;
@@ -14588,14 +14586,14 @@ box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 
   gap: 8px;
   border-radius: 100px;
   background: #FFFFFF;
-  color: #A328F4;
+  color: #FF008A;
   text-align: center;
   font-family: Inter;
   font-size: 16px;
   font-style: normal;
   font-weight: 700;
   line-height: 24px;
-  border: 2px solid #A328F4;
+  border: 2px solid #FF008A;
   transition: all 0.3s ease;
   box-shadow: 0px 0px 1px 0px rgba(117, 131, 142, 0.04), 0px 2px 4px 0px rgba(52, 60, 68, 0.16);
 }
@@ -15270,6 +15268,20 @@ margin-bottom: -20px;
   .sign-up-modal-content {
     width: 90%;
     padding: 24px 20px;
+  }
+}
+
+/* Additional responsive adjustments for modal */
+@media screen and (max-width: 768px) {
+  .sign-up-modal-content {
+    width: 95%;
+    padding: 20px 15px;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  
+  .sign-up-modal {
+    padding: 10px;
   }
 }
 
@@ -16712,10 +16724,11 @@ label {
 
 .toggle-hidden-button {
   background-color: white;
-  border: none;
+  border: 1px solid #9633eb;
   color: #9633eb;
   transition: all 0.3s ease;
   display: flex;
+  border-radius: 100px;
 }
 
 .bid-display-head-container {
@@ -16871,3 +16884,69 @@ label {
   }
 }
 
+
+/* Responsive tweaks for Homepage top search bar */
+.tw-no-scrollbar::-webkit-scrollbar { display: none; }
+.tw-no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+.search-bar-inner {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Default compact widths */
+.search-field { min-width: 140px; }
+.search-field input { min-width: 0; }
+
+/* Make the first field (Vendors) a bit wider */
+.search-bar-inner .search-field:first-child { min-width: 180px; }
+
+@media (min-width: 640px) {
+  .search-bar { border-radius: 9999px; }
+  .search-bar-inner { gap: 0; }
+  .search-field { min-width: 160px; }
+  .search-bar-inner .search-field:first-child { min-width: 200px; }
+}
+
+/* Setup Progress Popup Animation */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Setup Progress Popup Styles */
+.setup-progress-popup {
+  animation: slideInUp 0.4s ease-out;
+}
+
+/* Section Highlighting for Setup Progress Navigation */
+.settings-section-highlight {
+  animation: sectionHighlight 2s ease-in-out;
+  border: 2px solid #9333ea !important;
+  box-shadow: 0 0 20px rgba(147, 51, 234, 0.3) !important;
+}
+
+@keyframes sectionHighlight {
+  0% {
+    border-color: #9333ea;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  }
+  50% {
+    border-color: #ec4899;
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+  }
+  100% {
+    border-color: #9333ea;
+    box-shadow: 0 0 20px rgba(147, 51, 234, 0.3);
+  }
+}

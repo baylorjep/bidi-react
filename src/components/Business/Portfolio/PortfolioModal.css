@@ -1,0 +1,145 @@
+/* Portfolio Modal Styles */
+
+.portfolio-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 9998;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.portfolio-modal-container {
+  background: white;
+  border-radius: 12px;
+  width: 100%;
+  height: 100%;
+  max-width: 100vw;
+  max-height: 100vh;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.portfolio-modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 24px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+  background: white;
+  position: relative;
+  z-index: 10;
+}
+
+.portfolio-modal-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1f2937;
+  margin: 0;
+}
+
+.portfolio-modal-close {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 18px;
+}
+
+.portfolio-modal-close:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.portfolio-modal-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  padding: 20px;
+}
+
+/* Override some portfolio styles for modal context */
+.portfolio-modal-content .portfolio-container {
+  padding: 0;
+  margin: 0;
+  min-height: auto;
+}
+
+/* Hide any fixed elements that might interfere */
+.portfolio-modal-content .portfolio-back-button {
+  display: none;
+}
+
+/* Adjust any sticky elements for modal context */
+.portfolio-modal-content .sticky-footer-wrapper {
+  position: static;
+}
+
+.portfolio-modal-content .section-right.sticky-footer {
+  position: static;
+  top: auto;
+  right: auto;
+  width: 100%;
+  max-width: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .portfolio-modal-backdrop {
+    padding: 0;
+  }
+  
+  .portfolio-modal-container {
+    border-radius: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: 100vw;
+    max-height: 100vh;
+  }
+  
+  .portfolio-modal-header {
+    padding: 16px 20px;
+  }
+  
+  .portfolio-modal-title {
+    font-size: 18px;
+  }
+}
+
+/* Custom scrollbar for the modal content */
+.portfolio-modal-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.portfolio-modal-content::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.portfolio-modal-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.portfolio-modal-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}

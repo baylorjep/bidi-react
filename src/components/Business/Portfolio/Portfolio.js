@@ -19,6 +19,7 @@ import ConsultationModal from '../../Consultation/ConsultationModal';
 import { useConsultation } from '../../../hooks/useConsultation';
 import { useGoogleCalendar } from '../../../hooks/useGoogleCalendar';
 import { toast } from 'react-toastify';
+import RequestModal from '../../Request/RequestModal'; // Import RequestModal
 
 // SVG Components
 const StarIcon = () => (
@@ -188,11 +189,6 @@ const MediaItem = ({ item, index, onImageClick }) => {
                     >
                         Your browser does not support the video tag.
                     </video>
-                    {!isPlaying && (
-                        <div className="video-play-overlay">
-                            <button className="play-button">▶</button>
-                        </div>
-                    )}
                 </div>
             ) : (
                 <img
@@ -206,7 +202,151 @@ const MediaItem = ({ item, index, onImageClick }) => {
     );
 };
 
-const Portfolio = ({ businessId: propBusinessId }) => {
+// Add this component before the Portfolio component
+const EmptyStateGuidance = ({ title, description, actionText, onClick, icon, isOwner }) => {
+  if (!isOwner) return null;
+  
+  return (
+    <div className="empty-state-guidance">
+      <div className="empty-state-icon">{icon}</div>
+      <h3 className="empty-state-title">{title}</h3>
+      <p className="empty-state-description">{description}</p>
+      <button className="empty-state-action" onClick={onClick}>
+        {actionText}
+      </button>
+    </div>
+  );
+};
+
+// Enhanced empty state component for when there are no portfolio images
+const PortfolioEmptyState = ({ isOwner, onAddImages, businessName }) => {
+  if (isOwner) {
+    return (
+      <div className="portfolio-empty-state">
+        <div className="portfolio-empty-icon">📸</div>
+        <h3 className="portfolio-empty-title">No Portfolio Images Yet</h3>
+        <p className="portfolio-empty-description">
+          Show potential customers your best work by adding photos and videos to your portfolio. 
+          This helps them understand your style and quality.
+        </p>
+        <button className="portfolio-empty-action" onClick={onAddImages}>
+          Add Portfolio Images
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="portfolio-empty-state customer-view">
+      <div className="portfolio-empty-icon">📸</div>
+      <h3 className="portfolio-empty-title">Portfolio Coming Soon</h3>
+      <p className="portfolio-empty-description">
+        {businessName} hasn't added portfolio images yet. Check back later to see examples of their work!
+      </p>
+      <div className="portfolio-empty-note">
+        💡 Tip: You can still contact this vendor to discuss your needs and see if they're a good fit.
+      </div>
+    </div>
+  );
+};
+
+// Add this component before the Portfolio component
+const ProfileCompletionSummary = ({ business, portfolioPics, portfolioVideos, packages, isOwner }) => {
+  if (!isOwner) return null;
+  
+  const sections = [
+    {
+      key: 'portfolio',
+      title: 'Portfolio Images',
+      completed: portfolioPics.length > 0 || portfolioVideos.length > 0,
+      icon: '📸',
+      description: 'Add photos and videos of your work'
+    },
+    {
+      key: 'description',
+      title: 'Business Description',
+      completed: !!business.business_description,
+      icon: '📝',
+      description: 'Describe what your business does'
+    },
+    {
+      key: 'location',
+      title: 'Location',
+      completed: !!(business.city_id || business.county_id || business.business_address),
+      icon: '📍',
+      description: 'Add your business address and service areas'
+    },
+    {
+      key: 'packages',
+      title: 'Service Packages',
+      completed: packages.length > 0,
+      icon: '📦',
+      description: 'Create packages with pricing'
+    },
+    {
+      key: 'specialties',
+      title: 'Specialties',
+      completed: business.specializations && business.specializations.length > 0,
+      icon: '⭐',
+      description: 'List your areas of expertise'
+    },
+    {
+      key: 'story',
+      title: 'Personal Story',
+      completed: !!business.story,
+      icon: '👤',
+      description: 'Share your background and experience'
+    }
+  ];
+  
+  const completedCount = sections.filter(s => s.completed).length;
+  const totalCount = sections.length;
+  const completionPercentage = Math.round((completedCount / totalCount) * 100);
+  
+  if (completedCount === totalCount) return null; // Don't show if everything is complete
+  
+  return (
+    <div className="profile-completion-summary">
+      <div className="completion-header">
+        <div className="completion-title-section">
+          <h3>Complete Your Profile</h3>
+          <div className="completion-progress">
+            <span className="completion-text">{completedCount} of {totalCount} complete</span>
+            <div className="progress-bar-portfolio">
+              <div 
+                className="progress-fill" 
+                style={{ width: `${completionPercentage}%` }}
+              ></div>
+            </div>
+            <span className="completion-percentage">{completionPercentage}%</span>
+          </div>
+        </div>
+        
+        <div className="completion-sections-horizontal">
+          {sections.map(section => (
+            <div 
+              key={section.key} 
+              className={`completion-section-horizontal ${section.completed ? 'completed' : 'incomplete'}`}
+              title={`${section.title}: ${section.description}`}
+            >
+              <span className="section-icon-horizontal">{section.icon}</span>
+              <span className="section-title-horizontal">{section.title}</span>
+              <div className="section-indicator-horizontal">
+                {section.completed ? (
+                  <span className="completed-check-horizontal">✓</span>
+                ) : (
+                  <span className="incomplete-dot-horizontal">•</span>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToSection = null, onScrollComplete = null }) => {
   const { businessId: paramBusinessId } = useParams();
   const businessId = propBusinessId || paramBusinessId;
   const navigate = useNavigate();
@@ -246,6 +386,8 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
   const [newReview, setNewReview] = useState({ rating: 5, comment: "" });
   const [showCalendarReconnectModal, setShowCalendarReconnectModal] = useState(false);
+  const [showRequestModal, setShowRequestModal] = useState(false); // Add request modal state
+  const [requestFormData, setRequestFormData] = useState({}); // Add request form data state
   const descriptionRef = useRef(null);
   const { connectCalendar } = useGoogleCalendar();
   const {
@@ -274,10 +416,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         const videos = document.querySelectorAll('.portfolio-image.video');
         videos.forEach(video => {
             video.pause();
-            const overlay = video.parentElement?.querySelector('.video-play-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-            }
         });
     },
     afterChange: (currentSlide) => {
@@ -285,10 +423,6 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         const videos = document.querySelectorAll('.portfolio-image.video');
         videos.forEach(video => {
             video.currentTime = 0;
-            const overlay = video.parentElement?.querySelector('.video-play-overlay');
-            if (overlay) {
-                overlay.style.display = 'flex';
-            }
         });
     }
   };
@@ -534,6 +668,44 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     fetchBusinessData();
   }, [businessId]);
 
+  // Handle scrolling to specific sections when navigated from setup progress
+  useEffect(() => {
+    if (scrollToSection) {
+      console.log('Portfolio: scrollToSection received:', scrollToSection);
+      
+      // Add a small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        let elementId = scrollToSection;
+        
+        // Map section keys to actual element IDs in the portfolio
+        if (scrollToSection === 'profile') {
+          elementId = 'vendor-profile-section';
+        } else if (scrollToSection === 'photos') {
+          elementId = 'portfolio-images-section';
+        }
+        
+        const element = document.getElementById(elementId);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          element.style.transition = 'background-color 0.3s ease';
+          element.style.backgroundColor = '#f0f8ff';
+          setTimeout(() => {
+            element.style.backgroundColor = '';
+            // Call the callback to reset scrollToSection in parent
+            if (onScrollComplete) {
+              onScrollComplete();
+            }
+          }, 2000);
+        } else {
+          console.warn('Portfolio: Element not found for scrollToSection:', scrollToSection);
+        }
+      }, 500);
+    }
+  }, [scrollToSection, onScrollComplete]);
+
   useEffect(() => {
     const convertImages = async () => {
       const converted = {};
@@ -632,47 +804,72 @@ const Portfolio = ({ businessId: propBusinessId }) => {
   };
 
   const handleGetQuote = () => {
-    // Format the vendor data as expected by MasterRequestFlow
+    // Set the request form data with the vendor information
     const vendorData = {
       vendor: {
         id: business.id,
         business_name: business.business_name,
         business_category: business.business_category,
         business_address: business.business_address,
-        profile_photo_url: profileImage
+        profile_photo_url: profileImage,
+        image: profileImage // Add image property for RequestModal compatibility
       },
       image: profileImage
     };
 
-    // Format the category to match the expected format in RequestCategories.js
+    // Format the category to match the expected format in RequestModal
     let formattedCategory;
     if (Array.isArray(business.business_category)) {
       formattedCategory = business.business_category[0];
     } else {
       formattedCategory = business.business_category;
     }
+    
     // Map to canonical category names if needed
     if (formattedCategory) {
       if (formattedCategory.toLowerCase().includes('wedding planner')) {
-        formattedCategory = 'WeddingPlanning';
+        formattedCategory = 'planner';
       } else if (formattedCategory.toLowerCase().includes('beauty')) {
-        formattedCategory = 'HairAndMakeup';
+        formattedCategory = 'beauty';
+      } else if (formattedCategory.toLowerCase().includes('photography')) {
+        formattedCategory = 'photographer';
+      } else if (formattedCategory.toLowerCase().includes('videography')) {
+        formattedCategory = 'videographer';
+      } else if (formattedCategory.toLowerCase().includes('catering')) {
+        formattedCategory = 'caterer';
+      } else if (formattedCategory.toLowerCase().includes('florist') || formattedCategory.toLowerCase().includes('flowers')) {
+        formattedCategory = 'florist';
+      } else if (formattedCategory.toLowerCase().includes('dj') || formattedCategory.toLowerCase().includes('disc jockey')) {
+        formattedCategory = 'dj';
+      } else if (formattedCategory.toLowerCase().includes('venue')) {
+        formattedCategory = 'venue';
       } else {
-        formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+        // Default to the original category
+        formattedCategory = formattedCategory.toLowerCase();
       }
     }
 
-    // Navigate to the master request flow with the vendor data and selected category
-    navigate("/master-request-flow", { 
-      state: { 
-        vendor: vendorData,
-        selectedCategories: [formattedCategory]
-      }
+    // Set the request form data and open the modal
+    setRequestFormData({
+      vendor: vendorData.vendor, // Pass the vendor object directly, not wrapped
+      selectedCategories: [formattedCategory]
     });
+    setShowRequestModal(true);
+  };
+
+  const handleRequestModalClose = () => {
+    setShowRequestModal(false);
+    setRequestFormData({});
   };
 
   const handleImageClick = (media) => {
     console.log('handleImageClick called with:', media);
+    
+    // Validate media object
+    if (!media || !media.url) {
+      console.warn('Invalid media object provided to handleImageClick:', media);
+      return;
+    }
     
     // Check if it's a video and handle full screen
     if (media && typeof media === 'object' && media.isVideo) {
@@ -1072,6 +1269,26 @@ const Portfolio = ({ businessId: propBusinessId }) => {
     });
   };
 
+  const handleGalleryClick = () => {
+    // Don't allow gallery navigation if there are no images
+    if (portfolioVideos.length + portfolioPics.length === 0) {
+      if (isOwner) {
+        // For business owners, open the edit modal to add images
+        openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio');
+      } else {
+        // For customers, show a toast or message
+        toast.info("This vendor hasn't added portfolio images yet. Check back later!");
+      }
+      return;
+    }
+
+    if (onOpenGallery) {
+      onOpenGallery(business);
+    } else {
+      navigate(`/portfolio/${businessId}/${business.business_name}/gallery`);
+    }
+  };
+
   // Add SEO title and description
   const getSeoTitle = () => {
     if (!business) return 'Vendor Portfolio | Bidi';
@@ -1258,6 +1475,19 @@ const Portfolio = ({ businessId: propBusinessId }) => {
         businessId={businessId}
       />
 
+      {/* Request Modal for Tailored Bids */}
+      {showRequestModal && (
+        <RequestModal
+          isOpen={showRequestModal}
+          onClose={handleRequestModalClose}
+          selectedVendors={requestFormData.selectedCategories || []}
+          searchFormData={null}
+          isEditMode={false}
+          existingRequestData={null}
+          vendor={requestFormData.vendor}
+        />
+      )}
+
       {showAuthModal && (
         <AuthModal 
           setIsModalOpen={setShowAuthModal}
@@ -1279,6 +1509,15 @@ const Portfolio = ({ businessId: propBusinessId }) => {
 
       <div className="portfolio-container">
         <div className={`portfolio-layout ${portfolioVideos.length + portfolioPics.length <= 1 ? "single-media" : ""}`}>
+
+          {/* Profile Completion Summary for Business Owners */}
+          <ProfileCompletionSummary 
+            business={business}
+            portfolioPics={portfolioPics}
+            portfolioVideos={portfolioVideos}
+            packages={packages}
+            isOwner={isOwner}
+          />
 
           {/* Mobile Swiper */}
           <div className="portfolio-images-mobile">
@@ -1312,45 +1551,53 @@ const Portfolio = ({ businessId: propBusinessId }) => {
               </div>
             </div>
             
-            <Slider {...settings}>
-              {[...portfolioVideos, ...portfolioPics].map((item, index) => {
-                const isVideo = portfolioVideos.includes(item);
-                return (
-                  <div key={index} className="portfolio-slide">
-                    {isVideo ? (
-                      <video
-                        src={item}
-                        className="portfolio-image video"
-                        controls
-                        muted
-                        autoPlay
-                        loop
-                        playsInline
-                        onClick={() => handleImageClick({ url: item, isVideo: true })}
-                        style={{ cursor: 'pointer' }}
-                      >
-                        Your browser does not support the video tag.
-                      </video>
-                    ) : (
-                      <img
-                        src={item}
-                        alt={`Portfolio ${index + 1}`}
-                        className="portfolio-image"
-                        onClick={() => handleImageClick({ url: item, isVideo: false })}
-                        loading="lazy"
-                      />
-                    )}
-                  </div>
-                );
-              })}
-            </Slider>
+            {portfolioVideos.length + portfolioPics.length > 0 ? (
+              <Slider {...settings}>
+                {[...portfolioVideos, ...portfolioPics].map((item, index) => {
+                  const isVideo = portfolioVideos.includes(item);
+                  return (
+                    <div key={index} className="portfolio-slide">
+                      {isVideo ? (
+                        <video
+                          src={item}
+                          className="portfolio-image video"
+                          controls
+                          muted
+                          autoPlay
+                          loop
+                          playsInline
+                          onClick={() => handleImageClick({ url: item, isVideo: true })}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      ) : (
+                        <img
+                          src={item}
+                          alt={`Portfolio ${index + 1}`}
+                          className="portfolio-image"
+                          onClick={() => handleImageClick({ url: item, isVideo: false })}
+                          loading="lazy"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
+              </Slider>
+            ) : (
+              <PortfolioEmptyState
+                isOwner={isOwner}
+                onAddImages={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
+                businessName={business.business_name}
+              />
+            )}
             
             {/* Mobile Gallery Button */}
             {portfolioVideos.length + portfolioPics.length > 0 && (
               <div className="mobile-gallery-button-container">
                 <button
                   className="see-all-button mobile"
-                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                  onClick={handleGalleryClick}
                 >
                   View Gallery
                 </button>
@@ -1359,7 +1606,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
           </div>
 
           {/* Desktop Grid (hidden on mobile) */}
-          <div className="portfolio-images-desktop">
+          <div className="portfolio-images-desktop" id="portfolio-images-section">
             {/* Show first media item based on display_order */}
             {portfolioPics.length > 0 || portfolioVideos.length > 0 ? (
               // Get the first item from the combined and sorted media array
@@ -1367,15 +1614,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 const allMedia = [...portfolioVideos, ...portfolioPics];
                 const firstMedia = allMedia[0];
                 const isVideo = firstMedia && portfolioVideos.includes(firstMedia);
+                const isSingleMedia = allMedia.length === 1;
 
                 if (isVideo) {
                   return (
                     <video
                       src={firstMedia}
                       className={`main-portfolio-image ${
-                        portfolioVideos.length + portfolioPics.length <= 1
-                        ? "single-media-item"
-                        : ""
+                        isSingleMedia ? "theater-mode" : "grid-main-image"
                       }`}
                       controls
                       muted
@@ -1393,9 +1639,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       src={firstMedia}
                       alt="Main Portfolio"
                       className={`main-portfolio-image ${
-                        portfolioVideos.length + portfolioPics.length <= 1
-                        ? "single-media-item"
-                        : ""
+                        isSingleMedia ? "theater-mode" : "grid-main-image"
                       }`}
                       onClick={() => handleImageClick({ url: firstMedia, isVideo: false })}
                       style={{ cursor: 'pointer' }}
@@ -1405,16 +1649,16 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 return null;
               })()
             ) : (
-              <img
-                src="/images/portfolio.jpeg"
-                alt="Default Portfolio"
-                className="main-portfolio-image single-media-item"
+              <PortfolioEmptyState
+                isOwner={isOwner}
+                onAddImages={() => openEditModal({ portfolio: { images: portfolioPics, videos: portfolioVideos } }, 'portfolio')}
+                businessName={business.business_name}
               />
             )}
 
-            {/* Show remaining media items in grid */}
+            {/* Show remaining media items in grid - only when there are multiple items */}
             {portfolioVideos.length + portfolioPics.length > 1 && (
-              <div className="portfolio-grid">
+              <div className="portfolio-grid-right">
                 {[...portfolioVideos, ...portfolioPics]
                   .slice(1, 5) // Show up to 4 more items (total of 5 including the first one)
                   .map((mediaItem, index) => {
@@ -1446,30 +1690,30 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       />
                     );
                   })}
-                {/* Always show gallery button if there are any media items */}
-                {portfolioVideos.length + portfolioPics.length > 0 && (
-                  <button
-                    className="see-all-button"
-                    onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
-                  >
-                    View Gallery
-                  </button>
-                )}
               </div>
+            )}
+
+            {/* Gallery button positioned in bottom right corner */}
+            {portfolioVideos.length + portfolioPics.length > 0 && (
+              <button
+                className="see-all-button gallery-corner-button"
+                onClick={handleGalleryClick}
+              >
+                View Gallery
+              </button>
             )}
 
             {/* Show gallery button even when there's only one media item */}
             {portfolioVideos.length + portfolioPics.length === 1 && (
-              <div className="portfolio-grid">
+              <div className="portfolio-grid-single">
                 <button
-                  className="see-all-button"
-                  onClick={() => navigate(`/portfolio/${businessId}/${business.business_name}/gallery`)}
+                  className="see-all-button single-media-button"
+                  onClick={handleGalleryClick}
                 >
                   View Gallery
                 </button>
               </div>
             )}
-
           </div>
           {isOwner && (
               <button
@@ -1514,9 +1758,44 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     </span>
                   )}
                 </div>
-                <p className="business-description">
-                  {business.business_description || "No description available"}
-                </p>
+                {business.business_description ? (
+                  <p className="business-description">
+                    {business.business_description}
+                  </p>
+                ) : (
+                  <EmptyStateGuidance
+                    title="No Business Description Yet"
+                    description="Tell potential customers about your business, what you do, and what makes you special. A good description helps customers understand your value."
+                    actionText="Add Description"
+                    onClick={() => openEditModal({
+                      business_name: business.business_name,
+                      business_description: business.business_description,
+                    }, 'business_info')}
+                    icon="📝"
+                    isOwner={isOwner}
+                  />
+                )}
+                
+                {/* Show portfolio status message when no images */}
+                {portfolioVideos.length + portfolioPics.length === 0 && (
+                  <div className="portfolio-status-message">
+                    {isOwner ? (
+                      <div className="status-message-owner">
+                        <span className="status-icon">📸</span>
+                        <span className="status-text">
+                          Add portfolio images to showcase your work and attract more customers
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="status-message-customer">
+                        <span className="status-icon">📸</span>
+                        <span className="status-text">
+                          Portfolio images coming soon - contact this vendor to discuss your needs
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                )}
                 <div
                   style={{
                     display: "flex",
@@ -1545,55 +1824,50 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 <div className="business-detail">
                   <p className="detail-title">Location</p>
                   <div className="detail-content">
-
-                    <div className="location-details">
-                      <div className="location-primary">
-                        <i className="fa-solid fa-location-dot"></i>
-                        <div className="location-text">
-                          {(!business.city_id && !business.county_id) && business.business_address && (
-                            <p className="detail-text address">
-                              {business.business_address}
-                            </p>
-                          )}
-                          {business.city_id && (
-                            <p className="detail-text city">
-                              {business.city_id.split(' ').map(word => 
-                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                              ).join(' ')}
-                            </p>
-                          )}
-                          {business.county_id && (
-                            <p className="detail-text county">
-                              {business.county_id.split(' ').map(word => 
-                                word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
-                              ).join(' ')} County
-                            </p>
-                          )}
+                    {(!business.city_id && !business.county_id && !business.business_address) ? (
+                      <EmptyStateGuidance
+                        title="No Location Information Yet"
+                        description="Help customers find you by adding your business address, city, and service areas. This improves your visibility in local searches."
+                        actionText="Add Location"
+                        onClick={() => openEditModal({
+                          business_address: business.business_address,
+                          city_id: business.city_id,
+                          county_id: business.county_id,
+                          service_areas: business.service_areas,
+                          latitude: business.latitude,
+                          longitude: business.longitude
+                        }, 'business_details')}
+                        icon="📍"
+                        isOwner={isOwner}
+                      />
+                    ) : (
+                      <div className="location-details">
+                        <div className="location-primary">
+                          <i className="fa-solid fa-location-dot"></i>
+                          <div className="location-text">
+                            {(!business.city_id && !business.county_id) && business.business_address && (
+                              <p className="detail-text address">
+                                {business.business_address}
+                              </p>
+                            )}
+                            {business.city_id && (
+                              <p className="detail-text city">
+                                {business.city_id.split(' ').map(word => 
+                                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                                ).join(' ')}
+                              </p>
+                            )}
+                            {business.county_id && (
+                              <p className="detail-text county">
+                                {business.county_id.split(' ').map(word => 
+                                  word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+                                ).join(' ')} County
+                              </p>
+                            )}
+                          </div>
                         </div>
                       </div>
-                      {business.service_areas && Array.isArray(business.service_areas) && business.service_areas.length > 0 && (
-                        <div className="service-areas">
-                          <button 
-                            className="service-areas-toggle"
-                            onClick={() => setShowServiceAreas(!showServiceAreas)}
-                          >
-                            {showServiceAreas ? 'Hide Additional Service Areas' : 'Show Additional Service Areas'}
-                          </button>
-                          {showServiceAreas && (
-                            <div className="service-areas-content">
-                              <h3 className="service-areas-title">Additional Service Areas</h3>
-                              <div className="service-areas-list">
-                                {business.service_areas.map((areaId, index) => (
-                                  <span key={index} className="service-area-tag">
-                                    {formatLocationName(areaId)}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    )}
                   </div>
                   {isOwner && (
                     <div className="edit-button" style={{ display: "flex", justifyContent: "flex-end", width: "100%", maxWidth: "50px" }}>
@@ -1618,37 +1892,48 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                 <div className="business-detail">
                   <p className="detail-title">Packages</p>
                   <div className="packages-container">
-                    {packages.map((pkg, index) => (
-                      <div key={index} className="package-card">
-                        {pkg.image_url && (
-                          <div className="package-image">
-                            <img src={pkg.image_url} alt={pkg.name} />
+                    {packages.length > 0 ? (
+                      packages.map((pkg, index) => (
+                        <div key={index} className="package-card">
+                          {pkg.image_url && (
+                            <div className="package-image">
+                              <img src={pkg.image_url} alt={pkg.name} />
+                            </div>
+                          )}
+                          <div className="package-header">
+                            <h3>{pkg.name}</h3>
+                            <p className="package-price">${pkg.price}</p>
                           </div>
-                        )}
-                        <div className="package-header">
-                          <h3>{pkg.name}</h3>
-                          <p className="package-price">${pkg.price}</p>
+                          <div 
+                            className="package-description"
+                            dangerouslySetInnerHTML={{ __html: pkg.description || '' }}
+                          />
+                          {pkg.features && pkg.features.length > 0 && (
+                            <ul className="package-features-portfolio">
+                              {pkg.features.map((feature, featureIndex) => (
+                                <li key={featureIndex}>{feature}</li>
+                              ))}
+                            </ul>
+                          )}
+                          <button 
+                            className="learn-more-button"
+                            onClick={() => handleLearnMore(pkg.name)}
+                          >
+                            <ChatIcon />
+                            Learn More
+                          </button>
                         </div>
-                        <div 
-                          className="package-description"
-                          dangerouslySetInnerHTML={{ __html: pkg.description || '' }}
-                        />
-                        {pkg.features && pkg.features.length > 0 && (
-                          <ul className="package-features-portfolio">
-                            {pkg.features.map((feature, featureIndex) => (
-                              <li key={featureIndex}>{feature}</li>
-                            ))}
-                          </ul>
-                        )}
-                        <button 
-                          className="learn-more-button"
-                          onClick={() => handleLearnMore(pkg.name)}
-                        >
-                          <ChatIcon />
-                          Learn More
-                        </button>
-                      </div>
-                    ))}
+                      ))
+                    ) : (
+                      <EmptyStateGuidance
+                        title="No Packages Yet"
+                        description="Create service packages to help customers understand your offerings and pricing. Packages make it easier for customers to choose your services."
+                        actionText="Add Packages"
+                        onClick={() => openEditModal({ packages: packages || [] }, 'packages')}
+                        icon="📦"
+                        isOwner={isOwner}
+                      />
+                    )}
                   </div>
                 </div>
                 <div
@@ -1680,7 +1965,7 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     Meet {business.business_name}
                   </p>
                 </div>
-                <div className="vendor-profile-container">
+                <div className="vendor-profile-container" id="vendor-profile-section">
                   <div 
                     className="vendor-profile-left" 
                     onClick={() => handleImageClick({ 
@@ -1701,10 +1986,25 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                     <div className="vendor-profile-owner">Owner</div>
                   </div>
                   <div className="vendor-profile-right">
-                    <div 
-                      className="vendor-profile-description"
-                      dangerouslySetInnerHTML={{ __html: business.story || "No vendor description available" }}
-                    />
+                    {business.story ? (
+                      <div 
+                        className="vendor-profile-description"
+                        dangerouslySetInnerHTML={{ __html: business.story }}
+                      />
+                    ) : (
+                      <EmptyStateGuidance
+                        title="No Vendor Story Yet"
+                        description="Share your personal story, experience, and what drives you. This helps customers connect with you on a personal level and builds trust."
+                        actionText="Add Story"
+                        onClick={() => openEditModal({
+                          business_owner: business.business_owner,
+                          story: business.story,
+                          profile_picture: true,
+                        }, 'profile')}
+                        icon="👤"
+                        isOwner={isOwner}
+                      />
+                    )}
                   </div>
                   {isOwner && (
                     <button
@@ -1736,7 +2036,14 @@ const Portfolio = ({ businessId: propBusinessId }) => {
                       </span>
                     ))
                   ) : (
-                    <p className="no-specialties-text">No specialties yet.</p>
+                    <EmptyStateGuidance
+                      title="No Specialties Yet"
+                      description="Highlight your unique skills and areas of expertise. Specialties help customers understand what makes you different from other vendors."
+                      actionText="Add Specialties"
+                      onClick={() => openEditModal({ specializations: business.specializations }, 'specialties')}
+                      icon="⭐"
+                      isOwner={isOwner}
+                    />
                   )}
                 </div>
                 {isOwner && (
@@ -2197,6 +2504,824 @@ const styles = `
 
 .view-map-link i {
   font-size: 16px;
+}
+
+/* Empty State Guidance Styles */
+.empty-state-guidance {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px 20px;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border: 2px dashed #d1d5db;
+  border-radius: 16px;
+  margin: 20px 0;
+  transition: all 0.3s ease;
+}
+
+.empty-state-guidance:hover {
+  border-color: #A328F4;
+  background: linear-gradient(135deg, #f0f4ff 0%, #e8f0ff 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(163, 40, 244, 0.1);
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  filter: grayscale(0.3);
+  transition: all 0.3s ease;
+}
+
+.empty-state-guidance:hover .empty-state-icon {
+  filter: grayscale(0);
+  transform: scale(1.1);
+}
+
+.empty-state-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 12px;
+  margin: 0 0 12px 0;
+}
+
+.empty-state-description {
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+  margin-bottom: 24px;
+  max-width: 300px;
+  margin: 0 0 24px 0;
+}
+
+.empty-state-action {
+  background: linear-gradient(135deg, #A328F4 0%, #8a1fd8 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(163, 40, 244, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.empty-state-action:hover {
+  background: linear-gradient(135deg, #8a1fd8 0%, #7a1bc8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(163, 40, 244, 0.4);
+}
+
+.empty-state-action:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments for empty states */
+@media (max-width: 768px) {
+  .empty-state-guidance {
+    padding: 30px 16px;
+    margin: 16px 0;
+  }
+  
+  .empty-state-icon {
+    font-size: 40px;
+    margin-bottom: 12px;
+  }
+  
+  .empty-state-title {
+    font-size: 18px;
+    margin-bottom: 10px;
+  }
+  
+  .empty-state-description {
+    font-size: 13px;
+    margin-bottom: 20px;
+    max-width: 280px;
+  }
+  
+  .empty-state-action {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+}
+
+/* Profile Completion Summary Styles */
+.profile-completion-summary {
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border: 1px solid #e5e7eb;
+  border-radius: 16px;
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.completion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+.completion-title-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 200px;
+}
+
+.completion-title-section h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.completion-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.completion-text {
+  font-size: 13px;
+  color: #6b7280;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.progress-bar-portfolio {
+  width: 100px;
+  height: 6px;
+  background: #e5e7eb;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #A328F4 0%, #8a1fd8 100%);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+.completion-percentage {
+  font-size: 13px;
+  font-weight: 600;
+  color: #A328F4;
+  min-width: 35px;
+}
+
+.completion-sections-horizontal {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  flex: 1;
+  justify-content: flex-end;
+}
+
+.completion-section-horizontal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 8px;
+  background: white;
+  border-radius: 10px;
+  border: 1px solid #f3f4f6;
+  transition: all 0.2s ease;
+  min-width: 80px;
+  cursor: pointer;
+  position: relative;
+}
+
+.completion-section-horizontal:hover {
+  border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.completion-section-horizontal.completed {
+  border-color: #d1fae5;
+  background: #f0fdf4;
+}
+
+.completion-section-horizontal.incomplete {
+  border-color: #fef3c7;
+  background: #fffbeb;
+}
+
+.section-icon-horizontal {
+  font-size: 20px;
+  filter: grayscale(0.3);
+}
+
+.completion-section-horizontal.completed .section-icon-horizontal {
+  filter: grayscale(0);
+}
+
+.section-title-horizontal {
+  font-size: 11px;
+  font-weight: 600;
+  color: #374151;
+  text-align: center;
+  line-height: 1.2;
+  max-width: 80px;
+}
+
+.section-indicator-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+}
+
+.completed-check-horizontal {
+  color: #059669;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.incomplete-dot-horizontal {
+  color: #f59e0b;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Responsive adjustments for completion summary */
+@media (max-width: 1024px) {
+  .completion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  
+  .completion-sections-horizontal {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .completion-section-horizontal {
+    min-width: 70px;
+    padding: 10px 6px;
+  }
+  
+  .section-title-horizontal {
+    font-size: 10px;
+    max-width: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .profile-completion-summary {
+    padding: 16px;
+    margin: 16px 0;
+  }
+  
+  .completion-title-section h3 {
+    font-size: 16px;
+  }
+  
+  .completion-text {
+    font-size: 12px;
+  }
+  
+  .progress-bar {
+    width: 80px;
+    height: 5px;
+  }
+  
+  .completion-percentage {
+    font-size: 12px;
+  }
+  
+  .completion-sections-horizontal {
+    gap: 8px;
+  }
+  
+  .completion-section-horizontal {
+    min-width: 60px;
+    padding: 8px 4px;
+  }
+  
+  .section-icon-horizontal {
+    font-size: 18px;
+  }
+  
+  .section-title-horizontal {
+    font-size: 9px;
+    max-width: 60px;
+  }
+  
+  .section-indicator-horizontal {
+    width: 14px;
+    height: 14px;
+  }
+  
+  .completed-check-horizontal {
+    font-size: 12px;
+  }
+  
+  .incomplete-dot-horizontal {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .completion-sections-horizontal {
+    gap: 6px;
+  }
+  
+  .completion-section-horizontal {
+    min-width: 50px;
+    padding: 6px 3px;
+  }
+  
+  .section-title-horizontal {
+    font-size: 8px;
+    max-width: 50px;
+  }
+}
+
+/* Portfolio Layout and Theater Mode Styles */
+.portfolio-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.portfolio-layout.single-media {
+  gap: 16px;
+}
+
+.portfolio-images-desktop {
+  position: relative;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .portfolio-images-desktop {
+    display: none;
+  }
+}
+
+/* Grid Layout for Multiple Media Items */
+.portfolio-images-desktop:has(.grid-main-image) {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  flex-direction:row;
+}
+
+@media (max-width: 768px) {
+  .portfolio-images-desktop:has(.grid-main-image) {
+    display: none;
+  }
+}
+
+.grid-main-image {
+  flex: 1;
+  max-width: 60%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.grid-main-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.grid-main-image video {
+  object-fit: contain;
+  background: #000;
+}
+
+.portfolio-grid-right {
+  flex: 1;
+  max-width: 40%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  align-items: start;
+  height: 400px;
+}
+
+.portfolio-grid-right .portfolio-image-portfolio {
+  width: 100%;
+  height: 190px;
+  object-fit: cover;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.portfolio-grid-right .portfolio-image-portfolio:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.portfolio-grid-right .portfolio-image-portfolio video {
+  object-fit: contain;
+  background: #000;
+}
+
+.portfolio-grid-right .see-all-button {
+  grid-column: 1 / -1;
+  justify-self: center;
+  margin-top: 12px;
+}
+
+.main-portfolio-image {
+  width: 100%;
+  height: 400px;
+  object-fit: cover;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.main-portfolio-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
+}
+
+.main-portfolio-image video {
+  object-fit: contain;
+  background: #000;
+}
+
+/* Theater Mode Styles */
+.main-portfolio-image.theater-mode {
+  height: 600px;
+  object-fit: cover;
+  border-radius: 20px;
+  box-shadow: 0 8px 40px rgba(0, 0, 0, 0.15);
+}
+
+.main-portfolio-image.theater-mode:hover {
+  transform: scale(1.01);
+  box-shadow: 0 12px 50px rgba(0, 0, 0, 0.2);
+}
+
+/* Video-specific styling for better mobile display */
+.main-portfolio-image.theater-mode video {
+  object-fit: contain; /* Prevents video from being cut off */
+  background: #000; /* Black background for letterboxing */
+}
+
+.main-portfolio-image video {
+  object-fit: contain; /* Prevents video from being cut off */
+  background: #000; /* Black background for letterboxing */
+}
+
+.portfolio-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.portfolio-grid-single {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+  align-items:flex-end;
+}
+
+.portfolio-grid-single .single-media-button {
+  position: relative;
+  z-index: 10;
+  margin-top: 16px;
+  height: 40px;
+}
+
+/* Special handling for single video with controls */
+.main-portfolio-image.theater-mode + .portfolio-grid-single {
+  margin-top: 24px;
+}
+
+/* Ensure video controls are always visible */
+.main-portfolio-image.theater-mode video {
+  position: relative;
+  z-index: 5;
+  object-fit: contain; /* Prevents video from being cut off */
+  background: #000; /* Black background for letterboxing */
+}
+
+/* Gallery button positioning for single media */
+.portfolio-grid-single .see-all-button {
+  background: linear-gradient(135deg, #A328F4 0%, #8a1fd8 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(163, 40, 244, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 10;
+}
+
+.portfolio-image-portfolio {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.portfolio-image-portfolio:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Ensure portfolio grid videos display properly */
+.portfolio-image-portfolio video {
+  object-fit: contain; /* Prevents video from being cut off */
+  background: #000; /* Black background for letterboxing */
+}
+
+.see-all-button {
+  background: linear-gradient(135deg, #A328F4 0%, #8a1fd8 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(163, 40, 244, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.see-all-button:hover {
+  background: linear-gradient(135deg, #8a1fd8 0%, #7a1bc8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(163, 40, 244, 0.4);
+}
+
+.see-all-button:active {
+  transform: translateY(0);
+}
+
+/* Responsive adjustments for portfolio */
+@media (max-width: 1024px) {
+  .main-portfolio-image.theater-mode {
+    height: 500px;
+  }
+  
+  .grid-main-image {
+    height: 350px;
+  }
+  
+  .portfolio-grid-right {
+    gap: 10px;
+  }
+  
+  .portfolio-grid-right .portfolio-image-portfolio {
+    height: 100px;
+  }
+  
+  .portfolio-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+}
+
+@media (max-width: 768px) {
+  .portfolio-layout {
+    padding: 0 16px;
+    gap: 20px;
+  }
+  
+  .main-portfolio-image {
+    height: 300px;
+    border-radius: 12px;
+  }
+  
+  .main-portfolio-image.theater-mode {
+    height: 400px;
+    border-radius: 16px;
+  }
+  
+  /* Mobile grid layout adjustments */
+  .portfolio-images-desktop:has(.grid-main-image) {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .grid-main-image {
+    max-width: 100%;
+    height: 300px;
+  }
+  
+  .portfolio-grid-right {
+    max-width: 100%;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+  
+  .portfolio-grid-right .portfolio-image-portfolio {
+    height: 80px;
+    border-radius: 8px;
+  }
+  
+  .portfolio-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    margin-top: 12px;
+  }
+  
+  .portfolio-image-portfolio {
+    height: 100px;
+    border-radius: 8px;
+  }
+  
+  .see-all-button {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  /* Mobile corner button adjustments */
+  .gallery-corner-button {
+    bottom: 12px;
+    right: 12px;
+    padding: 8px 14px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  
+  /* Mobile adjustments for single media */
+  .portfolio-grid-single {
+    margin-top: 16px;
+  }
+  
+  .portfolio-grid-single .single-media-button {
+    margin-top: 12px;
+  }
+  
+  .main-portfolio-image.theater-mode + .portfolio-grid-single {
+    margin-top: 20px;
+  }
+  
+  .portfolio-grid-single .see-all-button {
+    padding: 10px 20px;
+    font-size: 13px;
+  }
+  
+  /* Mobile video control improvements */
+  .main-portfolio-image.theater-mode video {
+    min-height: 44px; /* Minimum touch target size */
+    object-fit: contain; /* Prevents video from being cut off */
+    background: #000; /* Black background for letterboxing */
+  }
+  
+  .main-portfolio-image video {
+    object-fit: contain; /* Prevents video from being cut off */
+    background: #000; /* Black background for letterboxing */
+  }
+  
+  .portfolio-grid-single .see-all-button {
+    min-height: 44px;
+    min-width: 120px;
+  }
+}
+
+@media (max-width: 480px) {
+  .main-portfolio-image {
+    height: 250px;
+    border-radius: 10px;
+  }
+  
+  .main-portfolio-image.theater-mode {
+    height: 350px;
+    border-radius: 14px;
+  }
+  
+  .grid-main-image {
+    height: 250px;
+  }
+  
+  .portfolio-grid-right {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+  
+  .portfolio-grid-right .portfolio-image-portfolio {
+    height: 100px;
+  }
+  
+  .portfolio-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+  
+  .portfolio-image-portfolio {
+    height: 120px;
+  }
+  
+  /* Small mobile corner button adjustments */
+  .gallery-corner-button {
+    bottom: 8px;
+    right: 8px;
+    padding: 6px 12px;
+    font-size: 11px;
+    min-height: 36px;
+  }
+  
+  /* Small mobile adjustments for single media */
+  .portfolio-grid-single {
+    margin-top: 12px;
+  }
+  
+  .portfolio-grid-single .single-media-button {
+    margin-top: 8px;
+  }
+  
+  .main-portfolio-image.theater-mode + .portfolio-grid-single {
+    margin-top: 16px;
+  }
+  
+  .portfolio-grid-single .see-all-button {
+    padding: 8px 16px;
+    font-size: 12px;
+  }
+  
+  /* Small mobile video control improvements */
+  .main-portfolio-image.theater-mode video {
+    min-height: 40px;
+    object-fit: contain; /* Prevents video from being cut off */
+    background: #000; /* Black background for letterboxing */
+  }
+  
+  .main-portfolio-image video {
+    object-fit: contain; /* Prevents video from being cut off */
+    background: #000; /* Black background for letterboxing */
+  }
+  
+  .portfolio-grid-single .see-all-button {
+    min-height: 40px;
+    min-width: 100px;
+  }
+}
+
+/* Gallery button positioned in bottom right corner */
+.gallery-corner-button {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 20;
+  background: linear-gradient(135deg, #A328F4 0%, #8a1fd8 100%);
+  color: white;
+  border: none;
+  padding: 10px 16px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(163, 40, 244, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.gallery-corner-button:hover {
+  background: linear-gradient(135deg, #8a1fd8 0%, #7a1bc8 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(163, 40, 244, 0.4);
+}
+
+.gallery-corner-button:active {
+  transform: translateY(0);
 }
 `;
 

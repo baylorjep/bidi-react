@@ -19,7 +19,10 @@ const BidDisplayRow = ({
   onEditBid, 
   openWithdrawModal, 
   onContractUpload,
-  onMessageClick
+  onContractView,
+  onFollowUp,
+  onMessageClick,
+  onViewRequest
 }) => {
   const navigate = useNavigate();
   const [signature, setSignature] = useState("");
@@ -273,23 +276,28 @@ const BidDisplayRow = ({
 
   const handleFollowUp = async () => {
     try {
-      const { error } = await supabase
-        .from('bids')
-        .update({ followed_up: true })
-        .eq('id', bid.id);
-
-      if (error) throw error;
-
-      if (onMessageClick) {
-        onMessageClick(
-          request.profile_id || request.user_id,
-          "Hi! I wanted to follow up about your request. Are you still looking for services?"
-        );
+      // Use the parent component's handler if provided, otherwise handle locally
+      if (onFollowUp) {
+        await onFollowUp(bid);
       } else {
-        console.error('onMessageClick prop is not provided');
-        toast.error('Messaging functionality is not available');
-      }
+        // Fallback to local handling
+        const { error } = await supabase
+          .from('bids')
+          .update({ followed_up: true })
+          .eq('id', bid.id);
 
+        if (error) throw error;
+
+        if (onMessageClick) {
+          onMessageClick(
+            request.profile_id || request.user_id,
+            "Hi! I wanted to follow up about your request. Are you still looking for services?"
+          );
+        } else {
+          console.error('onMessageClick prop is not provided');
+          toast.error('Messaging functionality is not available');
+        }
+      }
     } catch (error) {
       console.error('Error sending follow-up:', error);
       toast.error('Failed to send follow-up');
@@ -387,7 +395,8 @@ const BidDisplayRow = ({
         borderBottom: '1px solid #ececf0',
         background: bid.status === "interested" ? "linear-gradient(to right, #fff, #faf5ff)" : "#fff",
         transition: "all 0.3s ease",
-        position: 'relative'
+        position: 'relative',
+        flexDirection: 'row'
       }}
       onMouseEnter={() => setShowActions(true)}
       onMouseLeave={() => setShowActions(false)}
@@ -548,89 +557,6 @@ const BidDisplayRow = ({
             <FaTrash style={{ fontSize: '0.8rem' }} />
           </button>
         </div>
-
-        {/* Contract Upload/View/Sign */}
-        {(bid.status === 'approved' || bid.status === 'accepted') && (
-          <div style={{ display: 'flex', gap: '6px', marginTop: 4 }}>
-            {!bid.contract_url && !bid.contract_content ? (
-              <label style={{
-                background: '#9633eb',
-                color: 'white',
-                border: 'none',
-                borderRadius: '6px',
-                padding: '6px 10px',
-                cursor: 'pointer',
-                fontSize: '0.8rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '4px'
-              }}>
-                <input
-                  type="file"
-                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={handleContractChange}
-                  style={{ display: 'none' }}
-                  disabled={uploading}
-                />
-                {uploading ? (
-                  <>
-                    <Spinner animation="border" size="sm" style={{ width: '12px', height: '12px' }} />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-upload" style={{ fontSize: '0.7rem' }}></i>
-                    Upload Contract
-                  </>
-                )}
-              </label>
-            ) : (
-              <>
-                <button
-                  onClick={() => window.open(bid.contract_url, '_blank')}
-                  style={{
-                    background: '#28a745',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '6px',
-                    padding: '6px 10px',
-                    cursor: 'pointer',
-                    fontSize: '0.8rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '4px'
-                  }}
-                >
-                  <i className="fas fa-file-pdf" style={{ fontSize: '0.7rem' }}></i>
-                  View Contract
-                </button>
-                {!bid.business_signed_at && (
-                  <button
-                    onClick={() => setShowContractModal(true)}
-                    style={{
-                      background: '#ffc107',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '6px',
-                      padding: '6px 10px',
-                      cursor: 'pointer',
-                      fontSize: '0.8rem',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <i className="fas fa-signature" style={{ fontSize: '0.7rem' }}></i>
-                    Sign
-                  </button>
-                )}
-              </>
-            )}
-          </div>
-        )}
 
         {/* Follow-up Button */}
         {showFollowUpButton && (

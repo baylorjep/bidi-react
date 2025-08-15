@@ -23,7 +23,7 @@ import ChangePlanModal from './ChangePlanModal';
 import Select from 'react-select';
 import StripeDashboardSummary from '../Stripe/StripeDashboardSummary';
 
-const BusinessSettings = ({ connectedAccountId }) => {
+const BusinessSettings = ({ connectedAccountId, scrollToSection, onScrollComplete }) => {
   const [isVerified, setIsVerified] = useState(false);
   // const [isVerificationPending, setIsVerificationPending] = useState(false);
   const [currentMinPrice, setCurrentMinPrice] = useState(null);
@@ -107,6 +107,9 @@ const {
 } = useGoogleBusinessReviews(connectedAccountId);
 
 const [partnershipData, setPartnershipData] = useState(null);
+
+// Add activeSection state near the top with other state declarations
+const [activeSection, setActiveSection] = useState('profile');
 
 // Add this state near the top with other state declarations
 const [isCopied, setIsCopied] = useState(false);
@@ -253,6 +256,45 @@ const dayNumberToName = {
     }
   }, [user?.id]);
 
+  // Handle scrolling to specific sections when navigated from setup progress
+  useEffect(() => {
+    if (scrollToSection) {
+      console.log('BusinessSettings: scrollToSection received:', scrollToSection);
+      // Switch to the appropriate tab based on the section
+      if (scrollToSection === 'paymentSettings') {
+        setActiveSection('payments');
+      } else if (scrollToSection === 'profile' || scrollToSection === 'businessSettings' || scrollToSection === 'photos' || scrollToSection === 'calendar' || scrollToSection === 'bidTemplate') {
+        setActiveSection('profile');
+      } else if (scrollToSection === 'aiBidder') {
+        setActiveSection('ai');
+      }
+      
+      // Add a small delay to ensure the component is fully rendered
+      setTimeout(() => {
+        const element = document.getElementById(scrollToSection);
+        if (element) {
+          element.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start'
+          });
+          element.style.transition = 'background-color 0.3s ease';
+          element.style.backgroundColor = '#f0f8ff';
+          setTimeout(() => {
+            element.style.backgroundColor = '';
+            // Call the callback to reset scrollToSection in parent
+            if (onScrollComplete) {
+              onScrollComplete();
+            }
+          }, 2000);
+        } else {
+          console.warn('Element not found for scrollToSection:', scrollToSection);
+        }
+      }, 500);
+    }
+  }, [scrollToSection, onScrollComplete, setActiveSection]);
+
+
+
 // Add this useEffect to debug the state
 useEffect(() => {
   console.log('Calendar state:', {
@@ -264,11 +306,6 @@ useEffect(() => {
 
 // Add isDesktop state and effect at the top of the component
 const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
-useEffect(() => {
-  const handleResize = () => setIsDesktop(window.innerWidth > 768);
-  window.addEventListener('resize', handleResize);
-  return () => window.removeEventListener('resize', handleResize);
-}, []);
 
   // Add these modules for the editor
   const modules = {
@@ -318,6 +355,13 @@ useEffect(() => {
     }
   }, [location]);
 
+  // Add resize handler effect
+  useEffect(() => {
+    const handleResize = () => setIsDesktop(window.innerWidth > 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   useEffect(() => {
     console.log("Active Coupon:", activeCoupon);
     console.log("New Coupon Code:", newCouponCode);
@@ -360,6 +404,21 @@ useEffect(() => {
         setSelectedCategories(categories);
         setCurrentCategories(categories);
       }
+
+      // Fetch notification preferences
+      const { data: notificationData, error: notificationError } = await supabase
+        .from("business_profiles")
+        .select("notification_preferences")
+        .eq("id", currentUser.id)
+        .single();
+
+      if (!notificationError && notificationData?.notification_preferences) {
+        setNotificationPreferences(prev => ({
+          ...prev,
+          ...notificationData.notification_preferences
+        }));
+      }
+
       const { data: existingCoupon, error: couponError } = await supabase
         .from("coupons")
         .select("*")
@@ -1129,7 +1188,7 @@ useEffect(() => {
                     value={googleMapsUrl}
                     onChange={(e) => setGoogleMapsUrl(e.target.value)}
                     placeholder="https://maps.app.goo.gl/..."
-                    className="form-control"
+                    className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-disabled:bg-gray-100 tw-disabled:text-gray-500 tw-disabled:cursor-not-allowed"
                     disabled={isProcessing}
                   />
                   {googleReviewsError && (
@@ -1588,7 +1647,6 @@ useEffect(() => {
     }
   }, [user?.id]);
 
-  const [activeSection, setActiveSection] = useState('profile');
   const [profileEdit, setProfileEdit] = useState({
     business_name: '',
     phone: '',
@@ -1605,6 +1663,18 @@ useEffect(() => {
   const [paymentsSaving, setPaymentsSaving] = useState(false);
   const [paymentsSaved, setPaymentsSaved] = useState(false);
 
+  // Add notification preferences state
+  const [notificationPreferences, setNotificationPreferences] = useState({
+    emailNotifications: true,
+    textNotifications: false,
+    minimumBudgetForNotifications: 0,
+    notifyOnNewRequests: true,
+    notifyOnMessages: true
+  });
+  const [notificationsChanged, setNotificationsChanged] = useState(false);
+  const [notificationsSaving, setNotificationsSaving] = useState(false);
+  const [notificationsSaved, setNotificationsSaved] = useState(false);
+
   useEffect(() => {
     if (profileDetails) {
       setProfileEdit({
@@ -1614,8 +1684,14 @@ useEffect(() => {
       });
       setProfileChanged(false);
       setProfileSaved(false);
+      
+      // If text notifications are enabled but no phone number, disable them
+      if (notificationPreferences.textNotifications && !profileDetails.phone) {
+        setNotificationPreferences(prev => ({ ...prev, textNotifications: false }));
+        setNotificationsChanged(true);
+      }
     }
-  }, [profileDetails, selectedCategories]);
+  }, [profileDetails, selectedCategories, notificationPreferences.textNotifications]);
 
   const handleProfileEditChange = (field, value) => {
     setProfileEdit(prev => ({ ...prev, [field]: value }));
@@ -1704,6 +1780,58 @@ useEffect(() => {
       setTimeout(() => setPaymentsSaved(false), 2000);
     }
     setPaymentsSaving(false);
+  };
+
+  // Add function to handle saving notification preferences
+  const handleNotificationsSave = async () => {
+    setNotificationsSaving(true);
+    setNotificationsSaved(false);
+    
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    
+    if (!user) {
+      alert('User not found. Please log in again.');
+      setNotificationsSaving(false);
+      return;
+    }
+
+    try {
+      const { error } = await supabase
+        .from('business_profiles')
+        .update({
+          notification_preferences: notificationPreferences
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        console.error('Error saving notification preferences:', error);
+        alert('Failed to save notification preferences. Please try again.');
+      } else {
+        setNotificationsChanged(false);
+        setNotificationsSaved(true);
+        setTimeout(() => setNotificationsSaved(false), 2000);
+      }
+    } catch (error) {
+      console.error('Error saving notification preferences:', error);
+      alert('An error occurred while saving notification preferences.');
+    } finally {
+      setNotificationsSaving(false);
+    }
+  };
+
+  // Add function to handle notification preference changes
+  const handleNotificationChange = (field, value) => {
+    // If enabling text notifications, check if phone number is set
+    if (field === 'textNotifications' && value === true && !profileDetails?.phone) {
+      alert('Please set a phone number in your Profile tab before enabling text notifications.');
+      return;
+    }
+    
+    setNotificationPreferences(prev => ({ ...prev, [field]: value }));
+    setNotificationsChanged(true);
+    setNotificationsSaved(false);
   };
 
   const [showMobileSidebar, setShowMobileSidebar] = useState(false);
@@ -1861,7 +1989,7 @@ useEffect(() => {
         ) : (
           <>
             {activeSection === 'profile' && (
-              <div className="settings-section">
+              <div className="settings-section" data-section="profile" id="profile">
                 <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>Profile</span>
                   <button
@@ -1904,7 +2032,7 @@ useEffect(() => {
                         value={profileEdit.business_name}
                         onChange={e => handleProfileEditChange('business_name', e.target.value)}
                         placeholder="Business Name"
-                        style={{ width: 260 }}
+                        className="tw-w-64 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -1919,7 +2047,7 @@ useEffect(() => {
                         value={profileEdit.phone}
                         onChange={e => handleProfileEditChange('phone', e.target.value)}
                         placeholder="Phone Number"
-                        style={{ width: 180 }}
+                        className="tw-w-44 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -1976,8 +2104,25 @@ useEffect(() => {
                       )}
                     </div>
                   </div>
+                  {/* Photos */}
+                  <div className="settings-row" id="photos">
+                    <div>
+                      <div className="settings-label">Portfolio Photos</div>
+                      <div className="settings-desc">Upload your best work to showcase your services.</div>
+                    </div>
+                    <div className="settings-control">
+                      <button
+                        className="btn-primary-business-settings"
+                        onClick={() => navigate("/business-dashboard/portfolio")}
+                        style={{ minWidth: 120 }}
+                      >
+                        Manage Photos
+                      </button>
+                    </div>
+                  </div>
+                  
                   {/* Calendar */}
-                  <div className="settings-row">
+                  <div className="settings-row" id="calendar">
                     <div>
                       <div className="settings-label">Google Calendar</div>
                       <div className="settings-desc">Sync your availability and prevent double bookings by connecting your calendar.</div>
@@ -1993,6 +2138,7 @@ useEffect(() => {
                                 value={consultationHours.startTime}
                                 onChange={e => setConsultationHours(prev => ({ ...prev, startTime: e.target.value }))}
                                 onBlur={handleConsultationHoursSubmit}
+                                className="tw-px-2 tw-py-1 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                               />
                               <label>End:</label>
                               <input
@@ -2000,6 +2146,7 @@ useEffect(() => {
                                 value={consultationHours.endTime}
                                 onChange={e => setConsultationHours(prev => ({ ...prev, endTime: e.target.value }))}
                                 onBlur={handleConsultationHoursSubmit}
+                                className="tw-px-2 tw-py-1 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                               />
                             </div>
                             <div className="settings-calendar-row settings-calendar-days">
@@ -2019,6 +2166,7 @@ useEffect(() => {
                                       setConsultationHours(prev => ({ ...prev, daysAvailable: newDays }));
                                       setTimeout(handleConsultationHoursSubmit, 100);
                                     }}
+                                    className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
                                   />
                                   {day.slice(0, 3)}
                                 </label>
@@ -2030,6 +2178,7 @@ useEffect(() => {
                                 value={timezone}
                                 onChange={e => setTimezone(e.target.value)}
                                 onBlur={handleConsultationHoursSubmit}
+                                className="tw-px-2 tw-py-1 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-bg-white"
                               >
                                 <option value="America/Denver">Mountain Time (MT)</option>
                                 <option value="America/New_York">Eastern Time (ET)</option>
@@ -2068,7 +2217,7 @@ useEffect(() => {
                     </div>
                   </div>
                   {/* Templates */}
-                  <div className="settings-row">
+                  <div className="settings-row" id="bidTemplate">
                     <div>
                       <div className="settings-label">Bid Template</div>
                       <div className="settings-desc">Create a reusable bid template to save time when responding to requests.</div>
@@ -2103,7 +2252,7 @@ useEffect(() => {
                             type="text"
                             value={`https://savewithbidi.com/partnership/${partnershipData.id}`}
                             readOnly
-                            style={{ width: 300, marginRight: 8 }}
+                            className="tw-w-80 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-bg-gray-50 tw-text-gray-600 tw-mr-2"
                           />
                           <button
                             className={`btn-success ${isCopied ? 'copied' : ''}`}
@@ -2127,7 +2276,7 @@ useEffect(() => {
               </div>
             )}
             {activeSection === 'payments' && (
-              <div className="settings-section">
+              <div className="settings-section" data-section="payments" id="paymentSettings">
                 <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <span>Payments</span>
                   <button
@@ -2210,9 +2359,10 @@ useEffect(() => {
                           setPaymentsChanged(true);
                           setPaymentsSaved(false);
                         }}
+                        className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500 tw-bg-white tw-mb-2"
                       >
                         <option value="">Select Type</option>
-                        <option value="percentage">Percentage</option>
+                        <option value="percentage">%</option>
                         <option value="flat fee">Flat Fee</option>
                       </select>
                       {paymentType === "percentage" && (
@@ -2227,6 +2377,7 @@ useEffect(() => {
                             setPaymentsSaved(false);
                           }}
                           placeholder="Enter Percentage"
+                          className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                         />
                       )}
                       {paymentType === "flat fee" && (
@@ -2239,6 +2390,7 @@ useEffect(() => {
                             setPaymentsSaved(false);
                           }}
                           placeholder="Enter Flat Fee"
+                          className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                         />
                       )}
                     </div>
@@ -2258,6 +2410,7 @@ useEffect(() => {
                           setPaymentsSaved(false);
                         }}
                         placeholder="Enter minimum price"
+                        className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
@@ -2277,15 +2430,205 @@ useEffect(() => {
                           setPaymentsSaved(false);
                         }}
                         placeholder="Enter days"
-                        style={{ width: 120 }}
+                        className="tw-w-full tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
                       />
                     </div>
                   </div>
                 </div>
               </div>
             )}
+            {activeSection === 'notifications' && (
+              <div className="settings-section" data-section="notifications" id="notifications">
+                <div className="settings-section-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Notification Preferences</span>
+                  <button
+                    className="btn-primary-business-settings"
+                    onClick={handleNotificationsSave}
+                    disabled={!notificationsChanged || notificationsSaving}
+                    style={{ minWidth: 120 }}
+                  >
+                    {notificationsSaving ? 'Saving...' : notificationsSaved ? 'Saved!' : 'Save'}
+                  </button>
+                </div>
+                <div className="settings-section-content">
+                  {/* Notification Methods */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Notification Methods</div>
+                      <div className="settings-desc">Choose how you want to receive notifications from Bidi.</div>
+                    </div>
+                    <div className="settings-control" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+                      <label className="settings-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.emailNotifications}
+                          onChange={e => handleNotificationChange('emailNotifications', e.target.checked)}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>Email Notifications</span>
+                        <small className="text-muted d-block">Receive notifications via email</small>
+                      </label>
+                      <label className={`settings-checkbox-label ${!profileDetails?.phone ? 'opacity-50' : ''}`}>
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.textNotifications}
+                          onChange={e => handleNotificationChange('textNotifications', e.target.checked)}
+                          disabled={!profileDetails?.phone}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>Text Message Notifications</span>
+                        <small className="text-muted d-block">
+                          {profileDetails?.phone 
+                            ? 'Receive notifications via SMS (requires phone number)' 
+                            : 'Phone number required - set one in Profile tab first'}
+                        </small>
+                      </label>
+                      
+                      {/* Phone Number Display for Text Notifications */}
+                      {notificationPreferences.textNotifications && (
+                        <div style={{ marginLeft: 28, marginTop: 8 }}>
+                          <div className="tw-w-80 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-bg-gray-50">
+                            {profileDetails?.phone || 'No phone number set'}
+                          </div>
+                          <small className="text-muted d-block mt-1">
+                            {profileDetails?.phone 
+                              ? 'Phone number from your business profile. Update it in the Profile tab.'
+                              : '⚠️ Text notifications enabled but no phone number set. Please add a phone number in the Profile tab.'}
+                          </small>
+                        </div>
+                      )}
+                      
+                      {/* Warning when text notifications enabled but no phone */}
+                      {notificationPreferences.textNotifications && !profileDetails?.phone && (
+                        <div style={{ marginLeft: 28, marginTop: 8 }}>
+                          <div className="alert alert-warning tw-text-sm">
+                            <i className="fas fa-exclamation-triangle me-2"></i>
+                            Text notifications are enabled but no phone number is set. 
+                            <a href="#profile" className="ms-2">Go to Profile tab to add phone number</a>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Minimum Budget for Notifications */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Minimum Budget for Notifications</div>
+                      <div className="settings-desc">Only notify me about new requests with budgets above this amount.</div>
+                    </div>
+                    <div className="settings-control">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <span style={{ fontSize: '1.1rem', fontWeight: 600 }}>$</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={notificationPreferences.minimumBudgetForNotifications}
+                          onChange={e => handleNotificationChange('minimumBudgetForNotifications', parseFloat(e.target.value) || 0)}
+                          placeholder="0.00"
+                          className="tw-w-32 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded-md tw-shadow-sm tw-focus:outline-none tw-focus:ring-2 tw-focus:ring-blue-500 tw-focus:border-blue-500"
+                        />
+                      </div>
+                      <small className="text-muted d-block mt-2">
+                        Set to $0 to receive notifications for all requests regardless of budget
+                      </small>
+                    </div>
+                  </div>
+
+                  {/* Notification Types */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Notification Types</div>
+                      <div className="settings-desc">Choose which types of events you want to be notified about.</div>
+                    </div>
+                    <div className="settings-control" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 12 }}>
+                      <label className="settings-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.notifyOnNewRequests}
+                          onChange={e => handleNotificationChange('notifyOnNewRequests', e.target.checked)}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>New Requests</span>
+                        <small className="text-muted d-block">Get notified when new requests match your criteria</small>
+                      </label>
+                      <label className="settings-checkbox-label">
+                        <input
+                          type="checkbox"
+                          checked={notificationPreferences.notifyOnMessages}
+                          onChange={e => handleNotificationChange('notifyOnMessages', e.target.checked)}
+                          className="tw-w-4 tw-h-4 tw-text-purple-600 tw-bg-gray-100 tw-border-gray-300 tw-rounded tw-focus:ring-purple-500 tw-focus:ring-2"
+                        />
+                        <span>Messages</span>
+                        <small className="text-muted d-block">Get notified about new messages from clients</small>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Notification Summary */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Current Settings</div>
+                      <div className="settings-desc">Summary of your notification preferences.</div>
+                    </div>
+                    <div className="settings-control">
+                      <div className="settings-summary-box">
+                        <div className="settings-summary-item">
+                          <strong>Methods:</strong> 
+                          {notificationPreferences.emailNotifications && notificationPreferences.textNotifications 
+                            ? ' Email & Text' 
+                            : notificationPreferences.emailNotifications 
+                            ? ' Email only' 
+                            : notificationPreferences.textNotifications 
+                            ? ' Text only' 
+                            : ' None'}
+                          {notificationPreferences.textNotifications && !profileDetails?.phone && (
+                            <span className="text-warning ms-2">⚠️ Phone number required</span>
+                          )}
+                          {!profileDetails?.phone && (
+                            <div className="text-muted mt-1">
+                              <small>Text notifications require a phone number in Profile tab</small>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {/* Note about phone number requirement */}
+                        {!profileDetails?.phone && (
+                          <div className="settings-summary-item text-info">
+                            <strong>ℹ️ Note:</strong> To enable text notifications, add a phone number in the Profile tab
+                          </div>
+                        )}
+                        {notificationPreferences.textNotifications && profileDetails?.phone && (
+                          <div className="settings-summary-item">
+                            <strong>Phone:</strong> {profileDetails.phone}
+                          </div>
+                        )}
+                        {notificationPreferences.textNotifications && !profileDetails?.phone && (
+                          <div className="settings-summary-item text-warning">
+                            <strong>⚠️ Warning:</strong> Text notifications enabled but no phone number set
+                          </div>
+                        )}
+                        <div className="settings-summary-item">
+                          <strong>Budget Filter:</strong> 
+                          ${notificationPreferences.minimumBudgetForNotifications > 0 
+                            ? notificationPreferences.minimumBudgetForNotifications.toFixed(2) 
+                            : '0.00 (all requests)'}
+                        </div>
+                        <div className="settings-summary-item">
+                          <strong>Active Notifications:</strong> 
+                          {[
+                            notificationPreferences.notifyOnNewRequests && 'New Requests',
+                            notificationPreferences.notifyOnMessages && 'Messages'
+                          ].filter(Boolean).join(', ') || 'None'}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {activeSection === 'ai' && (
-              <div className="settings-section">
+              <div className="settings-section" id="aiBidder">
                 <div className="settings-section-title">AI Bid Trainer</div>
                 <div className="settings-section-content">
                   {autobidEnabled ? (

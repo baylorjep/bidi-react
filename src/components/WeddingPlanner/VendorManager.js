@@ -719,6 +719,7 @@ function VendorManager({ weddingData, onUpdate, compact = false, demoMode = fals
           currentUserId={currentUserId}
           isNew={!bid.viewed}
           demoMode={demoMode}
+          isIndividualUser={true} // Wedding planners are individuals
         />
       </div>
     );

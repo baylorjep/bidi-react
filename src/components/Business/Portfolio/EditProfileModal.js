@@ -1018,7 +1018,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
   };
 
   const ProgressBar = ({ progress }) => (
-    <div className="upload-progress">
+    <div className="upload-progress-portfolio">
       <div 
         className="progress-bar" 
         style={{ 
@@ -1586,7 +1586,10 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
                   borderRadius: '8px',
                   display: 'flex',
                   flexDirection: 'column',
-                  gap: '15px'
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '15px',
+                  maxWidth: '300px'
                 }}>
                   <div className="zoom-controls" style={{
                     display: 'flex',
@@ -1893,117 +1896,6 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
                         />
                       </div>
                     </div>
-                  </div>
-
-                  {/* Additional Service Areas */}
-                  <div className="form-group service-areas">
-                    <label>Additional Service Areas</label>
-                    <p className="sub-description">Select other counties or cities where you provide services</p>
-                    
-                    <div className="service-areas-tabs">
-                      <button 
-                        className={`tab-button ${activeTab === 'counties' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('counties')}
-                      >
-                        Counties
-                      </button>
-                      <button 
-                        className={`tab-button ${activeTab === 'cities' ? 'active' : ''}`}
-                        onClick={() => setActiveTab('cities')}
-                      >
-                        Cities
-                      </button>
-                    </div>
-
-                    {activeTab === 'counties' ? (
-                      <div className="counties-list">
-                        <div className="searchable-counties">
-                          <div className="search-header">
-                            <input
-                              type="text"
-                              placeholder="Search counties..."
-                              value={countySearch}
-                              onChange={(e) => setCountySearch(e.target.value)}
-                              className="search-input"
-                            />
-                            <label className="select-all-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={counties
-                                  .filter(county => county.id !== formData.county_id)
-                                  .every(county => formData.service_areas?.includes(county.id))
-                                }
-                                onChange={() => handleSelectAll('county')}
-                              />
-                              <span>Select All</span>
-                            </label>
-                          </div>
-                          <div className="counties-results">
-                            {counties
-                              .filter(county => 
-                                county.id !== formData.county_id &&
-                                county.name.toLowerCase().includes(countySearch.toLowerCase())
-                              )
-                              .map(county => (
-                                <div key={county.id} className="county-item">
-                                  <label className="county-checkbox">
-                                    <input
-                                      type="checkbox"
-                                      checked={formData.service_areas?.includes(county.id)}
-                                      onChange={() => handleServiceAreaChange('county', county.id)}
-                                    />
-                                    <span>{county.name}</span>
-                                  </label>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="cities-section">
-                        <div className="searchable-cities">
-                          <div className="search-header">
-                            <input
-                              type="text"
-                              placeholder="Search for a city..."
-                              value={serviceAreaCitySearch}
-                              onChange={(e) => setServiceAreaCitySearch(e.target.value)}
-                              className="search-input"
-                            />
-                            <label className="select-all-checkbox">
-                              <input
-                                type="checkbox"
-                                checked={cities
-                                  .filter(city => city.id !== formData.city_id)
-                                  .every(city => formData.service_areas?.includes(city.id))
-                                }
-                                onChange={() => handleSelectAll('city')}
-                              />
-                              <span>Select All</span>
-                            </label>
-                          </div>
-                          <div className="cities-results">
-                            {cities
-                              .filter(city => 
-                                city.id !== formData.city_id && 
-                                city.name.toLowerCase().includes(serviceAreaCitySearch.toLowerCase())
-                              )
-                              .map(city => (
-                                <div key={city.id} className="city-item">
-                                  <label className="city-checkbox">
-                                    <input
-                                      type="checkbox"
-                                      checked={formData.service_areas?.includes(city.id)}
-                                      onChange={() => handleServiceAreaChange('city', city.id)}
-                                    />
-                                    <span>{city.name}</span>
-                                  </label>
-                                </div>
-                              ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 </div>
               </div>

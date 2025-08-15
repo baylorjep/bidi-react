@@ -1,0 +1,667 @@
+/* Bid Detail Modal Styles */
+
+.bdm-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bdm-modal {
+  position: fixed;
+  background: white;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+  overflow: hidden;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+}
+
+/* Mobile styles */
+@media (max-width: 768px) {
+  .bdm-modal {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    border-radius: 16px 16px 0 0;
+    max-height: 95vh;
+  }
+}
+
+/* Desktop styles */
+@media (min-width: 769px) {
+  .bdm-modal {
+    top: 50%;
+    left: 50%;
+    width: 90%;
+    max-width: 600px;
+    border-radius: 12px;
+    max-height: 80vh;
+  }
+}
+
+/* Header */
+.bdm-header {
+  padding: 16px;
+  border-bottom: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.bdm-drag-handle {
+  width: 36px;
+  height: 4px;
+  background: #d1d5db;
+  border-radius: 2px;
+  margin: 0 auto 12px;
+  cursor: grab;
+}
+
+.bdm-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bdm-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bdm-header-left h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.bdm-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.bdm-back-btn,
+.bdm-close-btn {
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s;
+}
+
+.bdm-back-btn:hover,
+.bdm-close-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.bdm-back-btn svg,
+.bdm-close-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Status Badges */
+.bdm-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bdm-status-badge.approved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.bdm-status-badge.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.bdm-status-badge.denied {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.bdm-status-badge svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Content */
+.bdm-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.bdm-section {
+  margin-bottom: 24px;
+}
+
+.bdm-section:last-child {
+  margin-bottom: 0;
+}
+
+.bdm-section h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Business Profile */
+.bdm-business-profile {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.bdm-business-avatar {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e5e7eb;
+}
+
+.bdm-business-avatar-clickable {
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.bdm-business-avatar-clickable:hover {
+  border-color: #3b82f6;
+  transform: scale(1.05);
+}
+
+.bdm-business-info {
+  flex: 1;
+}
+
+.bdm-business-name {
+  margin: 0 0 4px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bdm-verified-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  background: #fff;
+  border: 1px solid #9633eb;
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 500;
+  color: #9633eb;
+}
+
+.bdm-verified-badge img {
+  width: 12px;
+  height: 12px;
+}
+
+.bdm-business-time {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bdm-bid-amount {
+  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.bdm-amount {
+  font-size: 24px;
+  font-weight: 700;
+  color: #ec4899;
+}
+
+/* Payment Status Indicator */
+.bdm-payment-status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: #dcfce7;
+  border: 1px solid #16a34a;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 500;
+  color: #166534;
+}
+
+.bdm-payment-status-indicator svg {
+  width: 12px;
+  height: 12px;
+}
+
+/* Payment Status Section */
+.bdm-payment-status {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.bdm-payment-status-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bdm-payment-status-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.bdm-payment-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.bdm-payment-amount {
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.bdm-payment-amount.paid {
+  color: #059669;
+}
+
+.bdm-payment-date {
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.bdm-payment-remaining {
+  font-size: 16px;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+/* Description */
+.bdm-description {
+  line-height: 1.6;
+  color: #374151;
+}
+
+/* Breakdown */
+.bdm-breakdown {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bdm-line-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bdm-line-item:last-child {
+  border-bottom: none;
+}
+
+.bdm-line-item-description {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bdm-item-name {
+  font-weight: 500;
+  color: #111827;
+}
+
+.bdm-item-details {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.bdm-line-item-amount {
+  font-weight: 600;
+  color: #111827;
+}
+
+.bdm-subtotal {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.bdm-tax {
+  background: #f3f4f6;
+  font-weight: 600;
+}
+
+.bdm-total {
+  background: #e5e7eb;
+  font-weight: 700;
+  font-size: 18px;
+  color: #059669;
+}
+
+/* Discount Integration Styles */
+.bdm-original-total {
+  background: #f3f4f6;
+  font-weight: 600;
+  border-top: 2px solid #d1d5db;
+}
+
+.bdm-discount-applied {
+  font-weight: 600;
+  border-top: 2px solid #9633eb;
+}
+
+.bdm-discount-applied .discount-amount {
+  color: #dc2626;
+  font-weight: 700;
+}
+
+.bdm-final-total {
+  background: #f5cfe6;
+  font-weight: 700;
+  font-size: 18px;
+  color: #ec4899;
+  border-top: 2px solid #ec4899;
+}
+
+.bdm-final-total .final-amount {
+  color: #ec4899;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Actions */
+.bdm-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.bdm-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-decoration: none;
+  justify-content: center;
+  min-width: 120px;
+}
+
+.bdm-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.bdm-btn:active {
+  transform: translateY(0);
+}
+
+.bdm-btn-success {
+  background: #10b981;
+  color: white;
+}
+
+.bdm-btn-success:hover {
+  background: #059669;
+}
+
+.bdm-btn-danger {
+  background: #ef4444;
+  color: white;
+}
+
+.bdm-btn-danger:hover {
+  background: #dc2626;
+}
+
+.bdm-btn-pay {
+  background: #ec4899;
+  color: white;
+}
+
+.bdm-btn-pay:hover {
+  background: #ec4899;
+}
+
+.bdm-btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.bdm-btn-secondary:hover {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+}
+
+.bdm-btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.bdm-btn-primary:hover {
+  background: #2563eb;
+}
+
+.bdm-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Mobile specific styles */
+@media (max-width: 768px) {
+  .bdm-content {
+    padding: 16px;
+  }
+  
+  .bdm-actions {
+    flex-direction: column;
+  }
+  
+  .bdm-btn {
+    width: 100%;
+  }
+  
+  .bdm-business-profile {
+    flex-direction: column;
+    text-align: center;
+    gap: 12px;
+  }
+  
+  .bdm-bid-amount {
+    text-align: center;
+    align-items: center;
+  }
+  
+  .bdm-payment-status-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
+/* Desktop specific styles */
+@media (min-width: 769px) {
+  .bdm-content {
+    padding: 24px;
+  }
+  
+  .bdm-actions {
+    justify-content: flex-start;
+  }
+  
+  .bdm-btn {
+    min-width: 140px;
+  }
+}
+
+/* Discount Styles */
+.bdm-discount-info {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.bdm-discount-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.bdm-discount-note {
+  background: #f3dfeb;
+  border: 1px solid #ec4899;
+  border-radius: 6px;
+  padding: 8px 12px;
+  text-align: center;
+  color: #ec4899;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.bdm-discount-badge {
+  background: #ec4899;
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bdm-discount-deadline.active {
+  background: #f5cfe6;
+  color: #ec4899;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bdm-discount-deadline.expired {
+  background: #fee2e2;
+  color: #991b1b;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.bdm-discount-breakdown {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.bdm-discount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.bdm-discount-row:last-child {
+  border-bottom: none;
+}
+
+.bdm-original-price {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.bdm-discount-amount {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.bdm-final-price {
+  font-weight: 700;
+  font-size: 18px;
+  color: #059669;
+}
+
+.bdm-discounted-price {
+  color: #059669;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+/* Combined Section Styles */
+.bdm-section h5 {
+  color: #374151;
+  font-size: 16px;
+  font-weight: 600;
+  margin: 20px 0 12px 0;
+  padding-bottom: 8px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.bdm-description h5 {
+  margin-top: 0;
+}
+
+.bdm-breakdown h5 {
+  margin-top: 0;
+}
+
+/* Improved spacing for combined section */
+.bdm-discount-info {
+  margin-bottom: 24px;
+}
+
+.bdm-description {
+  margin-bottom: 24px;
+}
+
+.bdm-breakdown {
+  margin-top: 16px;
+}

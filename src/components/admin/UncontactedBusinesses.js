@@ -32,42 +32,42 @@ function UncontactedBusinesses() {
             ] = await Promise.all([
                 supabaseAdmin
                     .from('photography_requests')
-                    .select('id, created_at, event_title, event_type, status')
+                    .select('id, created_at, event_title, event_type, status, price_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('videography_requests')
-                    .select('id, created_at, event_title, event_type, status')
+                    .select('id, created_at, event_title, event_type, status, price_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('dj_requests')
-                    .select('id, created_at, title, event_type, status')
+                    .select('id, created_at, title, event_type, status, budget_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('catering_requests')
-                    .select('id, created_at, title, event_type, status')
+                    .select('id, created_at, title, event_type, status, budget_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('beauty_requests')
-                    .select('id, created_at, event_title, event_type, status')
+                    .select('id, created_at, event_title, event_type, status, price_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('florist_requests')
-                    .select('id, created_at, event_title, event_type, status')
+                    .select('id, created_at, event_title, event_type, status, price_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('wedding_planning_requests')
-                    .select('id, created_at, event_title, event_type, status')
+                    .select('id, created_at, event_title, event_type, status, budget_range')
                     .in('status', ['open', 'pending'])
                     .order('created_at', { ascending: false }),
                 supabaseAdmin
                     .from('requests')
-                    .select('id, created_at, event_title, service_category, open')
+                    .select('id, created_at, event_title, service_category, open, price_range')
                     .eq('open', true)
                     .order('created_at', { ascending: false })
             ]);
@@ -84,20 +84,20 @@ function UncontactedBusinesses() {
 
             // Combine all requests with their service categories
             const allRequests = [
-                ...(photographyRequests || []).map(req => ({ ...req, service_category: 'photography' })),
-                ...(videographyRequests || []).map(req => ({ ...req, service_category: 'videography' })),
-                ...(djRequests || []).map(req => ({ ...req, service_category: 'dj', event_title: req.title })),
-                ...(cateringRequests || []).map(req => ({ ...req, service_category: 'catering', event_title: req.title })),
-                ...(beautyRequests || []).map(req => ({ ...req, service_category: 'beauty' })),
-                ...(floristRequests || []).map(req => ({ ...req, service_category: 'florist' })),
-                ...(planningRequests || []).map(req => ({ ...req, service_category: 'wedding_planning' })),
-                ...(generalRequests || []).map(req => ({ ...req, event_type: req.service_category }))
+                ...(photographyRequests || []).map(req => ({ ...req, service_category: 'photography', budget: req.price_range })),
+                ...(videographyRequests || []).map(req => ({ ...req, service_category: 'videography', budget: req.price_range })),
+                ...(djRequests || []).map(req => ({ ...req, service_category: 'dj', event_title: req.title, budget: req.budget_range })),
+                ...(cateringRequests || []).map(req => ({ ...req, service_category: 'catering', event_title: req.title, budget: req.budget_range })),
+                ...(beautyRequests || []).map(req => ({ ...req, service_category: 'beauty', budget: req.price_range })),
+                ...(floristRequests || []).map(req => ({ ...req, service_category: 'florist', budget: req.price_range })),
+                ...(planningRequests || []).map(req => ({ ...req, service_category: 'wedding_planning', budget: req.budget_range })),
+                ...(generalRequests || []).map(req => ({ ...req, event_type: req.service_category, budget: req.price_range }))
             ].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
             // Get all businesses
             const { data: businesses, error: businessesError } = await supabaseAdmin
                 .from('business_profiles')
-                .select('id, business_name, phone, business_category');
+                .select('id, business_name, phone, business_category, notification_preferences');
 
             if (businessesError) throw businessesError;
 
@@ -135,11 +135,21 @@ function UncontactedBusinesses() {
 
             // Organize businesses by request
             const businessesByRequest = {};
+            let totalBusinessesFiltered = 0;
+            let totalBusinessesWithNoTextNotifications = 0;
+            let totalBusinessesBelowBudget = 0;
+            
             allRequests.forEach(request => {
+                // Debug: Log the request being processed
+                console.log(`Processing request: ${request.id} (${request.service_category})`);
+                
                 // Filter businesses that haven't bid on this request and match the request's category
                 const uncontacted = businesses.filter(business => {
                     // Skip businesses without phone numbers
-                    if (!business.phone) return false;
+                    if (!business.phone) {
+                        console.log(`Business ${business.business_name} skipped: no phone number`);
+                        return false;
+                    }
 
                     // Get business categories as an array
                     const businessCategories = Array.isArray(business.business_category) 
@@ -148,22 +158,72 @@ function UncontactedBusinesses() {
 
                     // Check if business category matches request category
                     if (!businessCategories.includes(request.service_category)) {
+                        console.log(`Business ${business.business_name} skipped: category mismatch (${businessCategories.join(', ')} vs ${request.service_category})`);
                         return false;
                     }
 
                     // If global category filter is set, check against it
                     if (selectedCategory !== 'all' && !businessCategories.includes(selectedCategory)) {
+                        console.log(`Business ${business.business_name} skipped: global category mismatch (${businessCategories.join(', ')} vs ${selectedCategory})`);
                         return false;
                     }
 
                     // Check if business has bid on this request
                     if (requestBidsMap[request.id]?.has(business.id)) {
+                        console.log(`Business ${business.business_name} skipped: already bid on this request`);
                         return false;
                     }
 
                     // Check if business has viewed this request
                     if (requestViewsMap[request.id]?.has(business.id)) {
+                        console.log(`Business ${business.business_name} skipped: already viewed this request`);
                         return false;
+                    }
+
+                    // Check text notification preferences
+                    const preferences = business.notification_preferences || {};
+                    // Default to true if no preferences are set (new businesses or businesses that haven't set preferences yet)
+                    const textNotifications = preferences.textNotifications !== false; // Default to true if not specified
+                    const notifyOnNewRequests = preferences.notifyOnNewRequests !== false; // Default to true if not specified
+                    
+                    // Debug: Log preferences for businesses being filtered
+                    if (preferences.textNotifications === false || preferences.notifyOnNewRequests === false) {
+                        console.log(`Business ${business.business_name} has explicit preferences:`, preferences);
+                    }
+                    
+                    // If business doesn't want text notifications or new request notifications, skip them
+                    if (!textNotifications || !notifyOnNewRequests) {
+                        totalBusinessesWithNoTextNotifications++;
+                        console.log(`Business ${business.business_name} skipped: no text notifications enabled (preferences: ${JSON.stringify(preferences)})`);
+                        return false;
+                    }
+
+                    // Check minimum budget requirement if set
+                    const minimumBudget = preferences.minimumBudgetForNotifications || 0;
+                    if (minimumBudget > 0) {
+                        // Extract budget amount from request
+                        let budgetAmount = 0;
+                        const budgetField = request.budget;
+                        
+                        if (budgetField) {
+                            if (typeof budgetField === 'string') {
+                                // Handle string format like "$500 - $1000" or "$500"
+                                const budgetMatch = budgetField.toString().match(/\$?(\d+)/);
+                                if (budgetMatch) {
+                                    budgetAmount = parseInt(budgetMatch[1]);
+                                }
+                            } else if (typeof budgetField === 'object' && budgetField?.type === 'custom') {
+                                // Handle custom budget object
+                                budgetAmount = budgetField.min || 0;
+                            }
+                        }
+                        
+                        // If we have a budget amount and it's below minimum, skip this business
+                        if (budgetAmount > 0 && budgetAmount < minimumBudget) {
+                            totalBusinessesBelowBudget++;
+                            console.log(`Business ${business.business_name} skipped: below minimum budget (${budgetAmount} < ${minimumBudget})`);
+                            return false;
+                        }
                     }
 
                     return true;
@@ -176,6 +236,13 @@ function UncontactedBusinesses() {
                     };
                 }
             });
+
+            // Log filtering statistics
+            console.log(`UncontactedBusinesses filtering results:`);
+            console.log(`- Total businesses with no text notifications: ${totalBusinessesWithNoTextNotifications}`);
+            console.log(`- Total businesses below budget requirements: ${totalBusinessesBelowBudget}`);
+            console.log(`- Total businesses filtered out: ${totalBusinessesWithNoTextNotifications + totalBusinessesBelowBudget}`);
+            console.log(`- Final uncontacted businesses: ${Object.values(businessesByRequest).reduce((total, { businesses }) => total + businesses.length, 0)}`);
 
             setUncontactedBusinesses(businessesByRequest);
         } catch (err) {
@@ -197,7 +264,7 @@ function UncontactedBusinesses() {
         }
         
         // Generate message template with request details
-        const message = `You have a new ${request.service_category} request to view on Bidi! Click here to view: https://savewithbidi.com/submit-bid/${request.id}`;
+        const message = `You have a new ${request.service_category} request to view on Bidi! Click here to view: https://bidievents.com/business-dashboard`;
         
         // Create the sms link
         const smsLink = `sms:${formattedPhone}?body=${encodeURIComponent(message)}`;
@@ -254,6 +321,29 @@ function UncontactedBusinesses() {
                 These businesses have not bid on recent requests matching their service category.
             </p>
             
+            {/* Add filtering summary */}
+            <div className="filtering-summary" style={{ 
+                backgroundColor: '#f8f9fa', 
+                padding: '15px', 
+                borderRadius: '8px', 
+                marginBottom: '20px',
+                border: '1px solid #dee2e6'
+            }}>
+                <h6 style={{ marginBottom: '10px', color: '#495057' }}>
+                    <i className="fas fa-info-circle" style={{ marginRight: '8px' }}></i>
+                    Text Notification Filtering
+                </h6>
+                <p style={{ marginBottom: '8px', fontSize: '14px', color: '#6c757d' }}>
+                    Businesses are only shown if they:
+                </p>
+                <ul style={{ marginBottom: '0', fontSize: '14px', color: '#6c757d', paddingLeft: '20px' }}>
+                    <li>Have text notifications enabled</li>
+                    <li>Have new request notifications enabled</li>
+                    <li>Meet minimum budget requirements (if set)</li>
+                    <li>Have a valid phone number</li>
+                </ul>
+            </div>
+            
             {successMessage && <Alert variant="success" className="mobile-alert">{successMessage}</Alert>}
             {error && <Alert variant="danger" className="mobile-alert">{error}</Alert>}
             
@@ -284,6 +374,14 @@ function UncontactedBusinesses() {
                                     <Badge bg="secondary" className="business-count">
                                         {businesses.length} businesses
                                     </Badge>
+                                    {request.budget && (
+                                        <Badge bg="info" className="budget-badge" style={{ marginLeft: '8px' }}>
+                                            <i className="fas fa-dollar-sign icon-space"></i>
+                                            {typeof request.budget === 'string' ? request.budget : 
+                                             request.budget?.type === 'custom' ? `$${request.budget.min} - $${request.budget.max}` : 
+                                             'Budget set'}
+                                        </Badge>
+                                    )}
                                 </div>
                             </div>
                         </Accordion.Header>

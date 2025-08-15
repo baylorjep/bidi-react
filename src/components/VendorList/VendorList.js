@@ -12,6 +12,7 @@ import LoadingPlaceholder from '../Common/LoadingPlaceholder';
 import LoadingSpinner from '../LoadingSpinner';
 import ImageErrorBoundary from '../Common/ImageErrorBoundary';
 import ImageModal from '../Business/Portfolio/ImageModal';
+import RequestModal from '../Request/RequestModal';
 
 // Skeleton loading component
 const VendorSkeleton = () => {
@@ -208,10 +209,29 @@ const VendorList = ({
     const [convertedUrls, setConvertedUrls] = useState({});
     const [convertingImages, setConvertingImages] = useState({});
     const [visibleVendors, setVisibleVendors] = useState([]);
+    const [isMobile, setIsMobile] = useState(false);
+    const [isTablet, setIsTablet] = useState(false);
     const observerRef = useRef(null);
     const vendorRefs = useRef({});
     const navigate = useNavigate();
     const [selectedImage, setSelectedImage] = useState(null);
+    const [requestModalOpen, setRequestModalOpen] = useState(false);
+    const [selectedVendorForRequest, setSelectedVendorForRequest] = useState(null);
+    const [selectedCategoryForRequest, setSelectedCategoryForRequest] = useState(null);
+
+    // Add device detection
+    useEffect(() => {
+        const checkDeviceType = () => {
+            const width = window.innerWidth;
+            setIsMobile(width <= 768);
+            setIsTablet(width > 768 && width <= 1024);
+        };
+
+        checkDeviceType();
+        window.addEventListener('resize', checkDeviceType);
+        
+        return () => window.removeEventListener('resize', checkDeviceType);
+    }, []);
 
     const truncateText = (text, maxLength = 150) => {
         if (!text) return "";
@@ -810,7 +830,20 @@ const VendorList = ({
                     height: sliderContainer.offsetHeight
                 });
             }
-        }
+        },
+        // Mobile-specific settings
+        ...(isMobile && {
+            swipeToSlide: true,
+            touchThreshold: 10,
+            swipeEvent: true,
+            edgeFriction: 0.15
+        }),
+        // Tablet-specific settings
+        ...(isTablet && {
+            swipeToSlide: true,
+            touchThreshold: 15,
+            edgeFriction: 0.2
+        })
     };
 
     function SampleNextArrow(props) {
@@ -917,42 +950,60 @@ const VendorList = ({
     };
 
     const handleGetQuote = (vendor) => {
-        // Format the vendor data as expected by MasterRequestFlow
+        // Format the vendor data as expected by RequestModal
         const vendorData = {
-            vendor: {
-                id: vendor.id,
-                business_name: vendor.business_name,
-                business_category: vendor.business_category,
-                business_address: vendor.business_address,
-                profile_photo_url: vendor.profile_photo_url
-            },
-            image: vendor.profile_photo_url
+            id: vendor.id,
+            business_name: vendor.business_name,
+            business_category: vendor.business_category,
+            business_address: vendor.business_address,
+            profile_photo_url: vendor.profile_photo_url,
+            image: vendor.profile_photo_url // Add image property for RequestModal compatibility
         };
 
-        // Format the category to match the expected format in RequestCategories.js
+        // Format the category to match the expected format in RequestModal
         let formattedCategory;
         if (Array.isArray(vendor.business_category)) {
             formattedCategory = vendor.business_category[0];
         } else {
             formattedCategory = vendor.business_category;
         }
+        
+        // Map to canonical category names if needed
         if (formattedCategory) {
             if (formattedCategory.toLowerCase().includes('wedding planner')) {
-                formattedCategory = 'WeddingPlanning';
+                formattedCategory = 'planner';
             } else if (formattedCategory.toLowerCase().includes('beauty')) {
-                formattedCategory = 'HairAndMakeup';
+                formattedCategory = 'beauty';
+            } else if (formattedCategory.toLowerCase().includes('photography')) {
+                formattedCategory = 'photographer';
+            } else if (formattedCategory.toLowerCase().includes('videography')) {
+                formattedCategory = 'videographer';
+            } else if (formattedCategory.toLowerCase().includes('catering')) {
+                formattedCategory = 'caterer';
+            } else if (formattedCategory.toLowerCase().includes('florist') || formattedCategory.toLowerCase().includes('flowers')) {
+                formattedCategory = 'florist';
+            } else if (formattedCategory.toLowerCase().includes('dj') || formattedCategory.toLowerCase().includes('disc jockey')) {
+                formattedCategory = 'dj';
+            } else if (formattedCategory.toLowerCase().includes('venue')) {
+                formattedCategory = 'venue';
             } else {
-                formattedCategory = formattedCategory.charAt(0).toUpperCase() + formattedCategory.slice(1).replace(/\s/g, '');
+                // Default to the original category
+                formattedCategory = formattedCategory.toLowerCase();
             }
         }
 
-        // Navigate to the master request flow with the vendor data and selected category
-        navigate("/master-request-flow", { 
-            state: { 
-                vendor: vendorData,
-                selectedCategories: [formattedCategory]
-            }
-        });
+        // Set the selected vendor and category, then open the RequestModal
+        console.log('Setting vendor data:', vendorData);
+        console.log('Setting category:', formattedCategory);
+        setSelectedVendorForRequest(vendorData);
+        setSelectedCategoryForRequest(formattedCategory);
+        setRequestModalOpen(true);
+    };
+
+    const handleRequestModalClose = () => {
+        setRequestModalOpen(false);
+        setSelectedVendorForRequest(null);
+        setSelectedCategoryForRequest(null);
     };
 
     const handleMoreInfo = (vendor) => {
@@ -1179,11 +1230,13 @@ const VendorList = ({
             {Array.isArray(vendors) && vendors.map(vendor => (
                 <div 
                     key={vendor.id} 
-                    className="vendor-card" 
+                    className={`vendor-card ${isMobile ? 'mobile' : ''} ${isTablet ? 'tablet' : ''}`}
                     data-vendor-id={vendor.id}
                     ref={el => vendorRefs.current[vendor.id] = el}
                 >
-                    <div className="portfolio-images" style={{ minHeight: '300px' }}>
+                    <div className="portfolio-images" style={{ 
+                        minHeight: isMobile ? '250px' : isTablet ? '300px' : '300px' 
+                    }}>
                         {(vendor.portfolio_photos && vendor.portfolio_photos.length > 0) ? (
                             <Slider {...settings}>
                                 {vendor.portfolio_photos.map((item, index) => 
@@ -1193,7 +1246,7 @@ const VendorList = ({
                                     <div className="loading-more-photos" 
                                          style={{ 
                                              height: '100%',
-                                             minHeight: '300px',
+                                             minHeight: isMobile ? '250px' : '300px',
                                              display: 'flex',
                                              alignItems: 'center',
                                              justifyContent: 'center'
@@ -1202,8 +1255,8 @@ const VendorList = ({
                                             <LoadingSpinner 
                                                 variant="dots" 
                                                 color="#ff008a" 
-                                                size={30}
-                                                text="Loading more photos..." 
+                                                size={isMobile ? 24 : 30}
+                                                text={isMobile ? "Loading..." : "Loading more photos..."} 
                                             />
                                         )}
                                     </div>
@@ -1212,7 +1265,7 @@ const VendorList = ({
                         ) : (
                             <div style={{ 
                                 height: '100%',
-                                minHeight: '300px',
+                                minHeight: isMobile ? '250px' : '300px',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center'
@@ -1228,7 +1281,14 @@ const VendorList = ({
                         )}
                     </div>
                     <div className="vendor-info">
-                        <div className="vendor-header" style={{display:'flex', flexDirection:'row', justifyContent:'left', alignItems:'center', marginLeft:'12px', gap:'4px'}}>
+                        <div className="vendor-header" style={{
+                            display: 'flex', 
+                            flexDirection: isMobile ? 'column' : 'row', 
+                            justifyContent: 'left', 
+                            alignItems: isMobile ? 'flex-start' : 'center', 
+                            marginLeft: isMobile ? '0' : '12px', 
+                            gap: isMobile ? '8px' : '4px'
+                        }}>
                             <img 
                                 src={vendor.profile_photo_url} 
                                 alt={vendor.business_name} 
@@ -1237,103 +1297,191 @@ const VendorList = ({
                                 style={{ cursor: 'pointer' }}
                                 onError={(e) => { e.target.src = '/images/default.jpg'; }} 
                             />
-                            <div style={{display:'flex', flexDirection:'row', justifyContent:'center', alignItems:'left', marginLeft:'12px', gap:'4px'}}>
-                            <h2 className="vendor-name">
-                                {vendor.business_name}
-                            </h2>
+                            <div style={{
+                                display: 'flex', 
+                                flexDirection: isMobile ? 'column' : 'row', 
+                                justifyContent: 'center', 
+                                alignItems: isMobile ? 'flex-start' : 'left', 
+                                marginLeft: isMobile ? '0' : '12px', 
+                                gap: isMobile ? '4px' : '4px',
+                                width: isMobile ? '100%' : 'auto'
+                            }}>
+                                <h2 className="vendor-name" style={{
+                                    fontSize: isMobile ? '18px' : '1.5rem',
+                                    marginBottom: isMobile ? '8px' : '0'
+                                }}>
+                                    {vendor.business_name}
+                                </h2>
 
-                            <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'left'}}>
-                                {(vendor.is_verified || vendor.Bidi_Plus) && (
-                                    <div className="verified-check-container" onClick={handleCheckClick}>
-                                        <img style={{marginLeft:'4px', marginBottom:'4px'}} src={Verified} alt="Verified" />
-                                        <span className="verified-tooltip">
-                                            This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
+                                <div style={{
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    justifyContent: 'center', 
+                                    alignItems: isMobile ? 'flex-start' : 'left',
+                                    gap: isMobile ? '4px' : '0'
+                                }}>
+                                    {(vendor.is_verified || vendor.Bidi_Plus) && (
+                                        <div className="verified-check-container" onClick={handleCheckClick}>
+                                            <img style={{
+                                                marginLeft: isMobile ? '0' : '4px', 
+                                                marginBottom: isMobile ? '0' : '4px',
+                                                width: isMobile ? '20px' : 'auto',
+                                                height: isMobile ? '20px' : 'auto'
+                                            }} src={Verified} alt="Verified" />
+                                            <span className="verified-tooltip">
+                                                This business is verified by Bidi. You will have a 100% money back guarantee if you pay through Bidi.
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                                <div style={{
+                                    display: 'flex', 
+                                    flexDirection: 'column', 
+                                    justifyContent: 'center', 
+                                    alignItems: isMobile ? 'flex-start' : 'left'
+                                }}>
+                                    {vendor.average_rating && (
+                                        <span className="vendor-rating" style={{
+                                            fontSize: isMobile ? '13px' : 'auto'
+                                        }}>
+                                            <img src={StarIcon} alt="Star" className="star-icon" />
+                                            {vendor.average_rating}
+                                            <span className="review-count">({vendor.reviews?.length || 0} reviews)</span>
                                         </span>
-                                    </div>
-                                )}
-                            </div>
-                            <div style={{display:'flex', flexDirection:'column', justifyContent:'center', alignItems:'left'}}>
-                                {vendor.average_rating && (
-                                    <span className="vendor-rating">
-                                        <img src={StarIcon} alt="Star" className="star-icon" />
-                                        {vendor.average_rating}
-                                        <span className="review-count">({vendor.reviews?.length || 0} reviews)</span>
-                                    </span>
-                                )}
-                            </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
-                        <div style={{display:'flex', flexDirection:'column', minHeight:'160px', width:'100%'}}>
-                        <div style={{textAlign:'left', display:'flex', flexDirection:'row', gap:'8px', justifyContent:'left', width:'100%'}}>
-                        <p className="vendor-location"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 21 21" fill="none">
-  <path d="M15.9676 11.7334C15.2798 13.127 14.3489 14.5164 13.3951 15.7632C12.4442 17.0061 11.4902 18.0821 10.7726 18.8481C10.6772 18.9499 10.5862 19.0461 10.5 19.1363C10.4138 19.0461 10.3228 18.9499 10.2274 18.8481C9.50982 18.0821 8.55577 17.0061 7.60495 15.7632C6.65115 14.5164 5.7202 13.127 5.03243 11.7334C4.33756 10.3255 3.9375 9.00625 3.9375 7.875C3.9375 4.25063 6.87563 1.3125 10.5 1.3125C14.1244 1.3125 17.0625 4.25063 17.0625 7.875C17.0625 9.00625 16.6624 10.3255 15.9676 11.7334ZM10.5 21C10.5 21 18.375 13.5367 18.375 7.875C18.375 3.52576 14.8492 0 10.5 0C6.15076 0 2.625 3.52576 2.625 7.875C2.625 13.5367 10.5 21 10.5 21Z" fill="#7E7684"/>
-  <path d="M10.5 10.5C9.05025 10.5 7.875 9.32475 7.875 7.875C7.875 6.42525 9.05025 5.25 10.5 5.25C11.9497 5.25 13.125 6.42525 13.125 7.875C13.125 9.32475 11.9497 10.5 10.5 10.5ZM10.5 11.8125C12.6746 11.8125 14.4375 10.0496 14.4375 7.875C14.4375 5.70038 12.6746 3.9375 10.5 3.9375C8.32538 3.9375 6.5625 5.70038 6.5625 7.875C6.5625 10.0496 8.32538 11.8125 10.5 11.8125Z" fill="#7E7684"/>
-</svg> {vendor.business_address || "Location not available"}</p>
-                        <p className="vendor-price"><svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 14 14" fill="none">
-  <path d="M3.5 9.43363C3.62934 10.8923 4.82383 11.9268 6.64219 12.0608V13.125H7.55517V12.0608C9.54091 11.9045 10.7734 10.803 10.7734 9.17315C10.7734 7.78144 9.94414 6.97767 8.18665 6.52369L7.55517 6.35996V3.03326C8.53663 3.13001 9.19854 3.65841 9.36592 4.4473H10.6517C10.5072 3.04815 9.30506 2.04344 7.55517 1.9318V0.875H6.64219V1.95413C4.94556 2.15507 3.7815 3.24165 3.7815 4.71522C3.7815 5.98785 4.62601 6.88837 6.10961 7.26792L6.64219 7.40933V10.937C5.6379 10.7881 4.94556 10.2374 4.77818 9.43363H3.5ZM6.4672 6.07716C5.55421 5.84645 5.06729 5.35525 5.06729 4.66312C5.06729 3.83703 5.68355 3.22676 6.64219 3.06303V6.12181L6.4672 6.07716ZM7.8595 7.71446C8.98551 7.99727 9.48004 8.46613 9.48004 9.26245C9.48004 10.2225 8.75727 10.8625 7.55517 10.9593V7.64004L7.8595 7.71446Z" fill="#7E7684"/>
-</svg> Starting at ${vendor.minimum_price || "0"}</p>    
-                        </div>
+                        <div style={{
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            minHeight: isMobile ? '140px' : '160px', 
+                            width: '100%'
+                        }}>
+                            <div style={{
+                                textAlign: 'left', 
+                                display: 'flex', 
+                                flexDirection: isMobile ? 'column' : 'row', 
+                                gap: isMobile ? '4px' : '8px', 
+                                justifyContent: 'left', 
+                                width: '100%'
+                            }}>
+                                <p className="vendor-location" style={{
+                                    fontSize: isMobile ? '13px' : '14px',
+                                    marginBottom: isMobile ? '4px' : '0'
+                                }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "18" : "21"} height={isMobile ? "18" : "21"} viewBox="0 0 21 21" fill="none">
+                                        <path d="M15.9676 11.7334C15.2798 13.127 14.3489 14.5164 13.3951 15.7632C12.4442 17.0061 11.4902 18.0821 10.7726 18.8481C10.6772 18.9499 10.5862 19.0461 10.5 19.1363C10.4138 19.0461 10.3228 18.9499 10.2274 18.8481C9.50982 18.0821 8.55577 17.0061 7.60495 15.7632C6.65115 14.5164 5.7202 13.127 5.03243 11.7334C4.33756 10.3255 3.9375 9.00625 3.9375 7.875C3.9375 4.25063 6.87563 1.3125 10.5 1.3125C14.1244 1.3125 17.0625 4.25063 17.0625 7.875C17.0625 9.00625 16.6624 10.3255 15.9676 11.7334ZM10.5 21C10.5 21 18.375 13.5367 18.375 7.875C18.375 3.52576 14.8492 0 10.5 0C6.15076 0 2.625 3.52576 2.625 7.875C2.625 13.5367 10.5 21 10.5 21Z" fill="#7E7684"/>
+                                        <path d="M10.5 10.5C9.05025 10.5 7.875 9.32475 7.875 7.875C7.875 6.42525 9.05025 5.25 10.5 5.25C11.9497 5.25 13.125 6.42525 13.125 7.875C13.125 9.32475 11.9497 10.5 10.5 10.5ZM10.5 11.8125C12.6746 11.8125 14.4375 10.0496 14.4375 7.875C14.4375 5.70038 12.6746 3.9375 10.5 3.9375C8.32538 3.9375 6.5625 5.70038 6.5625 7.875C6.5625 10.0496 8.32538 11.8125 10.5 11.8125Z" fill="#7E7684"/>
+                                    </svg> {vendor.business_address || "Location not available"}
+                                </p>
+                                <p className="vendor-price" style={{
+                                    fontSize: isMobile ? '13px' : '14px'
+                                }}>
+                                    <svg xmlns="http://www.w3.org/2000/svg" width={isMobile ? "18" : "21"} height={isMobile ? "18" : "21"} viewBox="0 0 14 14" fill="none">
+                                        <path d="M3.5 9.43363C3.62934 10.8923 4.82383 11.9268 6.64219 12.0608V13.125H7.55517V12.0608C9.54091 11.9045 10.7734 10.803 10.7734 9.17315C10.7734 7.78144 9.94414 6.97767 8.18665 6.52369L7.55517 6.35996V3.03326C8.53663 3.13001 9.19854 3.65841 9.36592 4.4473H10.6517C10.5072 3.04815 9.30506 2.04344 7.55517 1.9318V0.875H6.64219V1.95413C4.94556 2.15507 3.7815 3.24165 3.7815 4.71522C3.7815 5.98785 4.62601 6.88837 6.10961 7.26792L6.64219 7.40933V10.937C5.6379 10.7881 4.94556 10.2374 4.77818 9.43363H3.5ZM6.4672 6.07716C5.55421 5.84645 5.06729 5.35525 5.06729 4.66312C5.06729 3.83703 5.68355 3.22676 6.64219 3.06303V6.12181L6.4672 6.07716ZM7.8595 7.71446C8.98551 7.99727 9.48004 8.46613 9.48004 9.26245C9.48004 10.2225 8.75727 10.8625 7.55517 10.9593V7.64004L7.8595 7.71446Z" fill="#7E7684"/>
+                                    </svg> Starting at ${vendor.minimum_price || "0"}
+                                </p>    
+                            </div>
 
-                        <div className="vendor-description" style={{textAlign:'left'}}>
-                            <div style={{textAlign:'left'}}>
-                                <strong>
-                                    {expandedDescriptions[vendor.id] 
-                                        ? <div dangerouslySetInnerHTML={{ __html: vendor.business_description }} />
-                                        : (vendor.business_description && vendor.business_description.includes('<') 
-                                            ? <div>{truncateText(vendor.business_description)}</div>
-                                            : <div dangerouslySetInnerHTML={{ __html: truncateText(vendor.business_description) }} />
+                            <div className="vendor-description" style={{
+                                textAlign: 'left',
+                                fontSize: isMobile ? '14px' : '1rem'
+                            }}>
+                                <div style={{textAlign: 'left'}}>
+                                    <strong>
+                                        {expandedDescriptions[vendor.id] 
+                                            ? <div dangerouslySetInnerHTML={{ __html: vendor.business_description }} />
+                                            : (vendor.business_description && vendor.business_description.includes('<') 
+                                                ? <div>{truncateText(vendor.business_description)}</div>
+                                                : <div dangerouslySetInnerHTML={{ __html: truncateText(vendor.business_description) }} />
+                                              )
+                                        }
+                                    </strong>
+                                </div>
+                                {vendor.business_description && (vendor.business_description.length > 150 || (vendor.business_description.includes('<') && (vendor.business_description.replace(/<[^>]*>/g, '')).length > 150)) && (
+                                    <button 
+                                        onClick={() => toggleDescription(vendor.id)}
+                                        className="read-more-button"
+                                        style={{
+                                            fontSize: isMobile ? '12px' : '0.9em',
+                                            padding: isMobile ? '6px 12px' : '4px 20px'
+                                        }}
+                                    >
+                                        {expandedDescriptions[vendor.id] ? 'Read Less' : 'Read More'}
+                                    </button>
+                                )}
+                            </div>
+                            <div className="vendor-story">
+                                <div className="vendor-description" style={{
+                                    fontSize: isMobile ? '14px' : '1rem'
+                                }}>
+                                    {expandedStories[vendor.id] 
+                                        ? <div dangerouslySetInnerHTML={{ __html: vendor.story }} />
+                                        : (vendor.story && vendor.story.includes('<')
+                                            ? <div>{truncateText(vendor.story)}</div>
+                                            : <div dangerouslySetInnerHTML={{ __html: truncateText(vendor.story) }} />
                                           )
                                     }
-                                </strong>
+                                </div>
+                                {vendor.story && (vendor.story.length > 150 || (vendor.story.includes('<') && (vendor.story.replace(/<[^>]*>/g, '')).length > 150)) && (
+                                    <button 
+                                        onClick={() => toggleStory(vendor.id)}
+                                        className="read-more-button"
+                                        style={{
+                                            fontSize: isMobile ? '12px' : '0.9em',
+                                            padding: isMobile ? '6px 12px' : '4px 20px'
+                                        }}
+                                    >
+                                        {expandedStories[vendor.id] ? 'Read Less' : 'Read More'}
+                                    </button>
+                                )}
                             </div>
-                            {vendor.business_description && (vendor.business_description.length > 150 || (vendor.business_description.includes('<') && (vendor.business_description.replace(/<[^>]*>/g, '')).length > 150)) && (
-                                <button 
-                                    onClick={() => toggleDescription(vendor.id)}
-                                    className="read-more-button"
-                                >
-                                    {expandedDescriptions[vendor.id] ? 'Read Less' : 'Read More'}
-                                </button>
-                            )}
-                        </div>
-                        <div className="vendor-story">
-                            <div className="vendor-description">
-                                {expandedStories[vendor.id] 
-                                    ? <div dangerouslySetInnerHTML={{ __html: vendor.story }} />
-                                    : (vendor.story && vendor.story.includes('<')
-                                        ? <div>{truncateText(vendor.story)}</div>
-                                        : <div dangerouslySetInnerHTML={{ __html: truncateText(vendor.story) }} />
-                                      )
-                                }
-                            </div>
-                            {vendor.story && (vendor.story.length > 150 || (vendor.story.includes('<') && (vendor.story.replace(/<[^>]*>/g, '')).length > 150)) && (
-                                <button 
-                                    onClick={() => toggleStory(vendor.id)}
-                                    className="read-more-button"
-                                >
-                                    {expandedStories[vendor.id] ? 'Read Less' : 'Read More'}
-                                </button>
-                            )}
-                        </div>
                         </div>
 
                         {vendor.specializations && vendor.specializations.length > 0 && (
-                            <ul className="vendor-specializations">
+                            <ul className="vendor-specializations" style={{
+                                gap: isMobile ? '6px' : '10px',
+                                margin: isMobile ? '8px 0' : '10px 0'
+                            }}>
                                 {vendor.specializations.map((specialization, index) => (
-                                    <li key={index}>{specialization}</li>
+                                    <li key={index} style={{
+                                        fontSize: isMobile ? '12px' : 'auto',
+                                        padding: isMobile ? '4px 8px' : '6px 12px'
+                                    }}>{specialization}</li>
                                 ))}
                             </ul>
                         )}
-                        <div className="vendor-buttons">
+                        <div className="vendor-buttons-vendor-list" style={{
+                            flexDirection: isMobile ? 'column' : 'row',
+                            gap: isMobile ? '8px' : '12px',
+                            marginTop: isMobile ? '12px' : '16px'
+                        }}>
                             <button 
-                                className={`vendor-button ${isVendorSelected(vendor.id) ? 'selected' : ''}`}
+                                className={`vendor-button-vendor-list ${isVendorSelected(vendor.id) ? 'selected' : ''}`}
                                 onClick={() => handleVendorSelect(vendor)}
+                                style={{
+                                    width: isMobile ? '100%' : 'auto',
+                                    padding: isMobile ? '12px' : '10px 20px',
+                                    fontSize: isMobile ? '14px' : '16px'
+                                }}
                             >
                                 {showSelectionButton 
                                     ? (isVendorSelected(vendor.id) ? 'Selected ✓' : customButtonText)
                                     : 'Get a Tailored Bid'
                                 }
                             </button>
-                            <button className="vendor-button-secondary" onClick={() => handleMoreInfo(vendor)}>See Profile</button>
+                            <button 
+                                className="vendor-button-vendor-list-secondary" 
+                                onClick={() => handleMoreInfo(vendor)}
+                                style={{
+                                    width: isMobile ? '100%' : 'auto',
+                                    padding: isMobile ? '12px' : '10px 20px',
+                                    fontSize: isMobile ? '14px' : '16px'
+                                }}
+                            >
+                                See Profile
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -1388,6 +1536,27 @@ const VendorList = ({
                 categoryMedia={selectedImage?.categoryMedia || []}
                 currentIndex={selectedImage?.currentIndex || 0}
             />
+            
+            {/* Request Modal for Tailored Bids */}
+            {requestModalOpen && (
+                <>
+                    {console.log('Rendering RequestModal with props:', {
+                        isOpen: requestModalOpen,
+                        selectedVendors: selectedCategoryForRequest ? [selectedCategoryForRequest] : [],
+                        vendor: selectedVendorForRequest,
+                        selectedCategoryForRequest
+                    })}
+                    <RequestModal
+                        isOpen={requestModalOpen}
+                        onClose={handleRequestModalClose}
+                        selectedVendors={selectedCategoryForRequest ? [selectedCategoryForRequest] : []}
+                        searchFormData={null}
+                        isEditMode={false}
+                        existingRequestData={null}
+                        vendor={selectedVendorForRequest}
+                    />
+                </>
+            )}
         </div>
     );
 };

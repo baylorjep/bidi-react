@@ -4,6 +4,7 @@ import '../../styles/Sidebar.css';
 const sections = [
   { key: 'profile', label: 'Profile', icon: 'fas fa-user' },
   { key: 'payments', label: 'Payments', icon: 'fas fa-dollar-sign' },
+  { key: 'notifications', label: 'Notifications', icon: 'fas fa-bell' },
   { key: 'ai', label: 'AI', icon: 'fas fa-robot' },
   { key: 'admin', label: 'Admin', icon: 'fas fa-shield-alt' },
 ];

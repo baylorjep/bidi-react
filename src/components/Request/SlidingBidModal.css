@@ -628,3 +628,272 @@
     padding: 12px;
   }
 } 
+
+/* Bid Options Popout Animation */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+} 
+
+/* Mobile-friendly itemized quote styles */
+@media (max-width: 600px) {
+  .sbm-itemized-section {
+    padding: 12px;
+    margin: 16px 0;
+  }
+  
+  .sbm-itemized-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: stretch;
+  }
+  
+  .sbm-itemized-header h4 {
+    text-align: center;
+    margin-bottom: 8px;
+  }
+  
+  .sbm-add-line-item-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px 16px;
+    font-size: 16px;
+  }
+  
+  .sbm-line-item {
+    margin-bottom: 16px;
+    padding: 16px;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  }
+  
+  .sbm-line-item:last-child {
+    margin-bottom: 0;
+  }
+  
+  /* Mobile card layout for line items */
+  .sbm-line-item .sbm-line-item-row {
+    display: none; /* Hide desktop grid on mobile */
+  }
+  
+  /* Mobile-specific line item styling */
+  .sbm-line-item input[type="text"],
+  .sbm-line-item input[type="number"] {
+    width: 100%;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 16px;
+    background: white;
+    transition: all 0.2s ease;
+  }
+  
+  .sbm-line-item input[type="text"]:focus,
+  .sbm-line-item input[type="number"]:focus {
+    outline: none;
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+    transform: translateY(-1px);
+  }
+  
+  .sbm-line-item label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #6b7280;
+    margin-bottom: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  /* Mobile summary styling */
+  .sbm-payment-summary {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .sbm-payment-summary h4 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 18px;
+  }
+  
+  .sbm-summary-row {
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 0;
+    text-align: center;
+  }
+  
+  .sbm-summary-row.sbm-total {
+    background: #f0fdf4;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+    border: 2px solid #bbf7d0;
+  }
+  
+  /* Mobile tax section */
+  .sbm-tax-section {
+    padding: 16px;
+    border-radius: 12px;
+  }
+  
+  .sbm-tax-input {
+    align-items: center;
+    text-align: center;
+  }
+  
+  .sbm-tax-input input {
+    width: 120px;
+    text-align: center;
+    font-size: 16px;
+    padding: 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+  }
+  
+  .sbm-tax-input input:focus {
+    border-color: #059669;
+    box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
+  }
+  
+  /* Mobile bid options */
+  .sbm-toolbox-toggle {
+    width: 100%;
+    justify-content: center;
+    padding: 16px;
+    font-size: 16px;
+  }
+  
+  /* Mobile form improvements */
+  .sbm-form-section-title {
+    text-align: center;
+    font-size: 20px;
+    margin-bottom: 20px;
+  }
+  
+  /* Mobile button improvements */
+  .sbm-btn {
+    width: 100%;
+    padding: 16px 20px;
+    font-size: 16px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  
+  .sbm-btn:active {
+    transform: scale(0.98);
+  }
+  
+  .sbm-btn-submit {
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+  }
+  
+  .sbm-btn-submit:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(5, 150, 105, 0.4);
+  }
+  
+  .sbm-btn-close {
+    background: #f3f4f6;
+    color: #374151;
+    border: 2px solid #e5e7eb;
+  }
+  
+  .sbm-btn-close:hover {
+    background: #e5e7eb;
+    border-color: #d1d5db;
+  }
+}
+
+/* Enhanced animations for mobile */
+@media (max-width: 600px) {
+  .sbm-itemized-section {
+    animation: slideUp 0.3s ease-out;
+  }
+  
+  .sbm-line-item {
+    animation: fadeInUp 0.3s ease-out;
+    animation-fill-mode: both;
+  }
+  
+  .sbm-line-item:nth-child(1) { animation-delay: 0.1s; }
+  .sbm-line-item:nth-child(2) { animation-delay: 0.2s; }
+  .sbm-line-item:nth-child(3) { animation-delay: 0.3s; }
+  .sbm-line-item:nth-child(4) { animation-delay: 0.4s; }
+  .sbm-line-item:nth-child(5) { animation-delay: 0.5s; }
+  
+  .sbm-payment-summary {
+    animation: slideUp 0.4s ease-out;
+  }
+  
+  .sbm-tax-section {
+    animation: slideUp 0.5s ease-out;
+  }
+}
+
+/* Mobile animations */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(15px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Mobile touch improvements */
+@media (max-width: 600px) {
+  .sbm-line-item input,
+  .sbm-btn,
+  .sbm-toolbox-toggle {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+  
+  .sbm-line-item input:focus {
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Improve scrolling on mobile */
+  .sbm-content {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Mobile-specific spacing */
+  .sbm-itemized-help {
+    margin: 16px 0;
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  
+  .sbm-itemized-help p {
+    font-size: 14px;
+    line-height: 1.6;
+    margin: 0;
+  }
+} 

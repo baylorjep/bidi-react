@@ -3,8 +3,13 @@ import { supabase } from '../../supabaseClient';
 import { formatBusinessName } from '../../utils/formatBusinessName';
 import '../../styles/BidsPage.css';
 import BidDisplay from '../Bid/BidDisplay';
+import BidDetailModal from '../Bid/BidDetailModal';
+import BidMessaging from '../Bid/BidMessaging';
+import PortfolioModal from '../Business/Portfolio/PortfolioModal';
+import GalleryModal from '../Business/Portfolio/GalleryModal';
 import RequestDisplay from '../Request/RequestDisplay';
 import PhotoRequestDisplay from '../Request/PhotoRequestDisplay';  // Add this import
+import RequestModal from '../Request/RequestModal';
 import { useNavigate } from 'react-router-dom';
 import bidiCheck from '../../assets/images/Bidi-Favicon.png';
 // Import Swiper
@@ -78,10 +83,7 @@ const BidCardSkeleton = () => (
 
 const BidsPageSkeleton = () => (
   <div className="bids-page">
-    <h1 className="section-title">Your Service Requests</h1>
-    <p className="section-description">
-      View all your service requests and manage the bids you've received.
-    </p>
+
     
     <div className="requests-list-container">
       <div className="requests-list-bids-page">
@@ -156,6 +158,9 @@ export default function BidsPage({ onOpenChat }) {
     
     // Tab state for bid status sections
     const [activeTab, setActiveTab] = useState('all');
+    
+    // Sorting state
+    const [sortBy, setSortBy] = useState('recommended'); // 'recommended', 'high-price', 'low-price', 'newest'
 
     const [couponCode, setCouponCode] = useState('');
     const [couponError, setError] = useState(null);
@@ -173,7 +178,33 @@ export default function BidsPage({ onOpenChat }) {
     const [selectedRequest, setSelectedRequest] = useState(null);
     const [currentUserId, setCurrentUserId] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [editRequestData, setEditRequestData] = useState(null);
     const navigate = useNavigate();
+    const [bidDisplayModalOpen, setBidDisplayModalOpen] = useState(false); // New state to track BidDisplay modal
+    const [showBidDetailModal, setShowBidDetailModal] = useState(false);
+    const [selectedBidForDetail, setSelectedBidForDetail] = useState(null);
+    const [showBidMessagingFromDetail, setShowBidMessagingFromDetail] = useState(false);
+    const [selectedBidForMessagingFromDetail, setSelectedBidForMessagingFromDetail] = useState(null);
+    const [showBidMessagingFromList, setShowBidMessagingFromList] = useState(false);
+    const [selectedBidForMessagingFromList, setSelectedBidForMessagingFromList] = useState(null);
+    const [showPortfolioModal, setShowPortfolioModal] = useState(false);
+    const [selectedBusinessForPortfolio, setSelectedBusinessForPortfolio] = useState(null);
+    const [showGalleryModal, setShowGalleryModal] = useState(false);
+    const [selectedBusinessForGallery, setSelectedBusinessForGallery] = useState(null);
+    
+    // Payment Modal State
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [selectedBidForPayment, setSelectedBidForPayment] = useState(null);
+
+    // Add new state for better UX
+    const [selectedRequestId, setSelectedRequestId] = useState(null);
+    const [showRequestSummary, setShowRequestSummary] = useState(true);
+    const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+
+    // Add new state for post-approval flow
+    const [showPostApprovalModal, setShowPostApprovalModal] = useState(false);
+    const [selectedBidForPostApproval, setSelectedBidForPostApproval] = useState(null);
 
     // Memoize the loading skeleton at the top level to avoid conditional hook calls
     const loadingSkeleton = useMemo(() => <BidsPageSkeleton />, []);
@@ -203,32 +234,165 @@ export default function BidsPage({ onOpenChat }) {
         
         const requestBids = bids.filter(bid => bid.request_id === currentRequest.id);
         
-        // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+        // Calculate recommendation score for a bid
+        const calculateRecommendationScore = (bid) => {
+            let score = 0;
+            
+            // Bidi verification bonus (highest priority)
+            if (bid.business_profiles?.is_verified) {
+                score += 1000;
+            }
+            
+            // Interest rating bonus
+            const interestRating = bid.interest_rating || 0;
+            score += interestRating * 100;
+            
+            // Viewed status bonus (new bids get priority)
+            if (!bid.viewed) {
+                score += 50;
+            }
+            
+            // Business membership tier bonus
+            const membershipTier = bid.business_profiles?.membership_tier;
+            if (membershipTier === 'premium') {
+                score += 200;
+            } else if (membershipTier === 'standard') {
+                score += 100;
+            }
+            
+            return score;
+        };
+        
+        // Sort bids based on selected sorting option
         const sortBids = (bids) => {
             return bids.sort((a, b) => {
-                // First sort by viewed status (new bids first)
-                if (!a.viewed && b.viewed) return -1;
-                if (a.viewed && !b.viewed) return 1;
-                
-                // If both have same viewed status, sort by interest rating (highest first)
-                const ratingA = a.interest_rating || 0;
-                const ratingB = b.interest_rating || 0;
-                if (ratingA !== ratingB) {
-                    return ratingB - ratingA;
+                switch (sortBy) {
+                    case 'recommended':
+                        // Sort by recommendation score (highest first)
+                        const scoreA = calculateRecommendationScore(a);
+                        const scoreB = calculateRecommendationScore(b);
+                        if (scoreA !== scoreB) {
+                            return scoreB - scoreA;
+                        }
+                        // If scores are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    case 'high-price':
+                        // Sort by bid amount (highest first)
+                        const amountA = parseFloat(a.bid_amount || 0);
+                        const amountB = parseFloat(b.bid_amount || 0);
+                        if (amountA !== amountB) {
+                            return amountB - amountA;
+                        }
+                        // If amounts are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    case 'low-price':
+                        // Sort by bid amount (lowest first)
+                        const amountLowA = parseFloat(a.bid_amount || 0);
+                        const amountLowB = parseFloat(b.bid_amount || 0);
+                        if (amountLowA !== amountLowB) {
+                            return amountLowA - amountLowB;
+                        }
+                        // If amounts are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    case 'newest':
+                        // Sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
+                        
+                    default:
+                        // Default sorting (original logic)
+                        // First sort by viewed status (new bids first)
+                        if (!a.viewed && b.viewed) return -1;
+                        if (a.viewed && !b.viewed) return 1;
+                        
+                        // If both have same viewed status, sort by interest rating (highest first)
+                        const ratingA = a.interest_rating || 0;
+                        const ratingB = b.interest_rating || 0;
+                        if (ratingA !== ratingB) {
+                            return ratingB - ratingA;
+                        }
+                        
+                        // If ratings are equal, sort by creation date (newest first)
+                        return new Date(b.created_at) - new Date(a.created_at);
                 }
-                
-                // If ratings are equal, sort by creation date (newest first)
-                return new Date(b.created_at) - new Date(a.created_at);
             });
         };
         
+        // Helper function to check if a bid is fully paid
+        const isFullyPaid = (bid) => {
+            // Check if the bid is fully paid (not just down payment)
+            return bid.payment_status === 'fully_paid' || 
+                   (bid.payment_type === 'full' && bid.payment_amount && parseFloat(bid.payment_amount) >= parseFloat(bid.bid_amount));
+        };
+        
+        // Helper function to check if a bid has any payment
+        const hasAnyPayment = (bid) => {
+            const hasPaymentStatus = bid.status === 'paid' || 
+                                   bid.payment_status === 'down_payment_paid' || 
+                                   bid.payment_status === 'fully_paid';
+            
+            const hasPaymentAmount = bid.payment_amount && parseFloat(bid.payment_amount) > 0;
+            const hasLegacyPayment = bid.down_payment && parseFloat(bid.down_payment) > 0;
+            
+            return hasPaymentStatus || hasPaymentAmount || hasLegacyPayment;
+        };
+        
+        // Separate fully paid bids (historical) from active bids
+        const fullyPaidBids = requestBids.filter(bid => isFullyPaid(bid));
+        const activePaidBids = requestBids.filter(bid => hasAnyPayment(bid) && !isFullyPaid(bid));
+        
+        // Debug logging for payment status
+        console.log('Payment status debug:', {
+            totalBids: requestBids.length,
+            fullyPaidBids: fullyPaidBids.length,
+            activePaidBids: activePaidBids.length,
+            fullyPaidBidsDetails: fullyPaidBids.map(bid => ({
+                id: bid.id,
+                status: bid.status,
+                payment_status: bid.payment_status,
+                payment_type: bid.payment_type,
+                payment_amount: bid.payment_amount,
+                bid_amount: bid.bid_amount,
+                paid_at: bid.paid_at
+            }))
+        });
+
         return {
-            paid: sortBids(requestBids.filter(bid => bid.status === 'paid' && !bid.isExpired)),
-            approved: sortBids(requestBids.filter(bid => (bid.status === 'approved' || bid.status === 'accepted') && !bid.isExpired)),
-            interested: sortBids(requestBids.filter(bid => bid.status === 'interested' && !bid.isExpired)),
-            pending: sortBids(requestBids.filter(bid => bid.status === 'pending' && !bid.isExpired)),
-            denied: sortBids(requestBids.filter(bid => bid.status === 'denied' && !bid.isExpired)),
-            expired: sortBids(requestBids.filter(bid => bid.isExpired)),
+            // Historical: Fully paid bids (treated as completed/historical)
+            historical: sortBids(fullyPaidBids),
+            
+            // Active: Bids with partial payments (down payments)
+            paid: sortBids(activePaidBids),
+            
+            // Other active statuses should only show non-expired, non-paid bids
+            approved: sortBids(requestBids.filter(bid => 
+                (bid.status === 'approved' || bid.status === 'accepted') && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            interested: sortBids(requestBids.filter(bid => 
+                bid.status === 'interested' && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            pending: sortBids(requestBids.filter(bid => 
+                bid.status === 'pending' && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            denied: sortBids(requestBids.filter(bid => 
+                bid.status === 'denied' && 
+                !bid.isExpired && 
+                !hasAnyPayment(bid)
+            )),
+            
+            // Expired bids should exclude any that have payments
+            expired: sortBids(requestBids.filter(bid => {
+                if (!bid.isExpired) return false;
+                return !hasAnyPayment(bid);
+            })),
         };
     };
 
@@ -236,6 +400,8 @@ export default function BidsPage({ onOpenChat }) {
     const getNewBidsCount = (statusKey) => {
         const bidsByStatus = getBidsByStatus();
         const statusBids = bidsByStatus[statusKey] || [];
+        // Historical bids don't show new count since they're completed
+        if (statusKey === 'historical') return 0;
         return statusBids.filter(bid => !bid.viewed).length;
     };
 
@@ -290,6 +456,63 @@ export default function BidsPage({ onOpenChat }) {
             loadBids();
         }
     }, [user, currentRequestIndex, requests]);
+
+    // Reload bids when sorting changes
+    useEffect(() => {
+        if (user && requests.length > 0 && bids.length > 0) {
+            // Re-sort existing bids without fetching from database
+            const sortedBids = [...bids].sort((a, b) => {
+                switch (sortBy) {
+                    case 'recommended':
+                        const scoreA = (a.business_profiles?.is_verified ? 1000 : 0) + 
+                                     ((a.interest_rating || 0) * 100) + 
+                                     (!a.viewed ? 50 : 0) +
+                                     (a.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                      a.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                        const scoreB = (b.business_profiles?.is_verified ? 1000 : 0) + 
+                                     ((b.interest_rating || 0) * 100) + 
+                                     (!b.viewed ? 50 : 0) +
+                                     (b.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                      b.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                        if (scoreA !== scoreB) {
+                            return scoreB - scoreA;
+                        }
+                        break;
+                        
+                    case 'high-price':
+                        const amountA = parseFloat(a.bid_amount || 0);
+                        const amountB = parseFloat(b.bid_amount || 0);
+                        if (amountA !== amountB) {
+                            return amountB - amountA;
+                        }
+                        break;
+                        
+                    case 'low-price':
+                        const amountLowA = parseFloat(a.bid_amount || 0);
+                        const amountLowB = parseFloat(b.bid_amount || 0);
+                        if (amountLowA !== amountLowB) {
+                            return amountLowA - amountLowB;
+                        }
+                        break;
+                        
+                    default:
+                        if (!a.viewed && b.viewed) return -1;
+                        if (a.viewed && !b.viewed) return 1;
+                        
+                        const ratingA = a.interest_rating || 0;
+                        const ratingB = b.interest_rating || 0;
+                        if (ratingA !== ratingB) {
+                            return ratingB - ratingA;
+                        }
+                        break;
+                }
+                
+                return new Date(b.created_at) - new Date(a.created_at);
+            });
+            
+            setBids(sortedBids);
+        }
+    }, [sortBy]);
 
     const loadRequests = async (userId) => {
         try {
@@ -537,7 +760,8 @@ export default function BidsPage({ onOpenChat }) {
                         membership_tier,
                         down_payment_type,
                         amount,
-                        stripe_account_id
+                        stripe_account_id,
+                        is_verified
                     )
                 `)
                 .in('request_id', requestIds)
@@ -549,6 +773,19 @@ export default function BidsPage({ onOpenChat }) {
             }
 
             if (bidsData) {
+                // Debug: Log the first bid to see what fields are available
+                if (bidsData.length > 0) {
+                    console.log('Sample bid data:', {
+                        id: bidsData[0].id,
+                        status: bidsData[0].status,
+                        payment_status: bidsData[0].payment_status,
+                        payment_type: bidsData[0].payment_type,
+                        payment_amount: bidsData[0].payment_amount,
+                        paid_at: bidsData[0].paid_at,
+                        remaining_amount: bidsData[0].remaining_amount
+                    });
+                }
+                
                 // Filter out hidden bids but keep expired ones
                 const validBids = bidsData.filter(bid => {
                     if (bid.hidden) return false; // Skip hidden bids
@@ -609,20 +846,57 @@ export default function BidsPage({ onOpenChat }) {
                     isExpired: bid.expiration_date ? new Date(bid.expiration_date) < now : false
                 }));
 
-                // Sort bids by interest rating first (highest to lowest), then by creation date (newest first)
+                // Sort bids using the new sorting system
                 const sortedBids = bidsWithExpiration.sort((a, b) => {
-                    // First sort by viewed status (new bids first)
-                    if (!a.viewed && b.viewed) return -1;
-                    if (a.viewed && !b.viewed) return 1;
-                    
-                    // If both have same viewed status, sort by interest rating (highest first)
-                    const ratingA = a.interest_rating || 0;
-                    const ratingB = b.interest_rating || 0;
-                    if (ratingA !== ratingB) {
-                        return ratingB - ratingA;
+                    // Use the same sorting logic as in getBidsByStatus
+                    switch (sortBy) {
+                        case 'recommended':
+                            // Calculate recommendation scores
+                            const scoreA = (a.business_profiles?.is_verified ? 1000 : 0) + 
+                                         ((a.interest_rating || 0) * 100) + 
+                                         (!a.viewed ? 50 : 0) +
+                                         (a.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                          a.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                            const scoreB = (b.business_profiles?.is_verified ? 1000 : 0) + 
+                                         ((b.interest_rating || 0) * 100) + 
+                                         (!b.viewed ? 50 : 0) +
+                                         (b.business_profiles?.membership_tier === 'premium' ? 200 : 
+                                          b.business_profiles?.membership_tier === 'standard' ? 100 : 0);
+                            if (scoreA !== scoreB) {
+                                return scoreB - scoreA;
+                            }
+                            break;
+                            
+                        case 'high-price':
+                            const amountA = parseFloat(a.bid_amount || 0);
+                            const amountB = parseFloat(b.bid_amount || 0);
+                            if (amountA !== amountB) {
+                                return amountB - amountA;
+                            }
+                            break;
+                            
+                        case 'low-price':
+                            const amountLowA = parseFloat(a.bid_amount || 0);
+                            const amountLowB = parseFloat(b.bid_amount || 0);
+                            if (amountLowA !== amountLowB) {
+                                return amountLowA - amountLowB;
+                            }
+                            break;
+                            
+                        default:
+                            // Default sorting (original logic)
+                            if (!a.viewed && b.viewed) return -1;
+                            if (a.viewed && !b.viewed) return 1;
+                            
+                            const ratingA = a.interest_rating || 0;
+                            const ratingB = b.interest_rating || 0;
+                            if (ratingA !== ratingB) {
+                                return ratingB - ratingA;
+                            }
+                            break;
                     }
                     
-                    // If ratings are equal, sort by creation date (newest first)
+                    // If all else is equal, sort by creation date (newest first)
                     return new Date(b.created_at) - new Date(a.created_at);
                 });
 
@@ -636,18 +910,30 @@ export default function BidsPage({ onOpenChat }) {
     const handlePayNow = (bid) => {
         console.log('BidsPage: handlePayNow called with bid:', bid);
         try {
-            if (!bid.business_profiles.stripe_account_id) {
-                toast.error('This business is not yet set up to receive payments. Please contact them directly.');
-                return;
-            }
+            // Calculate the amount to pay (remaining amount if down payment was made)
+            const remainingAmount = calculateRemainingAmount(bid);
+            const amountToPay = remainingAmount.type === 'remaining' ? remainingAmount.amount : bid.bid_amount;
+            const paymentType = remainingAmount.type === 'remaining' ? 'remaining' : 'full';
+            
+            // Use Bidi's Stripe account if business doesn't have one
+            const stripeAccountId = bid.business_profiles?.stripe_account_id || 'acct_1RqCsQJwWKKQQDV2';
+            const isUsingBidiStripe = !bid.business_profiles?.stripe_account_id;
 
             const paymentData = {
                 bid_id: bid.id,
-                amount: bid.bid_amount,
-                stripe_account_id: bid.business_profiles.stripe_account_id,
-                payment_type: 'full',
-                business_name: bid.business_profiles.business_name,
-                description: bid.message || 'Service payment'
+                amount: amountToPay + (bid.tax_rate * bid.bid_amount || 0),
+                stripe_account_id: stripeAccountId,
+                payment_type: paymentType,
+                business_name: bid.business_profiles?.business_name || 'Unknown Business',
+                description: isUsingBidiStripe ? 'Service payment (Processed by Bidi)' : (bid.message || 'Service payment'),
+                lineItems: bid.line_items || [],
+                taxRate: bid.tax_rate || 0,
+                // Add payment context for remaining payments
+                payment_context: remainingAmount.type === 'remaining' ? {
+                    total_bid_amount: bid.bid_amount,
+                    already_paid: remainingAmount.alreadyPaid,
+                    remaining_amount: remainingAmount.amount
+                } : null
             };
             console.log('BidsPage: Navigating to checkout with payment data:', paymentData);
             navigate('/checkout', { state: { paymentData } });
@@ -682,7 +968,7 @@ export default function BidsPage({ onOpenChat }) {
 
             const paymentData = {
                 bid_id: bid.id,
-                amount: downPayment.amount,
+                amount: downPayment.amount + (bid.tax_rate * downPayment.amount || 0),
                 stripe_account_id: stripeAccountId,
                 payment_type: 'down_payment',
                 business_name: bid.business_profiles?.business_name || 'Unknown Business',
@@ -934,7 +1220,61 @@ export default function BidsPage({ onOpenChat }) {
     const handleConfirmAccept = async () => {
         if (selectedBid) {
             try {
-                // Update the bid status and add acceptance timestamp
+                // First, decline all other bids for this request
+                const currentRequest = requests[currentRequestIndex];
+                const otherBids = bids.filter(bid => 
+                    bid.request_id === currentRequest.id && 
+                    bid.id !== selectedBid.id &&
+                    bid.status !== 'denied' &&
+                    bid.status !== 'expired'
+                );
+
+                // Update other bids to denied status
+                if (otherBids.length > 0) {
+                    const { error: declineError } = await supabase
+                        .from('bids')
+                        .update({ 
+                            status: 'denied',
+                        })
+                        .in('id', otherBids.map(bid => bid.id));
+
+                    if (declineError) {
+                        console.error('Error declining other bids:', declineError);
+                        toast.error('Failed to decline other bids. Please try again.');
+                        return;
+                    }
+                }
+
+                // Close the request
+                const requestType = currentRequest.type || 'regular';
+                const tableMap = {
+                    regular: "requests",
+                    photography: "photography_requests",
+                    dj: "dj_requests",
+                    catering: "catering_requests",
+                    beauty: "beauty_requests",
+                    videography: "videography_requests",
+                    florist: "florist_requests",
+                    wedding_planning: "wedding_planning_requests"
+                };
+
+                const tableName = tableMap[requestType];
+                if (tableName) {
+                    const { error: closeError } = await supabase
+                        .from(tableName)
+                        .update({ 
+                            status: 'closed',
+                            closed_at: new Date().toISOString()
+                        })
+                        .eq('id', currentRequest.id);
+
+                    if (closeError) {
+                        console.error('Error closing request:', closeError);
+                        // Continue anyway as this is not critical
+                    }
+                }
+
+                // Update the selected bid status and add acceptance timestamp
                 const updateData = {
                     status: 'accepted',
                     accepted_at: new Date().toISOString()
@@ -951,14 +1291,19 @@ export default function BidsPage({ onOpenChat }) {
                     return;
                 }
 
-                // Reload bids to reflect the change
+                // Reload bids and requests to reflect the changes
                 await loadBids();
+                await loadRequests(user.id);
                 
-                // Close modal and reset state
+                // Close accept modal and show post-approval modal
                 setShowAcceptModal(false);
                 setSelectedBid(null);
                 
-                toast.success('Bid accepted successfully!');
+                // Show post-approval modal
+                setShowPostApprovalModal(true);
+                setSelectedBidForPostApproval(selectedBid);
+                
+                toast.success('Bid accepted successfully! Other bids have been declined and request closed.');
             } catch (error) {
                 console.error('Error accepting bid:', error);
                 toast.error('Failed to accept bid. Please try again.');
@@ -983,6 +1328,65 @@ export default function BidsPage({ onOpenChat }) {
                 amount: bid.business_profiles.amount,
                 display: `$${bid.business_profiles.amount.toFixed(2)}`
             };
+        }
+    };
+
+    const calculateRemainingAmount = (bid) => {
+        // Check if bid has any payment made
+        const hasPayment = bid.status === 'paid' || 
+                          bid.payment_status === 'down_payment_paid' || 
+                          bid.payment_status === 'fully_paid' ||
+                          (bid.payment_amount && parseFloat(bid.payment_amount) > 0) ||
+                          (bid.down_payment && parseFloat(bid.down_payment) > 0);
+        
+        if (!hasPayment) {
+            // No payment made, calculate potential remaining after down payment
+            const downPayment = calculateDownPayment(bid);
+            if (downPayment) {
+                return {
+                    amount: bid.bid_amount - downPayment.amount,
+                    display: `$${(bid.bid_amount - downPayment.amount).toFixed(2)}`,
+                    type: 'potential'
+                };
+            }
+            return {
+                amount: bid.bid_amount,
+                display: `$${bid.bid_amount}`,
+                type: 'full'
+            };
+        } else {
+            // Payment has been made, calculate actual remaining
+            const totalPaid = parseFloat(bid.payment_amount || bid.down_payment || 0);
+            const remaining = bid.bid_amount - totalPaid;
+            
+            return {
+                amount: Math.max(0, remaining),
+                display: `$${Math.max(0, remaining).toFixed(2)}`,
+                type: 'remaining',
+                alreadyPaid: totalPaid
+            };
+        }
+    };
+
+    // Check if user has already been messaging with this vendor
+    const hasExistingConversation = async (bid) => {
+        try {
+            // Check if there are any existing messages between the user and this business
+            const { data: messages, error } = await supabase
+                .from('messages')
+                .select('id')
+                .or(`and(sender_id.eq.${currentUserId},recipient_id.eq.${bid.business_profiles.id}),and(sender_id.eq.${bid.business_profiles.id},recipient_id.eq.${currentUserId})`)
+                .limit(1);
+
+            if (error) {
+                console.error('Error checking existing conversations:', error);
+                return false;
+            }
+
+            return messages && messages.length > 0;
+        } catch (error) {
+            console.error('Error checking existing conversations:', error);
+            return false;
         }
     };
 
@@ -1148,8 +1552,36 @@ export default function BidsPage({ onOpenChat }) {
     };
 
     const handleEdit = (request) => {
-        // Use navigate with state to pass the full request object
-        navigate(`/edit-request/${request.table_name || 'requests'}/${request.id}`, { state: { request } });
+        // Map request types to the categories that RequestModal expects
+        const getCategoryFromType = (requestType) => {
+            const categoryMap = {
+                'photography': 'photographer',
+                'videography': 'videographer',
+                'catering': 'caterer',
+                'dj': 'dj',
+                'florist': 'florist',
+                'beauty': 'beauty',
+                'wedding_planning': 'planner',
+                'venue': 'venue',
+                'other': 'photographer' // Default fallback for regular requests
+            };
+            return categoryMap[requestType] || 'photographer';
+        };
+
+        // Open the RequestModal in edit mode instead of navigating to a separate page
+        setEditRequestData({
+            isEditMode: true,
+            existingRequestData: request,
+            selectedVendors: [getCategoryFromType(request.type || 'other')],
+            searchFormData: {
+                eventType: request.event_type || request.service_category || 'Wedding',
+                date: request.service_date || request.start_date || request.eventDate,
+                time: request.service_time || request.start_time || request.eventTime,
+                location: request.location,
+                guestCount: request.guest_count || request.guestCount
+            }
+        });
+        setIsEditModalOpen(true);
     };
 
     const toggleRequestStatus = async (request) => {
@@ -1254,14 +1686,24 @@ export default function BidsPage({ onOpenChat }) {
                 business_profiles: {
                     ...bid.business_profiles,
                     profile_image: profileImage
-                }
+                },
+                // Ensure payment information is properly passed
+                payment_type: bid.payment_type || null,
+                payment_amount: bid.payment_amount || null,
+                down_payment: bid.down_payment || null
             },
             showActions: !bid.isExpired, // Hide actions for expired bids
             onViewCoupon: handleViewCoupon,
             onMessage: onOpenChat,
             currentUserId: currentUserId,
             onProfileClick: () => handlePortfolioClick(bid.business_profiles.id, bid.business_profiles.business_name),
-            isNew: !bid.viewed // Add isNew prop for new bids
+            isNew: !bid.viewed, // Add isNew prop for new bids
+            onMobileModalToggle: handleBidDisplayModalToggle, // Add callback for modal state changes
+            onOpenBidDetail: handleOpenBidDetail, // Add callback for opening bid detail modal
+            onOpenBidMessaging: handleOpenBidMessagingFromList, // Add callback for opening bid messaging modal
+            onOpenPortfolio: handleOpenPortfolio, // Add callback for opening portfolio modal
+            onOpenPaymentModal: handleOpenPaymentModal, // Add callback for opening payment modal
+            isIndividualUser: true // This is BidsPage, so users are individuals
         };
 
         // Determine which props to show based on bid status
@@ -1344,6 +1786,16 @@ export default function BidsPage({ onOpenChat }) {
                 showNotInterested: false,
                 showInterested: false
             };
+        } else if (bid.payment_status === 'fully_paid' || 
+                   (bid.payment_type === 'full' && bid.payment_amount && parseFloat(bid.payment_amount) >= parseFloat(bid.bid_amount))) {
+            // Historical bid - fully paid and completed
+            statusProps = {
+                showHistorical: true,
+                showActions: false,
+                showPending: false,
+                showNotInterested: false,
+                showInterested: false
+            };
         } else {
             // pending status
             statusProps = {
@@ -1365,35 +1817,7 @@ export default function BidsPage({ onOpenChat }) {
         }
 
         return (
-            <div key={bid.id} className="bid-display-wrapper">
-                <div className="bid-client-controls">
-                    <div className="bid-interest-rating">
-                        <span className="interest-label">Your Interest:</span>
-                        <div className="star-rating">
-                            {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                    key={star}
-                                    className={`star-btn ${star <= (bid.interest_rating || 0) ? 'filled' : 'empty'}`}
-                                    onClick={() => handleBidRating(bid.id, star)}
-                                    title={getInterestLevelText(star)}
-                                >
-                                    <i className="fas fa-star"></i>
-                                </button>
-                            ))}
-                        </div>
-                        <span className="rating-text">
-                            {getInterestLevelText(bid.interest_rating || 0)}
-                        </span>
-                    </div>
-                    <button
-                        className="bid-notes-btn"
-                        onClick={() => openBidNotes(bid)}
-                        title={bid.client_notes ? "View and edit notes" : "Add notes"}
-                    >
-                        <i className="fas fa-sticky-note"></i>
-                        {bid.client_notes ? 'Show Notes' : 'Add Notes'}
-                    </button>
-                </div>
+            <div key={bid.id}>
                 <BidDisplay
                     {...commonBidProps}
                     {...statusProps}
@@ -1507,87 +1931,151 @@ export default function BidsPage({ onOpenChat }) {
                     onClick={handleCloseMobileBids}
                 />
                 <div className={`mobile-bids-view ${showMobileBids ? 'active' : ''}`}>
-                    <div className="mobile-bids-header">
-                        <button className="mobile-back-button" onClick={handleCloseMobileBids}>
-                            <i className="fas fa-arrow-left"></i>
-                            <span>Back</span>
-                        </button>
-                        <h2 className="mobile-bids-title">
-                            {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
-                        </h2>
-                    </div>
+                    {/* Only show header when BidDisplay modal is not open */}
+                    {!bidDisplayModalOpen && (
+                        <div className="mobile-bids-header">
+                            <button className="mobile-back-button" onClick={handleCloseMobileBids}>
+                                <i className="fas fa-arrow-left"></i>
+                                <span>Back</span>
+                            </button>
+                            <h2 className="mobile-bids-title">
+                                {selectedRequest.event_title || selectedRequest.title || 'Selected Request'}
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '400',
+                                    color: '#666',
+                                    display: 'block',
+                                    marginTop: '4px'
+                                }}>
+                                                                    {sortBy === 'recommended' && '⭐ Sorted by recommendation'}
+                                {sortBy === 'high-price' && '💰 Sorted by highest price'}
+                                {sortBy === 'low-price' && '💸 Sorted by lowest price'}
+                                {sortBy === 'newest' && '🕒 Sorted by newest bid'}
+                                </span>
+                            </h2>
+                        </div>
+                    )}
                     <div className="mobile-bids-content">
                     <div className="bids-container-bids-page">
-    <div className="status-tabs" style={{
-        display: 'flex',
-        gap: '8px',
-        marginBottom: '24px',
-        overflowX: 'auto',
-        padding: '8px 0'
-    }}>
-        {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
-            const bidsByStatus = getBidsByStatus();
-            const count = status === 'all' 
-                ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
-                : (bidsByStatus[status]?.length || 0);
-            
-            const displayText = status.split('_')
-                .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                .join(' ');
-            
-            const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
-            
-            return (
-                <button
-                    key={status}
-                    className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
-                    onClick={() => setActiveTab(status)}
-                    style={{
-                        padding: '8px 16px',
-                        borderRadius: '20px',
-                        border: 'none',
-                        background: activeTab === status ? '#9633eb' : '#f8f9fa',
-                        color: activeTab === status ? 'white' : '#666',
-                        cursor: 'pointer',
-                        fontWeight: '500',
-                        whiteSpace: 'nowrap',
-                        position: 'relative',
-                        transition: 'all 0.2s ease'
-                    }}
-                >
-                    {displayText} ({count})
-                    {newBidsCount > 0 && (
-                        <span style={{
-                            position: 'absolute',
-                            top: '-8px',
-                            right: '-8px',
-                            background: '#ec4899',
-                            color: 'white',
-                            borderRadius: '50%',
-                            padding: '2px 6px',
-                            fontSize: '12px',
-                            fontWeight: 'bold'
-                        }}>
-                            {newBidsCount}
-                        </span>
-                    )}
-                </button>
-            );
-        })}
-    </div>
-    <div className="bids-grid">
-        {(() => {
-            const bidsByStatus = getBidsByStatus();
-            if (activeTab === 'all') {
-                return Object.values(bidsByStatus)
-                    .flat()
-                    .map(bid => renderBidCard(bid));
-            }
-            return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
-        })()}
-        {renderNoBidsMessage()}
-    </div>
-</div>
+                        {/* Only show sorting controls and tabs when BidDisplay modal is not open */}
+                        {!bidDisplayModalOpen && (
+                            <>
+                                {/* Mobile Sorting Controls */}
+                                <div className="mobile-sorting-controls" style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '12px',
+                                    marginBottom: '16px',
+                                    padding: '0 16px'
+                                }}>
+                                    <span style={{
+                                        fontSize: '14px',
+                                        fontWeight: '500',
+                                        color: '#666',
+                                        textAlign: 'center'
+                                    }}>
+                                        Sort by:
+                                    </span>
+                                    <select
+                                        value={sortBy}
+                                        onChange={(e) => setSortBy(e.target.value)}
+                                        style={{
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            border: '2px solid #9633eb',
+                                            background: 'white',
+                                            color: '#374151',
+                                            cursor: 'pointer',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            width: '100%',
+                                            maxWidth: '200px',
+                                            textAlign: 'center'
+                                        }}
+                                    >
+                                        <option value="recommended">⭐ Recommended</option>
+                                        <option value="high-price">💰 High Price</option>
+                                        <option value="low-price">💸 Low Price</option>
+                                        <option value="newest">🕒 Newest Bid</option>
+                                    </select>
+                                </div>
+                                
+                                {/* Mobile Status Dropdown - styled like desktop */}
+                                <div className="mobile-status-dropdown-container" style={{
+                                    display: 'flex',
+                                    flexDirection: 'column',
+                                    gap: '8px',
+                                    marginBottom: '24px',
+                                    padding: '0 16px'
+                                }}>
+                                    <label htmlFor="mobile-status-select" style={{
+                                        fontWeight: '600',
+                                        color: '#374151',
+                                        fontSize: '14px',
+                                        marginBottom: '4px',
+                                        textAlign: 'center'
+                                    }}>
+                                        Filter by Status:
+                                    </label>
+                                    <select
+                                        id="mobile-status-select"
+                                        value={activeTab}
+                                        onChange={(e) => setActiveTab(e.target.value)}
+                                        style={{
+                                            padding: '12px 16px',
+                                            border: '2px solid #e5e7eb',
+                                            borderRadius: '8px',
+                                            backgroundColor: 'white',
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            color: '#374151',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s ease',
+                                            width: '100%',
+                                            maxWidth: '300px',
+                                            alignSelf: 'center'
+                                        }}
+                                    >
+                                        {[
+                                            { key: 'all', label: 'All Bids', description: 'View all bids for this request' },
+                                            { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
+                                            { key: 'interested', label: 'Interested', description: 'Bids you\'re interested in' },
+                                            { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
+                                            { key: 'paid', label: 'Paid', description: 'Bids with partial payments' },
+                                            { key: 'historical', label: 'Historical', description: 'Completed and fully paid bids' },
+                                            { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
+                                            { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
+                                        ].map(({ key, label, description }) => {
+                                            const bidsByStatus = getBidsByStatus();
+                                            const count = key === 'all' 
+                                                ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
+                                                : (bidsByStatus[key]?.length || 0);
+                                            
+                                            const newBidsCount = key !== 'all' ? getNewBidsCount(key) : 0;
+                                            
+                                            return (
+                                                <option key={key} value={key} title={description}>
+                                                    {label} ({count}){newBidsCount > 0 ? ` - ${newBidsCount} new` : ''}
+                                                </option>
+                                            );
+                                        })}
+                                    </select>
+                                </div>
+                            </>
+                        )}
+                        <div className="tw-flex tw-flex-col tw-gap-0">
+                            {(() => {
+                                const bidsByStatus = getBidsByStatus();
+                                if (activeTab === 'all') {
+                                    return Object.values(bidsByStatus)
+                                        .flat()
+                                        .map(bid => renderBidCard(bid));
+                                }
+                                return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
+                            })()}
+                            {renderNoBidsMessage()}
+                        </div>
+                    </div>
                     </div>
                 </div>
             </>
@@ -1599,13 +2087,22 @@ export default function BidsPage({ onOpenChat }) {
         navigate(`/portfolio/${businessId}/${formattedName}`);
     };
 
+    // Enhanced request selection with better visual feedback
     const handleRequestClick = (request, index) => {
+        setSelectedRequestId(request.id);
+        setCurrentRequestIndex(index);
+        
         if (window.innerWidth <= 1024) {
             setSelectedRequest(request);
-            setCurrentRequestIndex(index);
             setShowMobileBids(true);
-        } else {
-            setCurrentRequestIndex(index);
+        }
+        
+        // Scroll to bids section on desktop
+        if (window.innerWidth > 1024) {
+            const bidsSection = document.querySelector('.bids-section');
+            if (bidsSection) {
+                bidsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
         }
     };
 
@@ -1615,6 +2112,302 @@ export default function BidsPage({ onOpenChat }) {
         setTimeout(() => {
             setSelectedRequest(null);
         }, 300);
+    };
+
+    const handleBidDisplayModalToggle = (isOpen) => {
+        setBidDisplayModalOpen(isOpen);
+    };
+
+    const handleOpenBidDetail = (bid) => {
+        setSelectedBidForDetail(bid);
+        setShowBidDetailModal(true);
+    };
+
+    const handleCloseBidDetail = () => {
+        setShowBidDetailModal(false);
+        setSelectedBidForDetail(null);
+    };
+
+    const handleOpenBidMessaging = (bid) => {
+        setSelectedBidForMessagingFromDetail(bid);
+        setShowBidMessagingFromDetail(true);
+    };
+
+    const handleCloseBidMessaging = () => {
+        setShowBidMessagingFromDetail(false);
+        setSelectedBidForMessagingFromDetail(null);
+    };
+
+    const handleOpenBidMessagingFromList = (bid) => {
+        setSelectedBidForMessagingFromList(bid);
+        setShowBidMessagingFromList(true);
+    };
+
+    const handleCloseBidMessagingFromList = () => {
+        setShowBidMessagingFromList(false);
+        setSelectedBidForMessagingFromList(null);
+    };
+
+    const handleOpenPortfolio = (business) => {
+        setSelectedBusinessForPortfolio(business);
+        setShowPortfolioModal(true);
+    };
+
+    const handleClosePortfolio = () => {
+        setShowPortfolioModal(false);
+        setSelectedBusinessForPortfolio(null);
+    };
+
+    const handleOpenGallery = (business) => {
+        setSelectedBusinessForGallery(business);
+        setShowGalleryModal(true);
+    };
+
+    const handleCloseGallery = () => {
+        setShowGalleryModal(false);
+        setSelectedBusinessForGallery(null);
+    };
+
+    const handleBackToPortfolio = () => {
+        // Close gallery modal
+        setShowGalleryModal(false);
+        setSelectedBusinessForGallery(null);
+        
+        // Reopen portfolio modal with the same business
+        if (selectedBusinessForGallery) {
+            setShowPortfolioModal(true);
+        }
+    };
+    
+    // Payment Modal Handlers
+    const handleOpenPaymentModal = (bid) => {
+        setSelectedBidForPayment(bid);
+        setShowPaymentModal(true);
+    };
+    
+    const handleClosePaymentModal = () => {
+        setShowPaymentModal(false);
+        setSelectedBidForPayment(null);
+    };
+    
+
+
+    const handlePostApprovalAction = async (action) => {
+        if (action === 'message') {
+            // Open messaging modal
+            setShowPostApprovalModal(false);
+            setSelectedBidForPostApproval(null);
+            
+            // Open the messaging modal for this bid
+            setSelectedBidForMessagingFromList(selectedBidForPostApproval);
+            setShowBidMessagingFromList(true);
+        } else if (action === 'payment') {
+            // Open payment modal
+            setShowPostApprovalModal(false);
+            setSelectedBidForPostApproval(null);
+            
+            // Open the payment modal for this bid
+            setSelectedBidForPayment(selectedBidForPostApproval);
+            setShowPaymentModal(true);
+        }
+    };
+
+    // Enhanced request card with better visual feedback
+    const renderRequestCard = (request, index) => {
+        const isSelected = selectedRequestId === request.id;
+        const hasBids = bids.some(bid => bid.request_id === request.id);
+        const unseenBidCount = bids.filter(bid => bid.request_id === request.id && !bid.viewed).length;
+        
+        return (
+            <div 
+                key={request.id} 
+                className={`request-card ${isSelected ? 'selected' : ''} ${hasBids ? 'has-bids' : ''}`}
+                onClick={() => handleRequestClick(request, index)}
+            >
+                <div className="request-header">
+                    <div className="request-category">
+                        <div className="category-icon-wrapper">
+                            <i className={`${getCategoryIcon(request.type)} category-icon`}></i>
+                            {unseenBidCount > 0 && (
+                                <div className="bid-count-badge">
+                                    {unseenBidCount}
+                                </div>
+                            )}
+                        </div>
+                        <div className="category-info">
+                            <h4 className="category-name">
+                                {formatCategoryType(request.type)}
+                            </h4>
+                            <div className="request-status-container">
+                                {isNew(request.created_at) && (
+                                    <span className="status-badge new">New</span>
+                                )}
+                                <span className={`status-badge ${(request.status === "open" || request.status === "pending" || request.open) ? 'open' : 'closed'}`}>
+                                    {(request.status === "open" || request.status === "pending" || request.open) ? 'Active' : 'Closed'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div className="request-actions">
+                        <button
+                            className="action-btn secondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleEdit(request);
+                            }}
+                            title="Edit Request"
+                        >
+                            <i className="fas fa-edit"></i>
+                        </button>
+                        <button
+                            className="action-btn secondary"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                toggleRequestStatus(request);
+                            }}
+                            title={`${(request.status === "open" || request.status === "pending" || request.open) ? 'Close' : 'Open'} Request`}
+                        >
+                            <i className={`fas ${(request.status === "open" || request.status === "pending" || request.open) ? 'fa-lock' : 'fa-unlock'}`}></i>
+                        </button>
+                    </div>
+                </div>
+
+                {hasBids && (
+                    <div className="request-bids-summary">
+                        <div className="bids-status-summary">
+                            {(() => {
+                                const requestBids = bids.filter(bid => bid.request_id === request.id);
+                                const pendingCount = requestBids.filter(bid => bid.status === 'pending').length;
+                                const approvedCount = requestBids.filter(bid => bid.status === 'approved' || bid.status === 'accepted').length;
+                                const interestedCount = requestBids.filter(bid => bid.status === 'interested').length;
+                                
+                                return (
+                                    <>
+                                        {pendingCount > 0 && (
+                                            <span className="status-indicator pending">
+                                                {pendingCount} Pending
+                                            </span>
+                                        )}
+                                        {approvedCount > 0 && (
+                                            <span className="status-indicator approved">
+                                                {approvedCount} Approved
+                                            </span>
+                                        )}
+                                        {interestedCount > 0 && (
+                                            <span className="status-indicator interested">
+                                                {interestedCount} Interested
+                                            </span>
+                                        )}
+                                    </>
+                                );
+                            })()}
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    // Enhanced bids section with better organization
+    const renderBidsSection = () => {
+        if (!requests[currentRequestIndex]) return null;
+        
+        const currentRequest = requests[currentRequestIndex];
+        const bidsByStatus = getBidsByStatus();
+        const totalBids = Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0);
+        
+        return (
+            <div className="bids-section active">
+                <div className="bids-header">
+                    <div className="request-summary">
+                        <h2 className="section-title">
+                            {currentRequest.event_title || currentRequest.title || 'Selected Request'}
+                        </h2>
+                        <div className="request-meta">
+                            <span className="meta-item">
+                                <i className="fas fa-calendar-alt"></i>
+                                {getDate(currentRequest)}
+                            </span>
+                            <span className="meta-item">
+                                <i className="fas fa-dollar-sign"></i>
+                                ${currentRequest.price_range}
+                            </span>
+                            <span className="meta-item">
+                                <i className="fas fa-eye"></i>
+                                {currentRequest.viewCount || 0} vendors viewed
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <div className="bids-overview">
+                        <div className="sorting-controls">
+                            <span className="sort-label">Sort by:</span>
+                            <select
+                                className="sort-dropdown"
+                                value={sortBy}
+                                onChange={(e) => setSortBy(e.target.value)}
+                            >
+                                <option value="recommended">⭐ Recommended</option>
+                                <option value="high-price">💰 High Price</option>
+                                <option value="low-price">💸 Low Price</option>
+                                <option value="newest">🕒 Newest Bid</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                                        <div className="bids-container">
+                            {/* Status Dropdown */}
+                            <div className="status-dropdown-container">
+                                <label htmlFor="status-select" className="status-dropdown-label">
+                                    Filter by Status:
+                                </label>
+                                <select
+                                    id="status-select"
+                                    className="status-dropdown"
+                                    value={activeTab}
+                                    onChange={(e) => setActiveTab(e.target.value)}
+                                >
+                                    {[
+                                        { key: 'all', label: 'All Bids', description: 'View all bids for this request' },
+                                        { key: 'pending', label: 'Pending', description: 'Bids awaiting your review' },
+                                        { key: 'interested', label: 'Interested', description: 'Bids you\'re interested in' },
+                                        { key: 'approved', label: 'Approved', description: 'Bids you\'ve accepted' },
+                                        { key: 'paid', label: 'Paid', description: 'Bids with partial payments' },
+                                        { key: 'historical', label: 'Historical', description: 'Completed and fully paid bids' },
+                                        { key: 'denied', label: 'Denied', description: 'Bids you\'ve rejected' },
+                                        { key: 'expired', label: 'Expired', description: 'Bids that have expired' }
+                                    ].map(({ key, label, description }) => {
+                                        const count = key === 'all' 
+                                            ? totalBids
+                                            : (bidsByStatus[key]?.length || 0);
+                                        
+                                        const newBidsCount = key !== 'all' ? getNewBidsCount(key) : 0;
+                                        
+                                        return (
+                                            <option key={key} value={key} title={description}>
+                                                {label} ({count}){newBidsCount > 0 ? ` - ${newBidsCount} new` : ''}
+                                            </option>
+                                        );
+                                    })}
+                                </select>
+                            </div>
+
+                    <div className="bids-content">
+                        {(() => {
+                            if (activeTab === 'all') {
+                                return Object.values(bidsByStatus)
+                                    .flat()
+                                    .map(bid => renderBidCard(bid));
+                            }
+                            return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
+                        })()}
+                        {renderNoBidsMessage()}
+                    </div>
+                </div>
+            </div>
+        );
     };
 
     if (loading) {
@@ -1629,180 +2422,1026 @@ export default function BidsPage({ onOpenChat }) {
                 <meta name="keywords" content="bids, wedding vendors, Bidi, manage bids" />
             </Helmet>
             <div className="bids-page">
-                <div>
-                </div>
-                <h1 className="section-title">Your Service Requests</h1>
- 
-                <p className="section-description">
-                    View all your service requests and manage the bids you've received.
-                </p>
-
-                
                 <style>
                     {`
+                        /* Enhanced Visual Hierarchy */
+                        .requests-header {
+                            text-align: center;
+                            margin-bottom: 32px;
+                            padding: 24px;
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                            border-radius: 16px;
+                            border: 1px solid #dee2e6;
+                        }
+                        
+                        .requests-title {
+                            font-size: 28px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin-bottom: 8px;
+                        }
+                        
+                        .requests-subtitle {
+                            font-size: 16px;
+                            color: #6c757d;
+                            margin: 0;
+                        }
+                        
+                        /* Enhanced Request Cards */
+                        .request-card {
+                            background: white;
+                            border: 2px solid #e9ecef;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin-bottom: 20px;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                            position: relative;
+                            overflow: hidden;
+                            min-height: 120px;
+                        }
+                        
+                        .request-card:hover {
+                            border-color: #9633eb;
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 25px rgba(150, 51, 235, 0.15);
+                        }
+                        
+                        .request-card.selected {
+                            border-color: #9633eb;
+                            background: linear-gradient(135deg, #f8f5ff 0%, #f0ebff 100%);
+                            box-shadow: 0 8px 25px rgba(150, 51, 235, 0.2);
+                        }
+                        
+                        .request-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 20px;
+                            gap: 16px;
+                        }
+                        
+                        .request-category {
+                            display: flex;
+                            align-items: center;
+                            gap: 16px;
+                            flex: 1;
+                        }
+                        
+                        .category-icon-wrapper {
+                            position: relative;
+                            flex-shrink: 0;
+                        }
+                        
+                        .category-icon {
+                            width: 60px;
+                            height: 60px;
+                            background: linear-gradient(135deg, #f8f5ff 0%, #f0ebff 100%);
+                            border-radius: 16px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: #9633eb;
+                            font-size: 24px;
+                            border: 2px solid #e9ecef;
+                            transition: all 0.3s ease;
+                        }
+                        
+                        .request-card:hover .category-icon {
+                            border-color: #9633eb;
+                            background: linear-gradient(135deg, #f0ebff 0%, #e8e3ff 100%);
+                        }
+                        
+                        .bid-count-badge {
+                            position: absolute;
+                            top: -8px;
+                            right: -8px;
+                            background: #ec4899;
+                            color: white;
+                            border-radius: 50%;
+                            width: 24px;
+                            height: 24px;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            font-size: 12px;
+                            font-weight: bold;
+                            box-shadow: 0 2px 8px rgba(236, 72, 153, 0.3);
+                        }
+                        
+                        .category-info {
+                            flex: 1;
+                            margin: 0;
+                            min-width: 0;
+                        }
+                        
+                        .category-name {
+                            font-size: 20px;
+                            font-weight: 600;
+                            color: #2c3e50;
+                            margin: 0 0 8px 0;
+                            line-height: 1.3;
+                            word-wrap: break-word;
+                        }
+                        
+                        /* Mobile Status Dropdown Styles */
+                        .mobile-status-dropdown-container select:hover {
+                            border-color: #9633eb;
+                        }
+                        
+                        .mobile-status-dropdown-container select:focus {
+                            outline: none;
+                            border-color: #9633eb;
+                            box-shadow: 0 0 0 3px rgba(150, 51, 235, 0.1);
+                        }
+                        
+                        .mobile-status-dropdown-container select option {
+                            padding: 8px 12px;
+                            font-size: 14px;
+                        }
+                        
+                        .request-status-container {
+                            display: flex;
+                            gap: 8px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .status-badge {
+                            padding: 6px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            white-space: nowrap;
+                        }
+                        
+                        .status-badge.new {
+                            background: #28a745;
+                            color: white;
+                        }
+                        
+                        .status-badge.open {
+                            background: #17a2b8;
+                            color: white;
+                        }
+                        
+                        .status-badge.closed {
+                            background: #6c757d;
+                            color: white;
+                        }
+                        
                         .request-actions {
                             display: flex;
                             gap: 8px;
-                            margin-top: 12px;
+                            flex-shrink: 0;
                         }
-                        .btn-view-bids, .btn-edit, .btn-toggle {
-                            padding: 8px 16px;
-                            border-radius: 20px;
+                        
+                        .action-btn {
+                            padding: 12px 16px;
+                            border-radius: 12px;
                             border: none;
                             cursor: pointer;
                             display: flex;
                             align-items: center;
-                            gap: 6px;
+                            justify-content: center;
+                            gap: 8px;
                             font-size: 14px;
+                            font-weight: 500;
                             transition: all 0.2s ease;
+                            min-width: 44px;
+                            min-height: 44px;
+                            touch-action: manipulation;
                         }
-                        .btn-view-bids {
-                            background-color: #9633eb;
+                        
+                        .action-btn.primary {
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
                             color: white;
                         }
-                        .btn-view-bids:hover {
-                            background-color: #7a29c0;
+                        
+                        .action-btn.primary:hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 4px 12px rgba(150, 51, 235, 0.3);
                         }
-                        .btn-edit {
-                            background-color: #f8f9fa;
-                            color: #666;
-                            border: 1px solid #ddd;
+                        
+                        .action-btn.secondary {
+                            background: #f8f9fa;
+                            color: #6c757d;
+                            border: 1px solid #dee2e6;
                         }
-                        .btn-edit:hover {
-                            background-color: #e9ecef;
+                        
+                        .action-btn.secondary:hover {
+                            background: #e9ecef;
+                            border-color: #adb5bd;
                         }
-                        .btn-toggle {
-                            background-color: #f8f9fa;
-                            color: #666;
-                            border: 1px solid #ddd;
+                        
+                        .action-btn:active {
+                            transform: scale(0.95);
                         }
-                        .btn-toggle:hover {
-                            background-color: #e9ecef;
+                        
+                        .request-details {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                            gap: 16px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .detail-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 16px;
+                            background: #f8f9fa;
+                            border-radius: 12px;
+                            border: 1px solid #e9ecef;
+                        }
+                        
+                        .detail-item i {
+                            color: #9633eb;
+                            font-size: 18px;
+                            width: 20px;
+                            text-align: center;
+                        }
+                        
+                        .detail-label {
+                            font-weight: 600;
+                            color: #495057;
+                            font-size: 14px;
+                        }
+                        
+                        .detail-value {
+                            margin-left: auto;
+                            font-weight: 500;
+                            color: #2c3e50;
+                        }
+                        
+                        .view-count {
+                            font-size: 18px;
+                            font-weight: 700;
+                            color: #9633eb;
+                            display: block;
+                        }
+                        
+                        .view-label {
+                            font-size: 12px;
+                            color: #6c757d;
+                        }
+                        
+                        .request-bids-summary {
+                            border-top: 1px solid #e9ecef;
+                            padding-top: 16px;
+                        }
+                        
+                        .bids-status-summary {
+                            display: flex;
+                            gap: 8px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .status-indicator {
+                            padding: 6px 12px;
+                            border-radius: 20px;
+                            font-size: 12px;
+                            font-weight: 600;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                            white-space: nowrap;
+                        }
+                        
+                        .status-indicator.pending {
+                            background: #ffc107;
+                            color: #212529;
+                        }
+                        
+                        .status-indicator.approved {
+                            background: #28a745;
+                            color: white;
+                        }
+                        
+                        .status-indicator.interested {
+                            background: #17a2b8;
+                            color: white;
+                        }
+                        
+                        /* Enhanced Bids Section */
+                        .bids-section {
+                            background: white;
+                            border-radius: 20px;
+                            padding: 32px;
+                            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+                            border: 1px solid #e9ecef;
+                        }
+                        
+                        .bids-header {
+                            display: flex;
+                            justify-content: space-between;
+                            align-items: flex-start;
+                            margin-bottom: 32px;
+                            padding-bottom: 24px;
+                            border-bottom: 2px solid #f8f9fa;
+                        }
+                        
+                        .request-summary {
+                            flex: 1;
+                        }
+                        
+                        .section-title {
+                            font-size: 32px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin: 0 0 16px 0;
+                        }
+                        
+                        .request-meta {
+                            display: flex;
+                            gap: 24px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .meta-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            color: #6c757d;
+                            font-size: 14px;
+                        }
+                        
+                        .meta-item i {
+                            color: #9633eb;
+                        }
+                        
+                        .bids-overview {
+                            text-align: right;
+                        }
+                        
+                        .total-bids {
+                            margin-bottom: 20px;
+                        }
+                        
+                        .bids-count {
+                            display: block;
+                            font-size: 36px;
+                            font-weight: 700;
+                            color: #9633eb;
+                            line-height: 1;
+                        }
+                        
+                        .bids-label {
+                            font-size: 14px;
+                            color: #6c757d;
+                            text-transform: uppercase;
+                            letter-spacing: 0.5px;
+                        }
+                        
+                        .sorting-controls {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            flex-wrap: wrap;
+                        }
+                        
+                        .sort-label {
+                            font-size: 14px;
+                            font-weight: 600;
+                            color: #495057;
+                        }
+                        
+                        .sort-btn {
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            border: 2px solid #9633eb;
+                            background: white;
+                            color: #9633eb;
+                            cursor: pointer;
+                            font-size: 13px;
+                            font-weight: 600;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                            transition: all 0.2s ease;
+                        }
+                        
+                        .sort-btn:hover {
+                            transform: translateY(-1px);
+                            box-shadow: 0 4px 12px rgba(150, 51, 235, 0.2);
+                        }
+                        
+                        .sort-btn.active {
+                            background: #9633eb;
+                            color: white;
+                        }
+                        
+                        /* Enhanced Status Tabs */
+                        .status-tabs {
+                            display: flex;
+                            gap: 12px;
+                            margin-bottom: 32px;
+                            overflow-x: auto;
+                            padding: 8px 0;
+                            border-bottom: 2px solid #f8f9fa;
+                        }
+                        
+                        .tab-button {
+                            padding: 12px 20px;
+                            border-radius: 25px;
+                            border: 2px solid #e9ecef;
+                            background: white;
+                            color: #6c757d;
+                            cursor: pointer;
+                            font-weight: 600;
+                            white-space: nowrap;
+                            position: relative;
+                            transition: all 0.3s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                        }
+                        
+                        .tab-button:hover {
+                            border-color: #9633eb;
+                            color: #9633eb;
+                            transform: translateY(-1px);
+                        }
+                        
+                        .tab-button.active {
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
+                            color: white;
+                            border-color: #9633eb;
+                            box-shadow: 0 4px 15px rgba(150, 51, 235, 0.3);
+                        }
+                        
+                        .tab-count {
+                            background: rgba(255, 255, 255, 0.2);
+                            padding: 2px 8px;
+                            border-radius: 12px;
+                            font-size: 12px;
+                            font-weight: 700;
+                        }
+                        
+                        .new-bids-badge {
+                            position: absolute;
+                            top: -8px;
+                            right: -8px;
+                            background: #ec4899;
+                            color: white;
+                            border-radius: 50%;
+                            padding: 4px 8px;
+                            font-size: 11px;
+                            font-weight: bold;
+                            min-width: 20px;
+                            text-align: center;
+                        }
+                        
+                        /* Responsive Design */
+                        @media (max-width: 1024px) {
+                            .bids-header {
+                                flex-direction: column;
+                                gap: 24px;
+                            }
+                            
+                            .bids-overview {
+                                text-align: left;
+                            }
+                            
+                            .request-meta {
+                                gap: 16px;
+                            }
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .request-card {
+                                padding: 20px;
+                                margin-bottom: 16px;
+                                min-height: auto;
+                            }
+                            
+                            .request-header {
+                                flex-direction: column;
+                                gap: 16px;
+                                margin-bottom: 16px;
+                            }
+                            
+                            .request-category {
+                                flex-direction: column;
+                                align-items: flex-start;
+                                gap: 12px;
+                            }
+                            
+                            .category-icon {
+                                width: 50px;
+                                height: 50px;
+                                font-size: 20px;
+                            }
+                            
+                            .category-name {
+                                font-size: 18px;
+                                margin-bottom: 6px;
+                            }
+                            
+                            .request-status-container {
+                                gap: 6px;
+                            }
+                            
+                            .status-badge {
+                                padding: 4px 10px;
+                                font-size: 11px;
+                            }
+                            
+                            .request-actions {
+                                justify-content: center;
+                                width: 100%;
+                                gap: 12px;
+                            }
+                            
+                            .action-btn {
+                                flex: 1;
+                                max-width: 120px;
+                                padding: 14px 16px;
+                                font-size: 13px;
+                            }
+                            
+                            .request-details {
+                                grid-template-columns: 1fr;
+                                gap: 12px;
+                                margin-bottom: 16px;
+                            }
+                            
+                            .detail-item {
+                                padding: 12px;
+                            }
+                            
+                            .request-bids-summary {
+                                padding-top: 12px;
+                            }
+                            
+                            .bids-status-summary {
+                                gap: 6px;
+                            }
+                            
+                            .status-indicator {
+                                padding: 4px 10px;
+                                font-size: 11px;
+                            }
+                        }
+                        
+                        @media (max-width: 480px) {
+                            .request-card {
+                                padding: 16px;
+                                margin-bottom: 12px;
+                                border-radius: 12px;
+                            }
+                            
+                            .category-icon {
+                                width: 44px;
+                                height: 44px;
+                                font-size: 18px;
+                            }
+                            
+                            .category-name {
+                                font-size: 16px;
+                            }
+                            
+                            .request-actions {
+                                gap: 8px;
+                            }
+                            
+                            .action-btn {
+                                padding: 12px 14px;
+                                font-size: 12px;
+                                min-width: 40px;
+                                min-height: 40px;
+                            }
+                            
+                            .status-badge {
+                                padding: 3px 8px;
+                                font-size: 10px;
+                            }
+                            
+                            .status-indicator {
+                                padding: 3px 8px;
+                                font-size: 10px;
+                            }
+                        }
+                        
+                        /* Animation for new bids */
+                        @keyframes pulse {
+                            0% { transform: scale(1); }
+                            50% { transform: scale(1.05); }
+                            100% { transform: scale(1); }
+                        }
+                        
+                        .new-bids-badge {
+                            animation: pulse 2s infinite;
+                        }
+                        
+                        /* Enhanced focus states for accessibility */
+                        .request-card:focus,
+                        .action-btn:focus,
+                        .tab-button:focus,
+                        .sort-btn:focus {
+                            outline: 2px solid #9633eb;
+                            outline-offset: 2px;
+                        }
+                        
+                        /* Loading states */
+                        .skeleton-request-card {
+                            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+                            background-size: 200% 100%;
+                            animation: loading 1.5s infinite;
+                        }
+                        
+                        @keyframes loading {
+                            0% { background-position: 200% 0; }
+                            100% { background-position: -200% 0; }
+                        }
+                        
+                        /* Empty State Styling */
+                        .empty-state {
+                            text-align: center;
+                            padding: 60px 20px;
+                            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+                            border-radius: 20px;
+                            margin: 40px 0;
+                            border: 2px dashed #dee2e6;
+                        }
+                        
+                        .empty-state-icon {
+                            width: 80px;
+                            height: 80px;
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
+                            border-radius: 50%;
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            margin: 0 auto 24px;
+                            color: white;
+                            font-size: 32px;
+                        }
+                        
+                        .empty-state-title {
+                            font-size: 28px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin: 0 0 16px 0;
+                        }
+                        
+                        .empty-state-description {
+                            font-size: 16px;
+                            color: #6c757d;
+                            margin: 0 0 32px 0;
+                            max-width: 500px;
+                            margin-left: auto;
+                            margin-right: auto;
+                        }
+                        
+                        .empty-state-features {
+                            display: flex;
+                            flex-direction: column;
+                            gap: 12px;
+                            margin-bottom: 32px;
+                            max-width: 400px;
+                            margin-left: auto;
+                            margin-right: auto;
+                        }
+                        
+                        .feature-item {
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            color: #495057;
+                            font-size: 14px;
+                        }
+                        
+                        .feature-item i {
+                            color: #28a745;
+                            font-size: 16px;
+                        }
+                        
+                        .empty-state-cta {
+                            padding: 16px 32px;
+                            font-size: 18px;
+                            font-weight: 700;
+                            background: linear-gradient(135deg, #9633eb 0%, #7a29c0 100%);
+                            color: white;
+                            border: none;
+                            border-radius: 50px;
+                            cursor: pointer;
+                            display: inline-flex;
+                            align-items: center;
+                            gap: 12px;
+                            transition: all 0.3s ease;
+                            box-shadow: 0 4px 15px rgba(150, 51, 235, 0.3);
+                        }
+                        
+                        .empty-state-cta:hover {
+                            transform: translateY(-2px);
+                            box-shadow: 0 8px 25px rgba(150, 51, 235, 0.4);
+                        }
+                        
+                        /* Enhanced Mobile Experience */
+                        .mobile-bids-view {
+                            background: white;
+                            border-radius: 20px 20px 0 0;
+                            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+                        }
+                        
+                        .mobile-bids-header {
+                            padding: 24px;
+                            border-bottom: 2px solid #f8f9fa;
+                            background: linear-gradient(135deg, #f8f5ff 0%, #f0ebff 100%);
+                        }
+                        
+                        .mobile-back-button {
+                            background: none;
+                            border: none;
+                            color: #9633eb;
+                            font-size: 16px;
+                            font-weight: 600;
+                            cursor: pointer;
+                            display: flex;
+                            align-items: center;
+                            gap: 8px;
+                            margin-bottom: 16px;
+                            padding: 12px;
+                            border-radius: 8px;
+                            transition: background-color 0.2s ease;
+                            min-height: 44px;
+                            touch-action: manipulation;
+                        }
+                        
+                        .mobile-back-button:hover,
+                        .mobile-back-button:active {
+                            background-color: rgba(150, 51, 235, 0.1);
+                        }
+                        
+                        .mobile-bids-title {
+                            font-size: 24px;
+                            font-weight: 700;
+                            color: #2c3e50;
+                            margin: 0;
+                        }
+                        
+                        /* Touch-friendly improvements */
+                        .request-card {
+                            -webkit-tap-highlight-color: transparent;
+                            touch-action: manipulation;
+                        }
+                        
+                        .request-card:active {
+                            transform: scale(0.98);
+                        }
+                        
+                        /* Better mobile spacing */
+                        @media (max-width: 768px) {
+                            .requests-header {
+                                padding: 20px;
+                                margin-bottom: 24px;
+                            }
+                            
+                            .requests-title {
+                                font-size: 24px;
+                                margin-bottom: 6px;
+                            }
+                            
+                            .requests-subtitle {
+                                font-size: 14px;
+                            }
+                            
+                            .quick-actions {
+                                padding: 12px;
+                                gap: 8px;
+                            }
+                            
+                            .quick-action-btn {
+                                padding: 10px 16px;
+                                font-size: 13px;
+                                min-height: 40px;
+                            }
+                        }
+                        
+                        @media (max-width: 480px) {
+                            .requests-header {
+                                padding: 16px;
+                                margin-bottom: 20px;
+                            }
+                            
+                            .requests-title {
+                                font-size: 22px;
+                            }
+                            
+                            .quick-actions {
+                                flex-direction: column;
+                                align-items: center;
+                            }
+                            
+                            .quick-action-btn {
+                                width: 100%;
+                                max-width: 200px;
+                            }
+                        }
+                        
+                        /* Quick Actions Bar */
+                        .quick-actions {
+                            display: flex;
+                            gap: 12px;
+                            margin-bottom: 24px;
+                            padding: 16px;
+                            background: #f8f9fa;
+                            border-radius: 16px;
+                            border: 1px solid #e9ecef;
+                        }
+                        
+                        .quick-action-btn {
+                            padding: 8px 16px;
+                            border-radius: 20px;
+                            border: 1px solid #dee2e6;
+                            background: white;
+                            color: #495057;
+                            cursor: pointer;
+                            font-size: 13px;
+                            font-weight: 500;
+                            transition: all 0.2s ease;
+                            display: flex;
+                            align-items: center;
+                            gap: 6px;
+                        }
+                        
+                        .quick-action-btn:hover {
+                            border-color: #9633eb;
+                            color: #9633eb;
+                            background: #f8f5ff;
+                        }
+                        
+                        .quick-action-btn.active {
+                            background: #9633eb;
+                            color: white;
+                            border-color: #9633eb;
+                        }
+                        
+                        .quick-actions-divider {
+                            width: 1px;
+                            height: 24px;
+                            background: #dee2e6;
+                            margin: 0 8px;
+                        }
+                        
+                        /* Enhanced Request List Layout */
+                        .requests-list-bids-page {
+                            display: grid;
+                            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+                            gap: 24px;
+                            margin-top: 24px;
+                        }
+                        
+                        @media (max-width: 1024px) {
+                            .requests-list-bids-page {
+                                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+                                gap: 20px;
+                            }
+                        }
+                        
+                        @media (max-width: 768px) {
+                            .requests-list-bids-page {
+                                grid-template-columns: 1fr;
+                                gap: 16px;
+                                margin-top: 16px;
+                            }
+                        }
+                        
+                        @media (max-width: 480px) {
+                            .requests-list-bids-page {
+                                gap: 12px;
+                                margin-top: 12px;
+                            }
+                        }
+                        
+                        /* Enhanced Loading States */
+                        .skeleton-request-card {
+                            background: white;
+                            border: 1px solid #e9ecef;
+                            border-radius: 16px;
+                            padding: 24px;
+                            margin-bottom: 20px;
+                        }
+                        
+                        .skeleton-category-icon {
+                            width: 60px;
+                            height: 60px;
+                            background: #e9ecef;
+                            border-radius: 16px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-category-name {
+                            width: 120px;
+                            height: 20px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            margin-bottom: 8px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-status-badge {
+                            width: 60px;
+                            height: 16px;
+                            background: #e9ecef;
+                            border-radius: 20px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-action-btn {
+                            width: 40px;
+                            height: 40px;
+                            background: #e9ecef;
+                            border-radius: 12px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-detail-icon {
+                            width: 20px;
+                            height: 20px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-detail-label {
+                            width: 60px;
+                            height: 16px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            animation: pulse 1.5s infinite;
+                        }
+                        
+                        .skeleton-detail-value {
+                            width: 80px;
+                            height: 16px;
+                            background: #e9ecef;
+                            border-radius: 4px;
+                            animation: pulse 1.5s infinite;
                         }
                     `}
                 </style>
                 
                 {requests.length > 0 ? (
                     <div className="requests-list-container">
-                        <div className="requests-list-bids-page">
-                            {requests.map((request, index) => (
-                                <div 
-                                    key={request.id} 
-                                    className={`request-card ${currentRequestIndex === index ? 'active' : ''}`}
-                                    onClick={() => handleRequestClick(request, index)}
+                        <div className="requests-header">
+                            <h2 className="requests-title">Your Service Requests</h2>
+                            <p className="requests-subtitle">
+                                Select a request to view and manage bids from vendors
+                            </p>
+                            
+                            {/* Quick Actions Bar */}
+                            <div className="quick-actions" style={{display:'flex', justifyContent:'center', alignItems:'center', gap:'10px'}}>
+                                <button 
+                                    className="quick-action-btn"
+                                    onClick={() => navigate('/request-categories')}
+                                    title="Create New Request"
                                 >
-                                    <div className="request-header">
-                                        <div className="request-category">
-                                            <div className="category-icon">
-                                                <i className={`${getCategoryIcon(request.type)}`}></i>
-                                            </div>
-                                            <div className="category-info">
-                                                <span className="category-name">
-                                                    {formatCategoryType(request.type)}
-                                                </span>
-                                                <div className="request-status-container">
-                                                    {isNew(request.created_at) && (
-                                                        <div className="request-status new">New</div>
-                                                    )}
-                                                    <div className={`request-status ${(request.status === "open" || request.status === "pending" || request.open) ? 'open' : 'closed'}`}>
-                                                        {(request.status === "open" || request.status === "pending" || request.open) ? 'Open' : 'Closed'}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                    </div>
-                                    <div className="request-actions">
-                                        <button
-                                            className="btn-view-bids"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleRequestClick(request, index);
-                                            }}
-                                        >
-                                            <i className="fas fa-eye"></i>
-                                            View Bids
-                                        </button>
-                                        <button
-                                            className="btn-edit"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleEdit(request);
-                                            }}
-                                        >
-                                            <i className="fas fa-edit"></i>
-                                            Edit
-                                        </button>
-                                        <button
-                                            className="btn-toggle"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                toggleRequestStatus(request);
-                                            }}
-                                        >
-                                            <i className={`fas ${(request.status === "open" || request.status === "pending" || request.open) ? 'fa-lock' : 'fa-unlock'}`}></i>
-                                            {(request.status === "open" || request.status === "pending" || request.open) ? "Close" : "Reopen"}
-                                        </button>
-                                    </div>
-                                    <div className="request-details">
-                                        <div className="detail-item">
-                                            <i className="fas fa-calendar"></i>
-                                            <span className="detail-label">Date:</span>
-                                            <span className="detail-value">{getDate(request)}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <i className="fas fa-dollar-sign"></i>
-                                            <span className="detail-label">Budget:</span>
-                                            <span className="detail-value">${request.price_range}</span>
-                                        </div>
-                                        <div className="detail-item">
-                                            <i className="fas fa-eye"></i>
-                                            <span className="detail-label">Views:</span>
-                                            <div className="detail-value" style={{ 
-                                                display: 'flex', 
-                                                flexDirection: 'column',
-                                                alignItems: 'center',
-                                                textAlign: 'center'
-                                            }}>
-                                                <span>{getViewCountText(request).count}</span>
-                                                <span style={{ fontSize: '0.9em', color: '#666' }}>{getViewCountText(request).category}</span>
-                                            </div>
-
-                                        </div>
-                                    </div>
-                                </div>
-                            ))}
+                                    <i className="fas fa-plus"></i>
+                                    New Request
+                                </button>
+                                <button 
+                                    className="quick-action-btn"
+                                    onClick={() => window.location.reload()}
+                                    title="Refresh Page"
+                                >
+                                    <i className="fas fa-sync-alt"></i>
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                        <div className="requests-list-bids-page">
+                            {requests.map((request, index) => renderRequestCard(request, index))}
                         </div>
                     </div>
                 ) : (
-                    <div className="no-requests" style={{
-                        textAlign: 'center',
-                        padding: '40px 20px',
-                        background: '#f8f9fa',
-                        borderRadius: '8px',
-                        margin: '20px 0'
-                    }}>
-                        <h3 style={{ marginBottom: '15px', color: '#333' }}>No Active Requests Yet</h3>
-                        <p style={{ marginBottom: '20px', color: '#666' }}>
+                    <div className="empty-state">
+                        <div className="empty-state-icon">
+                            <i className="fas fa-clipboard-list"></i>
+                        </div>
+                        <h3 className="empty-state-title">No Active Requests Yet</h3>
+                        <p className="empty-state-description">
                             Start your journey by creating your first service request. 
                             Get matched with the perfect vendors for your event!
                         </p>
+                        <div className="empty-state-features">
+                            <div className="feature-item">
+                                <i className="fas fa-check-circle"></i>
+                                <span>Get multiple quotes from verified vendors</span>
+                            </div>
+                            <div className="feature-item">
+                                <i className="fas fa-check-circle"></i>
+                                <span>Compare prices and services easily</span>
+                            </div>
+                            <div className="feature-item">
+                                <i className="fas fa-check-circle"></i>
+                                <span>Secure payment processing</span>
+                            </div>
+                        </div>
                         <button 
                             onClick={() => navigate('/request-categories')}
-                            className="btn-primary"
-                            style={{
-                                padding: '12px 24px',
-                                fontSize: '16px',
-                                fontWeight: 'bold',
-                                backgroundColor: '#9633eb',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '40px',
-                                cursor: 'pointer',
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '8px'
-                            }}
+                            className="empty-state-cta"
                         >
                             <i className="fas fa-plus"></i>
                             Create Your First Request
@@ -1811,88 +3450,7 @@ export default function BidsPage({ onOpenChat }) {
                 )}
 
                 {/* Desktop bids section */}
-                {window.innerWidth > 1024 && currentRequestIndex >= 0 && (
-                    <div className={`bids-section ${currentRequestIndex >= 0 ? 'active' : ''}`}>
-                        <h2 className="section-title">
-                            Bids for {requests[currentRequestIndex]?.event_title || requests[currentRequestIndex]?.title || 'Selected Request'}
-                        </h2>
-                        <p className="section-description">
-                            Manage bids by their status: pending bids awaiting your review, approved bids you've accepted, or denied bids you've rejected.
-                        </p>
-
-                        <div className="bids-container-bids-page">
-                            <div className="status-tabs" style={{
-                                display: 'flex',
-                                gap: '8px',
-                                marginBottom: '24px',
-                                overflowX: 'auto',
-                                padding: '8px 0'
-                            }}>
-                                {["all", "pending", "interested", "approved", "paid", "denied", "expired"].map((status) => {
-                                    const bidsByStatus = getBidsByStatus();
-                                    const count = status === 'all' 
-                                        ? Object.values(bidsByStatus).reduce((sum, bids) => sum + bids.length, 0)
-                                        : (bidsByStatus[status]?.length || 0);
-                                    
-                                    const displayText = status.split('_')
-                                        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                                        .join(' ');
-                                    
-                                    const newBidsCount = status !== 'all' ? getNewBidsCount(status) : 0;
-                                    
-                                    return (
-                                        <button
-                                            key={status}
-                                            className={`tab-button ${status} ${activeTab === status ? "active" : ""}`}
-                                            onClick={() => setActiveTab(status)}
-                                            style={{
-                                                padding: '8px 16px',
-                                                borderRadius: '20px',
-                                                border: 'none',
-                                                background: activeTab === status ? '#9633eb' : '#f8f9fa',
-                                                color: activeTab === status ? 'white' : '#666',
-                                                cursor: 'pointer',
-                                                fontWeight: '500',
-                                                whiteSpace: 'nowrap',
-                                                position: 'relative',
-                                                transition: 'all 0.2s ease'
-                                            }}
-                                        >
-                                            {displayText} ({count})
-                                            {newBidsCount > 0 && (
-                                                <span style={{
-                                                    position: 'absolute',
-                                                    top: '-8px',
-                                                    right: '-8px',
-                                                    background: '#ec4899',
-                                                    color: 'white',
-                                                    borderRadius: '50%',
-                                                    padding: '2px 6px',
-                                                    fontSize: '12px',
-                                                    fontWeight: 'bold'
-                                                }}>
-                                                    {newBidsCount}
-                                                </span>
-                                            )}
-                                        </button>
-                                    );
-                                })}
-                            </div>
-                            <div className="bids-grid">
-                                {(() => {
-                                    const bidsByStatus = getBidsByStatus();
-                                    if (activeTab === 'all') {
-                                        return Object.values(bidsByStatus)
-                                            .flat()
-                                            .map(bid => renderBidCard(bid));
-                                    }
-                                    return (bidsByStatus[activeTab] || []).map(bid => renderBidCard(bid));
-                                })()}
-                                {renderNoBidsMessage()}
-                            </div>
-                        </div>
-                    </div>
-                )}
+                {window.innerWidth > 1024 && currentRequestIndex >= 0 && renderBidsSection()}
 
                 {/* Mobile bids view */}
                 {window.innerWidth <= 1024 && renderMobileBidsView()}
@@ -1933,6 +3491,38 @@ export default function BidsPage({ onOpenChat }) {
                     }}>
                         <h3 style={{ marginBottom: '16px', color: '#333' }}>Accept Bid Confirmation</h3>
                         <p style={{ marginBottom: '16px', color: '#666' }}>Are you sure you want to accept this bid from {selectedBid?.business_profiles?.business_name}?</p>
+                        
+                        <div style={{ 
+                            marginBottom: '24px', 
+                            padding: '16px',
+                            background: '#fff3cd',
+                            borderRadius: '8px',
+                            border: '1px solid #ffeaa7',
+                            color: '#856404'
+                        }}>
+                            <h4 style={{ color: '#856404', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <i className="fas fa-exclamation-triangle"></i>
+                                Important: This action will:
+                            </h4>
+                            <ul style={{ 
+                                margin: '0', 
+                                paddingLeft: '20px',
+                                listStyleType: 'none'
+                            }}>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-times-circle" style={{ color: '#dc3545' }}></i>
+                                    Decline all other bids for this request
+                                </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-lock" style={{ color: '#6c757d' }}></i>
+                                    Close this request (no more bids will be accepted)
+                                </li>
+                                <li style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <i className="fas fa-check-circle" style={{ color: '#28a745' }}></i>
+                                    Accept only this vendor's bid
+                                </li>
+                            </ul>
+                        </div>
                         
                         <div style={{ 
                             marginBottom: '24px', 
@@ -2154,6 +3744,367 @@ export default function BidsPage({ onOpenChat }) {
                                     Save
                                 </button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Edit Request Modal */}
+            {isEditModalOpen && editRequestData && (
+                <RequestModal
+                    isOpen={isEditModalOpen}
+                    onClose={() => {
+                        setIsEditModalOpen(false);
+                        setEditRequestData(null);
+                    }}
+                    selectedVendors={editRequestData.selectedVendors}
+                    searchFormData={editRequestData.searchFormData}
+                    isEditMode={editRequestData.isEditMode}
+                    existingRequestData={editRequestData.existingRequestData}
+                />
+            )}
+
+            {/* Bid Detail Modal - Rendered at top level to overlay entire page */}
+            {showBidDetailModal && selectedBidForDetail && (
+                <BidDetailModal
+                    isOpen={showBidDetailModal}
+                    onClose={handleCloseBidDetail}
+                    bid={selectedBidForDetail}
+                    currentUserId={currentUserId}
+                    onPayClick={() => handlePayNow(selectedBidForDetail)}
+                    onMessageClick={() => {
+                        handleCloseBidDetail();
+                        handleOpenBidMessaging(selectedBidForDetail);
+                    }}
+                    onConsultationClick={() => {
+                        handleCloseBidDetail();
+                        // Handle consultation scheduling
+                    }}
+                    onApprove={(bidId) => handleAcceptBidClick(selectedBidForDetail)}
+                    onDeny={(bidId) => handleMoveToNotInterested(selectedBidForDetail)}
+                    showActions={!selectedBidForDetail.isExpired}
+                    onOpenPortfolio={handleOpenPortfolio}
+                />
+            )}
+
+            {/* Bid Messaging Modal from Detail - Rendered at top level to overlay entire page */}
+            {showBidMessagingFromDetail && selectedBidForMessagingFromDetail && (
+                <BidMessaging
+                    bid={selectedBidForMessagingFromDetail}
+                    currentUserId={currentUserId}
+                    onClose={handleCloseBidMessaging}
+                    isOpen={showBidMessagingFromDetail}
+                    businessName={selectedBidForMessagingFromDetail.business_profiles?.business_name}
+                    profileImage={selectedBidForMessagingFromDetail.business_profiles?.profile_image || '/images/default.jpg'}
+                />
+            )}
+
+            {/* Bid Messaging Modal from List - Rendered at top level to overlay entire page */}
+            {showBidMessagingFromList && selectedBidForMessagingFromList && (
+                <BidMessaging
+                    bid={selectedBidForMessagingFromList}
+                    currentUserId={currentUserId}
+                    onClose={handleCloseBidMessagingFromList}
+                    isOpen={showBidMessagingFromList}
+                    businessName={selectedBidForMessagingFromList.business_profiles?.business_name}
+                    profileImage={selectedBidForMessagingFromList.business_profiles?.profile_image || '/images/default.jpg'}
+                />
+            )}
+
+            {/* Portfolio Modal - Rendered at top level to overlay entire page */}
+            {showPortfolioModal && selectedBusinessForPortfolio && (
+                <PortfolioModal
+                    isOpen={showPortfolioModal}
+                    onClose={handleClosePortfolio}
+                    businessId={selectedBusinessForPortfolio.id}
+                    businessName={selectedBusinessForPortfolio.business_name}
+                    onOpenGallery={handleOpenGallery}
+                />
+            )}
+
+            {/* Gallery Modal - Rendered at top level to overlay entire page */}
+            {showGalleryModal && selectedBusinessForGallery && (
+                <GalleryModal
+                    isOpen={showGalleryModal}
+                    onClose={handleCloseGallery}
+                    businessId={selectedBusinessForGallery.id}
+                    businessName={selectedBusinessForGallery.business_name}
+                    onBackToPortfolio={handleBackToPortfolio}
+                />
+            )}
+            
+            {/* Payment Modal - Rendered at top level to overlay entire page */}
+            {showPaymentModal && selectedBidForPayment && (
+                <div className="payment-modal-overlay" onClick={handleClosePaymentModal}>
+                    <div className="payment-modal" onClick={(e) => e.stopPropagation()}>
+                        <div className="payment-modal-header">
+                            <h3>Payment Options</h3>
+                            <button 
+                                className="payment-modal-close"
+                                onClick={handleClosePaymentModal}
+                            >
+                                ×
+                            </button>
+                        </div>
+                                                <div className="payment-modal-content">
+                            <div className="payment-options">
+                                {(() => {
+                                    const remainingAmount = calculateRemainingAmount(selectedBidForPayment);
+                                    const hasDownPayment = selectedBidForPayment.business_profiles?.amount && selectedBidForPayment.business_profiles?.down_payment_type;
+                                    
+                                    // If down payment has already been made, show remaining amount
+                                    if (remainingAmount.type === 'remaining' && remainingAmount.alreadyPaid > 0) {
+                                        return (
+                                            <div className="payment-option">
+                                                <h4>Pay Remaining Balance</h4>
+                                                <div className="payment-summary">
+                                                    <p className="payment-amount">{remainingAmount.display}</p>
+                                                    <p className="payment-breakdown">
+                                                        <span>Total Bid: ${selectedBidForPayment.bid_amount}</span>
+                                                        <span>Already Paid: ${remainingAmount.alreadyPaid.toFixed(2)}</span>
+                                                        <span className="remaining-amount">Remaining: {remainingAmount.display}</span>
+                                                    </p>
+                                                </div>
+                                                <p className="payment-description">
+                                                    Complete your payment to finalize this booking
+                                                </p>
+                                                <button 
+                                                    className="payment-option-btn success"
+                                                    onClick={() => {
+                                                        toast.info('Preparing payment for remaining balance...');
+                                                        handlePayNow(selectedBidForPayment);
+                                                        handleClosePaymentModal();
+                                                    }}
+                                                >
+                                                    Pay Remaining Balance ({remainingAmount.display})
+                                                </button>
+                                            </div>
+                                        );
+                                    }
+                                    
+                                    // If down payment option is available and no payment made yet
+                                    if (hasDownPayment) {
+                                        return (
+                                            <>
+                                                <div className="payment-option">
+                                                    <h4>Down Payment</h4>
+                                                    <p className="payment-amount">
+                                                        {selectedBidForPayment.business_profiles.down_payment_type === 'percentage' 
+                                                            ? `${selectedBidForPayment.business_profiles.amount*100}% ($${calculateDownPayment(selectedBidForPayment)?.amount?.toFixed(2) || '0.00'})`
+                                                            : `$${selectedBidForPayment.business_profiles.amount || '0.00'}`
+                                                        }
+                                                    </p>
+                                                    <p className="payment-description">
+                                                        Secure your booking with a partial payment
+                                                    </p>
+                                                    <button 
+                                                        className="payment-option-btn primary"
+                                                        onClick={() => {
+                                                            toast.info('Preparing payment...');
+                                                            handleDownPayNow(selectedBidForPayment);
+                                                            handleClosePaymentModal();
+                                                        }}
+                                                    >
+                                                        Pay Down Payment
+                                                    </button>
+                                                </div>
+                                                <div className="payment-option">
+                                                    <h4>Full Payment</h4>
+                                                    <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
+                                                    <p className="payment-description">Pay the complete amount upfront</p>
+                                                    <button 
+                                                        className="payment-option-btn success"
+                                                        onClick={() => {
+                                                            toast.info('Preparing payment...');
+                                                            handlePayNow(selectedBidForPayment);
+                                                            handleClosePaymentModal();
+                                                        }}
+                                                    >
+                                                        Pay Full Amount
+                                                    </button>
+                                                </div>
+                                            </>
+                                        );
+                                    }
+                                    
+                                    // Default: Full payment only
+                                    return (
+                                        <div className="payment-option">
+                                            <h4>Full Payment</h4>
+                                            <p className="payment-amount">${selectedBidForPayment.bid_amount}</p>
+                                            <p className="payment-description">Complete payment for this service</p>
+                                            <button 
+                                                className="payment-option-btn success"
+                                                onClick={() => {
+                                                    toast.info('Preparing payment...');
+                                                    handlePayNow(selectedBidForPayment);
+                                                    handleClosePaymentModal();
+                                                }}
+                                            >
+                                                Pay Now
+                                            </button>
+                                        </div>
+                                    );
+                                })()}
+                            </div>
+                        </div>
+                        <div className="payment-modal-actions">
+                            <button 
+                                className="cancel-btn"
+                                onClick={handleClosePaymentModal}
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+                        {/* Enhanced Post-Approval Modal */}
+            {showPostApprovalModal && selectedBidForPostApproval && (
+                <div className="modal-overlay" style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div className="modal-content-bids-page" style={{
+                        background: 'white',
+                        padding: '32px',
+                        borderRadius: '16px',
+                        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                        maxWidth: '600px',
+                        margin: '0 auto',
+                        overflowY: 'auto',
+                        height: window.innerWidth > 1024 ? 'auto' : '80vh',
+                        marginBottom: '80px',
+                        textAlign: 'center'
+                    }}>
+                        <div style={{ marginBottom: '24px' }}>
+                            <div style={{
+                                width: '80px',
+                                height: '80px',
+                                background: 'linear-gradient(135deg, #28a745 0%, #20c997 100%)',
+                                borderRadius: '50%',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                margin: '0 auto 16px',
+                                color: 'white',
+                                fontSize: '32px'
+                            }}>
+                                <i className="fas fa-check"></i>
+                            </div>
+                            <h3 style={{ marginBottom: '16px', color: '#2c3e50', fontSize: '24px' }}>
+                                Bid Accepted Successfully! 🎉
+                            </h3>
+                            <p style={{ marginBottom: '24px', color: '#6c757d', fontSize: '16px' }}>
+                                Your request has been closed and other bids have been declined. 
+                                {selectedBidForPostApproval.business_profiles?.business_name} is now your selected vendor!
+                            </p>
+                        </div>
+
+                        <div style={{ 
+                            marginBottom: '32px', 
+                            padding: '20px',
+                            background: '#f8f9fa',
+                            borderRadius: '12px',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <h4 style={{ color: '#495057', marginBottom: '16px', fontSize: '18px' }}>
+                                What would you like to do next?
+                            </h4>
+                            
+                            <div style={{ marginBottom: '20px' }}>
+                                <p style={{ color: '#6c757d', marginBottom: '16px' }}>
+                                    <i className="fas fa-info-circle" style={{ color: '#9633eb', marginRight: '8px' }}></i>
+                                    <strong>Recommended:</strong> Start by messaging {selectedBidForPostApproval.business_profiles?.business_name || 'this vendor'} to discuss service details, 
+                                    ask questions, and coordinate logistics.
+                                </p>
+                                <button 
+                                    className="btn-primary"
+                                    style={{
+                                        borderRadius: '50px',
+                                        padding: '16px 32px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        backgroundColor: '#9633eb',
+                                        color: 'white',
+                                        fontSize: '16px',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '12px',
+                                        margin: '0 auto',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onClick={() => handlePostApprovalAction('message')}
+                                >
+                                    <i className="fas fa-comments"></i>
+                                    Start Conversation with {selectedBidForPostApproval.business_profiles?.business_name || 'this vendor'}
+                                </button>
+                            </div>
+
+                            <div style={{ 
+                                padding: '16px',
+                                background: 'white',
+                                borderRadius: '8px',
+                                border: '1px solid #dee2e6'
+                            }}>
+                                <h5 style={{ color: '#495057', marginBottom: '12px', fontSize: '16px' }}>
+                                    Payment Options
+                                </h5>
+                                <p style={{ color: '#6c757d', marginBottom: '16px', fontSize: '14px' }}>
+                                    {(() => {
+                                        const downPayment = calculateDownPayment(selectedBidForPostApproval);
+                                        if (downPayment) {
+                                            return `Down Payment: ${downPayment.display} | Full Amount: $${selectedBidForPostApproval.bid_amount}`;
+                                        }
+                                        return `Full Amount: $${selectedBidForPostApproval.bid_amount}`;
+                                    })()}
+                                </p>
+                                <button 
+                                    className="btn-success"
+                                    style={{
+                                        borderRadius: '50px',
+                                        padding: '12px 24px',
+                                        border: 'none',
+                                        cursor: 'pointer',
+                                        backgroundColor: '#28a745',
+                                        color: 'white',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        margin: '0 auto',
+                                        transition: 'all 0.3s ease'
+                                    }}
+                                    onClick={() => handlePostApprovalAction('payment')}
+                                >
+                                    <i className="fas fa-credit-card"></i>
+                                    Proceed to Payment
+                                </button>
+                            </div>
+                        </div>
+
+                        <div style={{ 
+                            padding: '16px',
+                            background: '#e8f5e8',
+                            borderRadius: '8px',
+                            border: '1px solid #c3e6cb'
+                        }}>
+                            <p style={{ color: '#155724', fontSize: '14px', margin: 0 }}>
+                                <i className="fas fa-shield-alt" style={{ marginRight: '8px' }}></i>
+                                <strong>Bidi Protection:</strong> Your payment is secure and protected. 
+                                Full refund if the vendor doesn't deliver the service as promised.
+                                </p>
                         </div>
                     </div>
                 </div>

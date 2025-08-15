@@ -80,7 +80,7 @@ const VendorListWithFilters = ({ showAds = true }) => {
     return (
         <div className="vendor-list-with-filters">
             <Helmet>
-                <title>Find Wedding Vendors | Bidi</title>
+                <title>Find Event Vendors | Bidi</title>
                 <meta name="description" content="Discover and compare top wedding vendors in your area. Browse photographers, videographers, florists, caterers, DJs, and more for your perfect wedding day." />
                 <meta name="keywords" content="wedding vendors, wedding photographers, wedding videographers, wedding florists, wedding catering, wedding DJs, wedding beauty services" />
                 <meta property="og:title" content="Find Wedding Vendors | Bidi" />
@@ -90,8 +90,8 @@ const VendorListWithFilters = ({ showAds = true }) => {
             </Helmet>
 
             <div className="vendor-list-header">
-                <h1 className="vendor-list-title">Find Your Perfect Wedding Vendors</h1>
-                <p className="vendor-list-subtitle">Browse and compare top-rated wedding professionals in your area</p>
+                <h1 className="vendor-list-title">Find Your Perfect Event Vendors</h1>
+                <p className="vendor-list-subtitle">Browse and compare top-rated event professionals in your area</p>
             </div>
 
             <div className="filters-container">

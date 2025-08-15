@@ -458,6 +458,92 @@ h1 {
     max-width: 1600px;
 }
 
+/* Main Content */
+.vendors-main {
+    flex: 1;
+    min-width: 0;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Ad Space */
+.ad-space {
+    flex-shrink: 0;
+    position: sticky;
+    top: 24px;
+    height: fit-content;
+    align-self: flex-start;
+    width: 300px;
+}
+
+/* Large Desktop */
+@media screen and (min-width: 1400px) {
+    .vendors-layout {
+        max-width: 1800px;
+        gap: 32px;
+    }
+
+    .ad-space {
+        width: 350px;
+    }
+}
+
+/* Medium Desktop */
+@media screen and (max-width: 1399px) and (min-width: 1200px) {
+    .vendors-layout {
+        max-width: 1400px;
+        gap: 24px;
+    }
+
+    .ad-space {
+        width: 280px;
+    }
+}
+
+/* Small Desktop */
+@media screen and (max-width: 1199px) and (min-width: 1024px) {
+    .vendors-layout {
+        max-width: 1200px;
+        gap: 20px;
+        padding: 0 16px;
+    }
+
+    .ad-space {
+        width: 260px;
+    }
+}
+
+/* Tablet Landscape */
+@media screen and (max-width: 1023px) and (min-width: 768px) {
+    .vendors-layout {
+        flex-direction: column;
+        gap: 20px;
+        padding: 0 16px;
+        max-width: 100%;
+    }
+
+    .vendors-main {
+        max-width: 100%;
+        padding: 0;
+    }
+
+    .ad-space {
+        width: 100%;
+        position: static;
+        margin-top: 20px;
+        padding: 0;
+        order: 2;
+    }
+
+    .ad-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+}
+
 @media screen and (max-width: 768px) {
     .vendors-layout {
         flex-direction: column;
@@ -475,10 +561,14 @@ h1 {
         position: static;
         margin-top: 24px;
         padding: 0;
+        order: 2;
     }
 
     .ad-container {
         width: 100%;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
     }
 
     .ad-card {
@@ -596,39 +686,57 @@ h1 {
         font-size: 0.9rem;
         padding: 0 12px;
     }
-}
 
-/* Main Content */
-.vendors-main {
-    flex: 1;
-    min-width: 0;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Ad Space */
-.ad-space {
-    flex-shrink: 0;
-    position: sticky;
-    top: 24px;
-    height: fit-content;
-    align-self: flex-start;
-}
-
-@media screen and (max-width: 768px) {
     .ad-space {
-        width: 100%;
-        position: static;
-        margin-top: 32px;
-        padding: 0 16px;
+        margin-top: 20px;
+    }
+
+    .ad-container {
+        gap: 12px;
     }
 }
 
+/* Extra small devices */
+@media screen and (max-width: 360px) {
+    .vendors-layout {
+        padding: 0 8px;
+    }
+
+    .filters-container-SEO {
+        margin: 6px 0;
+    }
+
+    .filter-header {
+        padding: 8px 12px;
+    }
+
+    .filter-title {
+        font-size: 0.85rem;
+    }
+
+    .filter-button-SEO {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+
+    .page-title {
+        font-size: 1.2rem;
+        padding: 0 8px;
+    }
+
+    .location-description {
+        font-size: 0.85rem;
+        padding: 0 8px;
+    }
+}
+
+/* Ad Container Styles */
 .ad-container {
     display: flex;
     flex-direction: column;
     gap: 24px;
 }
+
 .ad-title {
     font-size: 20px;
     font-weight: 600;
@@ -703,4 +811,41 @@ h1 {
 
 .guarantee-text {
     color: #4B5563;
+}
+
+/* Improved Filter Responsiveness */
+@media screen and (max-width: 1200px) {
+    .filters-container-SEO {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+        padding: 0 16px;
+    }
+}
+
+@media screen and (max-width: 900px) {
+    .filters-container-SEO {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        padding: 0 12px;
+    }
+
+    .filter-content-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+        padding: 12px;
+    }
+}
+
+@media screen and (max-width: 600px) {
+    .filter-content-grid {
+        grid-template-columns: 1fr;
+        gap: 8px;
+        padding: 10px;
+    }
+
+    .filter-button-SEO {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        min-height: 40px;
+    }
 }

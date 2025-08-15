@@ -62,7 +62,7 @@ const LocationBanner = () => {
                 color: '#495057',
                 lineHeight: '1.4'
             }}>
-                🎉 Get 5% off everything when you book through Bidi! Limited time offer.
+                🎉 Welcome to the New Bidi!
                 <Link 
                     to="/request-categories"
                     style={{

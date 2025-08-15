@@ -1,7 +1,8 @@
 // App Imports
+import "./index.css";
 import "./App.css";
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from "react-router-dom";
+import { BrowserRouter as Router, Route, Routes, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { ToastContainer } from 'react-toastify';
 import "react-toastify/dist/ReactToastify.css";
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -65,11 +66,13 @@ import SuccessSignup from "./components/Profile/SuccessSignup";
 import ResetPassword from "./components/Profile/ResetPassword";
 import UpdatePassword from "./components/Profile/UpdatePassword";
 import ProfilePage from "./components/Profile/Profile";
+import AuthCallback from "./components/AuthCallback";
+import RestoreRequest from "./components/RestoreRequest";
 
 // Individual Imports
 
 import MyRequests from "./components/Individual/MyRequests";
-import EditRequest from "./components/Individual/EditRequest";
+
 import IndividualDashboard from "./components/Individual/IndividualDashboard";
 //
 // Business Imports
@@ -85,6 +88,7 @@ import GoogleBusinessSuccess from './components/Business/GoogleBusinessSuccess';
 import GoogleBusinessError from './components/Business/GoogleBusinessError';
 import AutobidTrainer from "./pages/Dashboard/AutobidTrainer";
 import PricingSetup from "./components/Business/PricingSetup";
+import SetupProgressPopup from "./components/Business/SetupProgressPopup";
 
 // Misc Imports
 import Homepage from "./components/Homepage";
@@ -160,6 +164,7 @@ import PublicRSVP from "./pages/PublicRSVP";
 // Create a wrapper component to use useLocation
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
   const [user, setUser] = useState(null);
   const [userRole, setUserRole] = useState(null);
   const [eventType, setEventType] = useState(null);
@@ -176,13 +181,13 @@ function AppContent() {
         // Fetch user role from profiles
         const { data: businessProfile } = await supabase
           .from('business_profiles')
-          .select('role')
+          .select('id')
           .eq('id', user.id)
           .single();
         
         const { data: individualProfile } = await supabase
           .from('individual_profiles')
-          .select('role')
+          .select('id')
           .eq('id', user.id)
           .single();
 
@@ -193,10 +198,23 @@ function AppContent() {
         } else if (individualProfile) {
           setUserRole('individual');
         }
+        
+        // Debug logging
+        console.log('User role detection:', {
+          userId: user.id,
+          businessProfile: !!businessProfile,
+          individualProfile: !!individualProfile,
+          userRole: businessProfile && individualProfile ? 'both' : businessProfile ? 'business' : individualProfile ? 'individual' : 'none'
+        });
       }
     };
     getUser();
   }, []);
+  
+  // Debug logging for user state changes
+  useEffect(() => {
+    console.log('User state changed:', { user, userRole, userId });
+  }, [user, userRole, userId]);
 
   // Function to check if current route is a dashboard
   const isDashboardRoute = () => {
@@ -319,6 +337,8 @@ function AppContent() {
           <Route path="/reset-password" element={<UpdatePassword />} />
           <Route path="/createaccount" element={<CreateAccount />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/auth-callback" element={<AuthCallback />} />
+          <Route path="/restore-request" element={<RestoreRequest />} />
           
           {/* Dashboard Routes */}
           <Route path="/individual-dashboard/*" element={
@@ -345,7 +365,6 @@ function AppContent() {
           
           {/* Individual Routes */}
           <Route path="/my-requests" element={<MyRequests />} />
-          <Route path="/edit-request/:type/:id" element={<EditRequest />} />
           {/* Test API Routes */}
           <Route path="/test-email" element={<TestEmail />} />
           {/* Business Routes */}
@@ -532,12 +551,59 @@ function AppContent() {
           <Route path="*" element={<ErrorPage />} />
         </Routes>
       </div>
+      
+      {/* Setup Progress Popup - shows on all pages for business users */}
+      {user && userRole === 'business' && (
+        <SetupProgressPopup 
+          userId={userId}
+          onNavigateToSection={(stepKey) => {
+            console.log('SetupProgressPopup navigation triggered:', stepKey);
+            // Handle navigation based on the step clicked
+            switch (stepKey) {
+              case 'stripe':
+                console.log('Navigating to Stripe setup');
+                navigate('/stripe-setup');
+                break;
+              case 'profile':
+              case 'photos':
+                console.log('Navigating to portfolio section');
+                navigate('/business-dashboard/portfolio');
+                break;
+              case 'paymentSettings':
+              case 'businessSettings':
+              case 'calendar':
+              case 'bidTemplate':
+              case 'aiBidder':
+                console.log('Navigating to settings section with stepKey:', stepKey);
+                navigate('/business-dashboard/settings', { 
+                  state: { scrollToSection: stepKey }
+                });
+                break;
+              default:
+                console.log('Unknown step key:', stepKey);
+                break;
+            }
+          }}
+        />
+      )}
+      
+      {/* Debug logging for SetupProgressPopup */}
+      {console.log('SetupProgressPopup render check:', {
+        user: !!user,
+        userRole,
+        userId,
+        shouldRender: user && userRole === 'business'
+      })}
+      
       {(!user || !isDashboardRoute()) && 
         !location.pathname.includes('signin') && 
         !location.pathname.includes('createaccount') && 
+        !location.pathname.includes('signup') &&
         !location.pathname.includes('pricing') && 
         !location.pathname.includes('request-password-reset') && 
         !location.pathname.includes('stripe-setup') && 
+        !location.pathname.includes('portfolio') && 
+        !location.pathname.includes('request-categories') && 
         <Footer />}
       <ToastContainer
         position="top-right"

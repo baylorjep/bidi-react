@@ -5,6 +5,7 @@ import StartNewChatModal from "./StartNewChatModal";
 import "../../styles/chat.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa";
+import { formatTimestamp } from "../../utils/dateTimeUtils";
 
 // Skeleton components for loading states
 const ChatListSkeleton = () => (
@@ -30,7 +31,7 @@ const ChatInterfaceSkeleton = () => (
     <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>
       Chat with your clients and vendors
     </p>
-    <div className="chat-app" style={{ minHeight: "100vh" }}>
+    <div className="chat-app-chat-interface" style={{ minHeight: "100vh" }}>
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
@@ -219,7 +220,15 @@ export default function ChatInterface({ initialChat }) {
         last_message_time: latestMap[p.id]?.created_at
       }));
 
-      setChats(formatted);
+      // Sort chats by most recent message time (newest first)
+      const sortedChats = formatted.sort((a, b) => {
+        if (!a.last_message_time && !b.last_message_time) return 0;
+        if (!a.last_message_time) return 1;
+        if (!b.last_message_time) return -1;
+        return new Date(b.last_message_time) - new Date(a.last_message_time);
+      });
+
+      setChats(sortedChats);
     })();
   }, [currentUserId, userType]);
 
@@ -266,7 +275,7 @@ export default function ChatInterface({ initialChat }) {
         Messages
       </h1>
       <p className="text-muted mb-4" style={{ fontFamily: "Outfit", fontSize: "1rem", color: "gray", textAlign: "center" }}>Chat with your clients and vendors</p>
-    <div className="chat-app">
+    <div className="chat-app-chat-interface">
       <aside className="chat-sidebar">
         <header>
           <span>Your Chats</span>
@@ -288,31 +297,28 @@ export default function ChatInterface({ initialChat }) {
             </div>
           ) : (
             chats.map((c) => (
-            <li
-              key={c.business_id}
-              className={activeBusiness === c.business_id ? "active" : ""}
-              onClick={() => handleChatSelect(c)}
-            >
-              <div className="chat-list-item-content">
-                <div className="chat-list-header">
-                  <span className="chat-name">{c.business_name}</span>
-                  {c.unseen_count > 0 && (
-                    <span className="unseen-badge">{c.unseen_count}</span>
-                  )}
-                </div>
-                <div className="chat-list-footer">
-                  <div className="message-preview">{c.last_message}</div>
-                  <div className="message-time" style={{ color: "black"}}>
-                    {new Date(c.last_message_time).toLocaleTimeString('en-US', {
-                      hour: 'numeric',
-                      minute: '2-digit',
-                      hour12: true
-                    })}
+              <li
+                key={c.business_id}
+                className={activeBusiness === c.business_id ? "active" : ""}
+                onClick={() => handleChatSelect(c)}
+              >
+                <div className="chat-list-item-content">
+                  <div className="chat-list-header">
+                    <span className="chat-name">{c.business_name}</span>
+                    {c.unseen_count > 0 && (
+                      <span className="unseen-badge">{c.unseen_count}</span>
+                    )}
+                  </div>
+                  <div className="chat-list-footer">
+                    <div className="message-preview">{c.last_message}</div>
+                    <div className="message-time" style={{ color: "black"}}>
+                      {formatTimestamp(c.last_message_time, 'datetime')}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </li>
-          )))}
+              </li>
+            ))
+          )}
         </ul>
       </aside>
 

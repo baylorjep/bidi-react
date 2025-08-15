@@ -15,7 +15,101 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
   const [isReady, setIsReady] = useState(false);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isZoomed, setIsZoomed] = useState(false);
+  const [videoLoading, setVideoLoading] = useState({});
+  const [videoVolumes, setVideoVolumes] = useState({});
+  const [mutedVideos, setMutedVideos] = useState({});
+  const [playingVideos, setPlayingVideos] = useState({});
   const navigate = useNavigate();
+
+  // Initialize video states when categoryMedia changes
+  useEffect(() => {
+    if (categoryMedia.length > 0) {
+      const initialVolumes = {};
+      const initialMuted = {};
+      const initialLoading = {};
+      
+      categoryMedia.forEach((media, index) => {
+        const isVideo = media.isVideo || media.type === 'video';
+        if (isVideo) {
+          initialVolumes[index] = 0.7;
+          initialMuted[index] = false;
+          initialLoading[index] = true;
+          
+          // Add a timeout fallback to prevent loading state from getting stuck
+          setTimeout(() => {
+            setVideoLoading(prev => ({ ...prev, [index]: false }));
+          }, 10000); // 10 second timeout
+        }
+      });
+      
+      setVideoVolumes(initialVolumes);
+      setMutedVideos(initialMuted);
+      setVideoLoading(initialLoading);
+    }
+  }, [categoryMedia]);
+
+  // Cleanup videos when component unmounts or slides change
+  useEffect(() => {
+    return () => {
+      cleanupVideos();
+    };
+  }, []);
+
+  const cleanupVideos = () => {
+    const videos = document.querySelectorAll('.modal-media.video');
+    videos.forEach(video => {
+      video.pause();
+      video.currentTime = 0;
+    });
+    setPlayingVideos({});
+  };
+
+  // Video control functions
+  const handleVideoPlay = (index) => {
+    setPlayingVideos(prev => ({ ...prev, [index]: true }));
+  };
+
+  const handleVideoPause = (index) => {
+    setPlayingVideos(prev => ({ ...prev, [index]: false }));
+  };
+
+  const handleVolumeChange = (index, volume) => {
+    setVideoVolumes(prev => ({ ...prev, [index]: volume }));
+    const video = document.querySelector(`.slick-slide[data-index="${index}"] .modal-media.video`);
+    if (video) {
+      video.volume = volume;
+    }
+  };
+
+  const handleMuteToggle = (index) => {
+    setMutedVideos(prev => ({ ...prev, [index]: !prev[index] }));
+    const video = document.querySelector(`.slick-slide[data-index="${index}"] .modal-media.video`);
+    if (video) {
+      video.muted = !mutedVideos[index];
+    }
+  };
+
+  const handleVideoClick = (index) => {
+    const video = document.querySelector(`.slick-slide[data-index="${index}"] .modal-media.video`);
+    if (video) {
+      if (video.paused) {
+        video.play().catch(console.error);
+      } else {
+        video.pause();
+      }
+    }
+  };
+
+  const handleVideoProgress = (index, e) => {
+    const video = document.querySelector(`.slick-slide[data-index="${index}"] .modal-media.video`);
+    if (video) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const width = rect.width;
+      const clickTime = (clickX / width) * video.duration;
+      video.currentTime = clickTime;
+    }
+  };
 
   useEffect(() => {
     console.log('ImageModal - useEffect triggered:', { isOpen, categoryMediaLength: categoryMedia.length });
@@ -123,18 +217,20 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       console.log('ImageModal - Slide changing:', { oldIndex, newIndex });
       // Pause all videos when changing slides
       const videos = document.querySelectorAll('.modal-media.video');
-      videos.forEach(video => video.pause());
+      videos.forEach(video => {
+        video.pause();
+        video.currentTime = 0;
+      });
       // Reset zoom when changing slides
       setZoomLevel(1);
       setIsZoomed(false);
+      // Update playing state
+      setPlayingVideos(prev => ({ ...prev, [oldIndex]: false }));
     },
     afterChange: (currentSlide) => {
       console.log('ImageModal - Slide changed to:', currentSlide);
-      // Play the current video if it exists
-      const currentVideo = document.querySelector('.slick-current .modal-media.video');
-      if (currentVideo) {
-        currentVideo.play().catch(console.error);
-      }
+      // Don't auto-play videos in modal - let user control
+      setPlayingVideos(prev => ({ ...prev, [currentSlide]: false }));
     }
   };
 
@@ -340,16 +436,212 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       height: auto;
       object-fit: contain;
       background: rgba(0, 0, 0, 0.8);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
     }
-    .video-container {
-      width: 100%;
-      height: 100vh;
+    
+    .modal-media.video:hover {
+      transform: scale(1.02);
+    }
+    
+         .video-container-image-modal {
+       width: 100%;
+       height: 100vh;
+       display: flex;
+       align-items: center;
+       justify-content: center;
+       background: rgba(0, 0, 0, 0.8);
+       backdrop-filter: blur(5px) !important;
+       -webkit-backdrop-filter: blur(5px) !important;
+       position: relative;
+       border-radius: 8px;
+       overflow: hidden;
+     }
+     
+     .video-container-image-modal.playing .video-play-overlay {
+       opacity: 0;
+       pointer-events: none;
+     }
+    
+    .video-play-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.2));
       display: flex;
       align-items: center;
       justify-content: center;
-      background: rgba(0, 0, 0, 0.8);
-      backdrop-filter: blur(5px) !important;
-      -webkit-backdrop-filter: blur(5px) !important;
+      opacity: 1;
+      transition: all 0.3s ease;
+      border-radius: 8px;
+      backdrop-filter: blur(2px);
+      z-index: 2;
+    }
+    
+    .video-container-image-modal:hover .video-play-overlay {
+      background: linear-gradient(135deg, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.4));
+      transform: scale(1.05);
+    }
+    
+    .play-button {
+      width: 80px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.95);
+      border: 3px solid rgba(163, 40, 244, 0.8);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a328f4;
+      font-size: 24px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+    }
+    
+    .play-button:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 1);
+      box-shadow: 0 6px 25px rgba(0, 0, 0, 0.4);
+    }
+    
+    .video-controls {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+      padding: 20px;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      border-radius: 0 0 8px 8px;
+      z-index: 3;
+    }
+    
+    .video-container-image-modal:hover .video-controls {
+      opacity: 1;
+    }
+    
+    .video-progress {
+      width: 100%;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      cursor: pointer;
+      margin-bottom: 15px;
+      position: relative;
+    }
+    
+    .video-progress-bar {
+      height: 100%;
+      background: #a328f4;
+      border-radius: 2px;
+      position: relative;
+      transition: width 0.1s ease;
+    }
+    
+    .video-progress-bar::after {
+      content: '';
+      position: absolute;
+      right: -6px;
+      top: -4px;
+      width: 12px;
+      height: 12px;
+      background: #a328f4;
+      border-radius: 50%;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .video-time {
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      margin-bottom: 10px;
+    }
+    
+    .video-controls-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .video-controls-buttons {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    
+    .video-control-btn {
+      background: rgba(255, 255, 255, 0.2);
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 14px;
+    }
+    
+    .video-control-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    
+    .volume-slider {
+      width: 80px;
+      height: 4px;
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+      -webkit-appearance: none;
+    }
+    
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px;
+      height: 16px;
+      background: #a328f4;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .volume-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      background: #a328f4;
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid white;
+      border-radius: 50%;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    
+    .video-loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 14px;
+      z-index: 2;
+    }
+    
+    .video-error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff6b6b;
+      font-size: 14px;
+      text-align: center;
+      z-index: 2;
     }
     .slick-prev, .slick-next {
       z-index: 1000 !important;
@@ -526,7 +818,9 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
         height: auto;
         object-fit: contain;
         background: #000;
+        border-radius: 0;
       }
+      
       .video-container {
         width: 100vw;
         height: 100vh;
@@ -534,6 +828,45 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
         align-items: center;
         justify-content: center;
         background: #000;
+        border-radius: 0;
+      }
+      
+      .video-controls {
+        padding: 15px;
+        opacity: 1;
+      }
+      
+      .play-button {
+        width: 60px;
+        height: 60px;
+        font-size: 18px;
+      }
+      
+      .video-progress {
+        height: 6px;
+        margin-bottom: 12px;
+      }
+      
+      .video-progress-bar::after {
+        width: 16px;
+        height: 16px;
+        right: -8px;
+        top: -5px;
+      }
+      
+      .video-controls-row {
+        flex-direction: column;
+        gap: 10px;
+        align-items: stretch;
+      }
+      
+      .video-controls-buttons {
+        justify-content: center;
+        gap: 20px;
+      }
+      
+      .volume-slider {
+        width: 100px;
       }
       .image-container {
         width: 100vw;
@@ -615,7 +948,9 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
         height: auto;
         object-fit: contain;
         background: #000;
+        border-radius: 0;
       }
+      
       .video-container {
         width: 100vw;
         height: 100vh;
@@ -623,7 +958,121 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
         align-items: center;
         justify-content: center;
         background: #000;
+        border-radius: 0;
       }
+      
+      .video-controls {
+        padding: 12px;
+        opacity: 1;
+      }
+      
+      .play-button {
+        width: 50px;
+        height: 50px;
+        font-size: 16px;
+      }
+      
+      .video-progress {
+        height: 5px;
+        margin-bottom: 10px;
+      }
+      
+      .video-progress-bar::after {
+        width: 14px;
+        height: 14px;
+        right: -7px;
+        top: -4.5px;
+      }
+      
+      .video-controls-row {
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+      }
+      
+      .video-controls-buttons {
+        justify-content: center;
+        gap: 15px;
+      }
+      
+      .volume-slider {
+        width: 80px;
+      }
+      
+      /* Landscape orientation adjustments for small mobile */
+      @media (max-width: 480px) and (orientation: landscape) {
+        .video-container {
+          height: 100vh;
+          width: 100vw;
+        }
+        
+        .video-controls {
+          padding: 8px;
+          opacity: 1;
+        }
+        
+        .play-button {
+          width: 40px;
+          height: 40px;
+          font-size: 14px;
+        }
+        
+        .video-progress {
+          height: 3px;
+          margin-bottom: 6px;
+        }
+        
+        .video-controls-row {
+          flex-direction: row;
+          gap: 10px;
+          align-items: center;
+        }
+        
+        .video-controls-buttons {
+          flex-direction: row;
+          gap: 10px;
+        }
+        
+        .volume-slider {
+          width: 60px;
+        }
+      }
+      
+      /* Landscape orientation adjustments */
+      @media (max-width: 768px) and (orientation: landscape) {
+        .video-container {
+          height: 100vh;
+          width: 100vw;
+        }
+        
+        .video-controls {
+          padding: 10px;
+          opacity: 1;
+        }
+        
+        .play-button {
+          width: 50px;
+          height: 50px;
+          font-size: 16px;
+        }
+        
+        .video-progress {
+          height: 4px;
+          margin-bottom: 8px;
+        }
+        
+        .video-controls-row {
+          flex-direction: row;
+          gap: 15px;
+          align-items: center;
+        }
+        
+        .video-controls-buttons {
+          flex-direction: row;
+          gap: 15px;
+        }
+      }
+      
       .image-container {
         width: 100vw;
         height: 100vh;
@@ -658,6 +1107,11 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
       border-radius: 50%;
       animation: spin 1s linear infinite;
       margin-bottom: 20px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
     }
 
     .loading-overlay p {
@@ -832,16 +1286,91 @@ const ImageModal = ({ isOpen, mediaUrl, isVideo, onClose, categoryMedia = [], cu
                 const isVideo = media.isVideo || media.type === 'video';
                 
                 return (
-                  <div key={index} className="modal-slide">
+                  <div key={index} className="modal-slide" data-index={index}>
                     {isVideo ? (
-                      <div className="video-container">
-                        <video 
-                          src={media.url} 
-                          controls 
-                          autoPlay={index === currentIndex}
-                          className="modal-media video"
-                          playsInline
-                        />
+                      <div className={`video-container-image-modal ${playingVideos[index] ? 'playing' : ''}`}>
+                                                 <video 
+                           src={media.url} 
+                           className="modal-media video"
+                           playsInline
+                           onLoadStart={() => setVideoLoading(prev => ({ ...prev, [index]: true }))}
+                           onLoadedData={() => setVideoLoading(prev => ({ ...prev, [index]: false }))}
+                           onCanPlay={() => setVideoLoading(prev => ({ ...prev, [index]: false }))}
+                           onCanPlayThrough={() => setVideoLoading(prev => ({ ...prev, [index]: false }))}
+                           onError={() => setVideoLoading(prev => ({ ...prev, [index]: false }))}
+                           onPlay={() => {
+                             handleVideoPlay(index);
+                             setVideoLoading(prev => ({ ...prev, [index]: false }));
+                           }}
+                           onPause={() => handleVideoPause(index)}
+                           onTimeUpdate={(e) => {
+                             const video = e.target;
+                             const progressBar = e.target.parentElement.querySelector('.video-progress-bar');
+                             const timeDisplay = e.target.parentElement.querySelector('.video-time');
+                             if (progressBar && timeDisplay) {
+                               const progress = (video.currentTime / video.duration) * 100;
+                               progressBar.style.width = `${progress}%`;
+                               timeDisplay.textContent = `${Math.floor(video.currentTime)}s / ${Math.floor(video.duration)}s`;
+                             }
+                           }}
+                           onClick={() => handleVideoClick(index)}
+                           style={{
+                             maxWidth: '100%',
+                             maxHeight: '100vh',
+                             width: 'auto',
+                             height: 'auto',
+                             objectFit: 'contain',
+                             display: 'block'
+                           }}
+                         />
+                        
+                        {videoLoading[index] && (
+                          <div className="video-loading">
+                            <div className="loading-spinner"></div>
+                            <p>Loading video...</p>
+                          </div>
+                        )}
+                        
+                        {!videoLoading[index] && (
+                          <>
+                                                         <div className="video-play-overlay">
+                               <div className="play-button" onClick={() => handleVideoClick(index)}>
+                                 ▶
+                               </div>
+                             </div>
+                            
+                            <div className="video-controls">
+                              <div className="video-progress" onClick={(e) => handleVideoProgress(index, e)}>
+                                <div className="video-progress-bar" style={{ width: '0%' }}></div>
+                              </div>
+                              
+                              <div className="video-controls-row">
+                                <div className="video-time">0s / 0s</div>
+                                <div className="video-controls-buttons">
+                                  <button 
+                                    className="video-control-btn"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMuteToggle(index);
+                                    }}
+                                  >
+                                    {mutedVideos[index] ? '🔇' : '🔊'}
+                                  </button>
+                                  <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value={videoVolumes[index] || 0.7}
+                                    onChange={(e) => handleVolumeChange(index, parseFloat(e.target.value))}
+                                    className="volume-slider"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </>
+                        )}
                       </div>
                     ) : (
                       <div 
