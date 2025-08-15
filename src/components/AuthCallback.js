@@ -33,6 +33,53 @@ const AuthCallback = () => {
         }
     };
 
+    // Helper function to check if user has a wedding plan
+    const checkForWeddingPlan = async (userId) => {
+        try {
+            const { data: weddingPlan } = await supabase
+                .from('wedding_plans')
+                .select('id')
+                .eq('user_id', userId)
+                .single();
+            return !!weddingPlan;
+        } catch (error) {
+            return false;
+        }
+    };
+
+    // Helper function to check if user has individual requests
+    const checkForIndividualRequests = async (userId) => {
+        try {
+            const requestTables = [
+                'photography_requests',
+                'videography_requests', 
+                'catering_requests',
+                'dj_requests',
+                'florist_requests',
+                'beauty_requests',
+                'wedding_planning_requests'
+            ];
+
+            for (const table of requestTables) {
+                let query = supabase.from(table).select('id');
+                
+                if (table === 'photography_requests') {
+                    query = query.eq('profile_id', userId);
+                } else {
+                    query = query.eq('user_id', userId);
+                }
+
+                const { data: requests } = await query;
+                if (requests && requests.length > 0) {
+                    return true;
+                }
+            }
+            return false;
+        } catch (error) {
+            return false;
+        }
+    };
+
     useEffect(() => {
         const handleAuthCallback = async () => {
             try {
@@ -57,24 +104,27 @@ const AuthCallback = () => {
                 setUserEmail(currentUser.email || '');
                 setUserName(currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '');
 
-                // Check if user already has profiles
-                const { data: profile, error: profileError } = await supabase
-                    .from('profiles')
-                    .select('*')
-                    .eq('id', currentUser.id)
-                    .single();
+                // Check if user already has profiles - check both individual and business profiles
+                const [individualProfile, businessProfile] = await Promise.all([
+                    supabase
+                        .from('individual_profiles')
+                        .select('*')
+                        .eq('id', currentUser.id)
+                        .single(),
+                    supabase
+                        .from('business_profiles')
+                        .select('*')
+                        .eq('id', currentUser.id)
+                        .single()
+                ]);
 
-                if (profileError && profileError.code !== 'PGRST116') {
-                    // PGRST116 means no rows returned, which is expected for new users
-                    console.error('Error checking profile:', profileError);
-                    setError('Failed to check profile status');
-                    setLoading(false);
-                    return;
-                }
+                // Check for profile errors (PGRST116 means no rows returned, which is expected for new users)
+                const hasIndividualProfile = individualProfile.data && !individualProfile.error;
+                const hasBusinessProfile = businessProfile.data && !businessProfile.error;
 
-                if (profile) {
-                    // User already has a profile, redirect to appropriate dashboard
-                    await redirectToDashboard(currentUser.id, profile.role);
+                if (hasIndividualProfile || hasBusinessProfile) {
+                    // User already has profiles, redirect to appropriate dashboard
+                    await redirectToDashboard(currentUser.id, hasIndividualProfile, hasBusinessProfile);
                 } else {
                     // New user, show user type selection modal
                     setShowUserTypeModal(true);
@@ -91,7 +141,7 @@ const AuthCallback = () => {
         handleAuthCallback();
     }, [navigate]);
 
-    const redirectToDashboard = async (userId, userRole) => {
+    const redirectToDashboard = async (userId, hasIndividualProfile, hasBusinessProfile) => {
         try {
             // Check for pending request context before redirecting
             const pendingRequestContext = sessionStorage.getItem('pendingRequestContext');
@@ -124,26 +174,33 @@ const AuthCallback = () => {
                 }
             }
             
-            // Normal redirect based on user type
-            if (userRole === 'both') {
+            // Determine user type and redirect accordingly
+            if (hasIndividualProfile && hasBusinessProfile) {
+                // User with both profiles (wedding planner vendor)
                 navigate('/wedding-planner-dashboard/home');
-            } else if (userRole === 'business') {
+            } else if (hasBusinessProfile && !hasIndividualProfile) {
+                // Business user only
                 navigate('/business-dashboard/dashboard');
-            } else {
-                // Individual user - check if they have existing data
-                const hasWeddingPlan = await checkForExistingData(userId, 'wedding_plans');
-                const hasRequests = await checkForExistingData(userId, 'photography_requests') ||
-                                   await checkForExistingData(userId, 'catering_requests') ||
-                                   await checkForExistingData(userId, 'dj_requests') ||
-                                   await checkForExistingData(userId, 'florist_requests') ||
-                                   await checkForExistingData(userId, 'beauty_requests') ||
-                                   await checkForExistingData(userId, 'wedding_planning_requests');
+            } else if (hasIndividualProfile && !hasBusinessProfile) {
+                // Individual user only - check their preferred dashboard
+                const { data: individualProfile } = await supabase
+                    .from('individual_profiles')
+                    .select('preferred_dashboard')
+                    .eq('id', userId)
+                    .single();
                 
-                if (hasWeddingPlan || hasRequests) {
-                    navigate('/individual-dashboard/bids');
+                const preferredDashboard = individualProfile?.preferred_dashboard;
+                
+                if (preferredDashboard === 'wedding-planner') {
+                    // User prefers wedding planner dashboard (individual wedding planning)
+                    navigate('/wedding-planner');
                 } else {
+                    // User prefers individual dashboard or no preference set
                     navigate('/individual-dashboard/bids');
                 }
+            } else {
+                // New user with no profiles, default to individual dashboard
+                navigate('/individual-dashboard/bids');
             }
         } catch (error) {
             console.error('Navigation error:', error);
