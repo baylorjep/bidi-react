@@ -84,6 +84,9 @@ export default function MessagingView({
   const [showApprovalModal, setShowApprovalModal] = useState(false);
   const [selectedBidForApproval, setSelectedBidForApproval] = useState(null);
 
+  // Stripe account ID for payment processing
+  const [stripeAccountId, setStripeAccountId] = useState(null);
+
   // Memoize the loading skeletons at the top level to avoid conditional hook calls
   const loadingSkeletons = useMemo(() => (
     <div className="messaging-view">
@@ -506,17 +509,21 @@ export default function MessagingView({
           if (!bidsError && bids && bids.length > 0) {
             console.log('Setting bid info:', bids[0]);
             setBidInfo(bids[0]);
+            setStripeAccountId(bids[0].business_profiles?.stripe_account_id);
           } else {
             console.log('No bids found or error occurred');
             setBidInfo(null);
+            setStripeAccountId(null);
           }
         } catch (error) {
           console.error('Error fetching bids:', error);
           setBidInfo(null);
+          setStripeAccountId(null);
         }
       } else {
         console.log('No request IDs found to check for bids');
         setBidInfo(null);
+        setStripeAccountId(null);
       }
     } catch (error) {
       console.error('Error in fetchBidInfo:', error);
@@ -554,6 +561,15 @@ export default function MessagingView({
 
     checkBusinessProfile();
   }, [currentUserId]);
+
+  // Update stripeAccountId whenever bidInfo changes
+  useEffect(() => {
+    if (bidInfo?.business_profiles?.stripe_account_id) {
+      setStripeAccountId(bidInfo.business_profiles.stripe_account_id);
+    } else {
+      setStripeAccountId(null);
+    }
+  }, [bidInfo]);
 
   if (!currentUserId || !businessId) {
     return loadingSkeletons;

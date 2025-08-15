@@ -1400,6 +1400,14 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
         {currentQuestion.type === 'budget' && (
           <div className="tw-space-y-4">
+            {/* Budget requirement notice */}
+            <div className="tw-p-3 tw-bg-blue-50 tw-border tw-border-blue-200 tw-rounded-lg tw-mb-4">
+              <div className="tw-flex tw-items-center tw-text-blue-800">
+                <FiDollarSign className="tw-mr-2" size={16} />
+                <span className="tw-text-sm tw-font-medium">Budget information is required to help vendors provide accurate quotes</span>
+              </div>
+            </div>
+            
             {/* Predefined budget options */}
             <div className="tw-space-y-3">
               {currentQuestion.options.map((option) => (
@@ -1447,9 +1455,23 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                     })}
                     className="tw-w-24 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded focus:tw-outline-none focus:tw-ring-2"
                     style={{ focusRingColor: colors.primary }}
+                    min="1"
+                    required
                   />
-                  <span className="tw-text-gray-200 tw-rounded focus:tw-outline-none focus:tw-ring-2"
+                  <span className="tw-text-gray-600">to</span>
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={currentAnswer.max}
+                    onChange={(e) => handleSelectAnswer({ 
+                      type: 'custom', 
+                      min: currentAnswer.min, 
+                      max: e.target.value 
+                    })}
+                    className="tw-w-24 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded focus:tw-outline-none focus:tw-ring-2"
                     style={{ focusRingColor: colors.primary }}
+                    min="1"
+                    required
                   />
                 </div>
               )}
@@ -1531,7 +1553,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                       style={{ display: "none" }}
                     />
                     <FiUpload className="tw-inline tw-mr-2" size={16} />
-                    Add More Photos
+                    'Add More Photos'
                   </button>
                 </div>
               </div>
@@ -1730,7 +1752,22 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     }
     if (!currentQuestion) return false;
     
-    // All questions are now optional - user can always skip
+    // Make budget questions mandatory
+    if (currentQuestion.type === 'budget') {
+      const currentAnswer = formData.responses?.[currentCategory]?.[currentQuestion.id];
+      if (!currentAnswer) return false;
+      
+      // If it's a custom budget, both min and max must be filled
+      if (typeof currentAnswer === 'object' && currentAnswer?.type === 'custom') {
+        return currentAnswer.min && currentAnswer.max && 
+               currentAnswer.min !== '' && currentAnswer.max !== '' &&
+               parseInt(currentAnswer.min) > 0 && parseInt(currentAnswer.max) > 0;
+      }
+      
+      return true; // Predefined budget option selected
+    }
+    
+    // All other questions are optional - user can always skip
     return true;
   };
 
@@ -1997,7 +2034,18 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         )}
 
                  {/* Content */}
-         <div className="tw-p-6 tw-overflow-y-auto tw-max-h-[calc(90vh-300px)]">
+         <div className="tw-relative tw-p-6 tw-overflow-y-auto tw-max-h-[calc(90vh-300px)]">
+           {/* Scroll indicator at top */}
+           <div className="tw-absolute tw-top-0 tw-left-0 tw-right-0 tw-h-4 tw-bg-gradient-to-b tw-from-white tw-to-transparent tw-pointer-events-none tw-z-10"></div>
+           
+           {/* Scroll indicator at bottom */}
+           <div className="tw-absolute tw-bottom-0 tw-left-0 tw-right-0 tw-h-4 tw-bg-gradient-to-t tw-from-white tw-to-transparent tw-pointer-events-none tw-z-10"></div>
+           
+           {/* Scroll hint text */}
+           <div className="tw-text-center tw-text-xs tw-text-gray-400 tw-mb-4 tw-italic">
+             💡 Scroll down to see more questions
+           </div>
+           
            {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : ((showEventDetails && shouldShowEventDetails) ? renderEventDetails() : renderQuestion()))}
          </div>
 
@@ -2032,7 +2080,9 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
              >
                {(showEventDetails && shouldShowEventDetails)
                  ? (currentQuestionIndex < eventDetailQuestions.length - 1 ? 'Next' : 'Finish Event Details')
-                 : (formData.responses?.[currentCategory]?.[currentQuestion?.id] ? 'Next' : 'Skip')
+                 : (currentQuestion?.type === 'budget' && !formData.responses?.[currentCategory]?.[currentQuestion?.id] 
+                     ? 'Budget Required' 
+                     : (formData.responses?.[currentCategory]?.[currentQuestion?.id] ? 'Next' : 'Skip'))
                }
                <FiArrowRight className="tw-ml-2" size={16} />
              </button>
