@@ -219,6 +219,38 @@ function VendorHomepage() {
                 <meta name="keywords" content="wedding vendor platform, grow wedding business, wedding leads, wedding vendor marketplace, wedding business opportunities" />
             </Helmet>
 
+            {/* AI Banner */}
+            <div style={{
+                backgroundColor: 'var(--primary-color, #A328F4)',
+                color: 'white',
+                textAlign: 'center',
+                padding: '12px 20px',
+                fontSize: '1rem',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                zIndex: 1000
+            }}
+            onClick={() => {
+                const aiSection = document.querySelector('.ai-autobid-section');
+                if (aiSection) {
+                    aiSection.scrollIntoView({ 
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            }}
+            onMouseOver={(e) => {
+                e.currentTarget.style.backgroundColor = '#8a1fd8';
+            }}
+            onMouseOut={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--primary-color, #A328F4)';
+            }}
+            >
+                🚀 NEW: Check out our AI that will bid for you! Click to learn more
+            </div>
+
             <div ref={mastheadRef} className={`masthead-index fade-in-section ${mastheadVisible ? 'is-visible' : ''}`} style={{
                 display: 'flex',
                 justifyContent: 'center',
@@ -369,6 +401,231 @@ function VendorHomepage() {
                             ))}
                         </div>
                     )}
+                </div>
+            </div>
+
+            <div className='ai-autobid-section' style={{
+                padding: window.innerWidth <= 768 ? '3rem 1rem' : '4rem 2rem',
+                backgroundColor: '#f8f9ff',
+                margin: '2rem 0'
+            }}>
+                <div className='ai-autobid-container' style={{
+                    maxWidth: '1200px',
+                    margin: '0 auto',
+                    textAlign: 'center'
+                }}>
+                    <div className='ai-autobid-header' style={{
+                        marginBottom: window.innerWidth <= 768 ? '2rem' : '3rem'
+                    }}>
+                        <h2 style={{
+                            fontSize: window.innerWidth <= 768 ? '2rem' : '2.5rem',
+                            color: 'var(--primary-color, #A328F4)',
+                            marginBottom: '1rem',
+                            fontWeight: '600'
+                        }}>
+                            🤖 Train Your AI to Bid for You
+                        </h2>
+                        <p style={{
+                            fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem',
+                            color: '#666',
+                            maxWidth: '800px',
+                            margin: '0 auto',
+                            lineHeight: '1.6'
+                        }}>
+                            Our revolutionary AI auto-bidder learns your pricing strategy and automatically generates 
+                            personalized bids that match your business model. No more manual bidding on every request!
+                        </p>
+                    </div>
+
+                    <div className='ai-features-grid' style={{
+                        display: 'grid',
+                        gridTemplateColumns: window.innerWidth <= 768 ? '1fr' : 'repeat(3, 1fr)',
+                        gap: window.innerWidth <= 768 ? '1.5rem' : '2rem',
+                        marginBottom: '2rem'
+                    }}>
+                        <div className='ai-feature-card' style={{
+                            backgroundColor: 'white',
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <div className='ai-feature-icon' style={{
+                                fontSize: '2.5rem',
+                                marginBottom: '1rem'
+                            }}>
+                                🎯
+                            </div>
+                            <h3 style={{
+                                fontSize: '1.2rem',
+                                marginBottom: '0.8rem',
+                                fontWeight: '600',
+                                color: '#333'
+                            }}>
+                                Smart Learning
+                            </h3>
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                lineHeight: '1.5'
+                            }}>
+                                AI analyzes your pricing patterns and learns to bid exactly like you would, 
+                                considering your experience, market rates, and business strategy.
+                            </p>
+                        </div>
+
+                        <div className='ai-feature-card' style={{
+                            backgroundColor: 'white',
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <div className='ai-feature-icon' style={{
+                                fontSize: '2.5rem',
+                                marginBottom: '1rem'
+                            }}>
+                                ⚡
+                            </div>
+                            <h3 style={{
+                                fontSize: '1.2rem',
+                                marginBottom: '0.8rem',
+                                fontWeight: '600',
+                                color: '#333'
+                            }}>
+                                Instant Bidding
+                            </h3>
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                lineHeight: '1.5'
+                            }}>
+                                Respond to requests in seconds, not hours. Your AI automatically generates 
+                                professional bids while you focus on growing your business.
+                            </p>
+                        </div>
+
+                        <div className='ai-feature-card' style={{
+                            backgroundColor: 'white',
+                            padding: '1.5rem',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
+                            border: '1px solid #e9ecef'
+                        }}>
+                            <div className='ai-feature-icon' style={{
+                                fontSize: '2.5rem',
+                                marginBottom: '1rem'
+                            }}>
+                                📈
+                            </div>
+                            <h3 style={{
+                                fontSize: '1.2rem',
+                                marginBottom: '0.8rem',
+                                fontWeight: '600',
+                                color: '#333'
+                            }}>
+                                Higher Win Rates
+                            </h3>
+                            <p style={{
+                                fontSize: '0.9rem',
+                                color: '#666',
+                                lineHeight: '1.5'
+                            }}>
+                                Consistent, well-priced bids lead to more bookings. Our AI helps you 
+                                win more jobs by bidding strategically on every opportunity.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className='ai-cta' style={{
+                        marginTop: '2rem'
+                    }}>
+                        <p style={{
+                            fontSize: window.innerWidth <= 768 ? '1rem' : '1.1rem',
+                            color: '#666',
+                            marginBottom: '1.5rem'
+                        }}>
+                            <strong>Ready to automate your bidding?</strong> Train your AI in just 10 minutes 
+                            and start winning more jobs automatically.
+                        </p>
+                        <div className='ai-cta-buttons' style={{
+                            display: 'flex',
+                            gap: '1rem',
+                            justifyContent: 'center',
+                            flexDirection: window.innerWidth <= 768 ? 'column' : 'row'
+                        }}>
+                            {user ? (
+                                role === 'business' ? (
+                                    <Link to="/autobid-trainer" onClick={() => posthog.capture('vendor_ai_training')}>
+                                        <button style={{
+                                            backgroundColor: 'var(--primary-color, #A328F4)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '12px 24px',
+                                            borderRadius: '30px',
+                                            fontSize: '1rem',
+                                            fontWeight: '500',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            width: window.innerWidth <= 768 ? '100%' : 'auto'
+                                        }}>
+                                            🚀 Start AI Training
+                                        </button>
+                                    </Link>
+                                ) : (
+                                    <Link to="/signup" onClick={() => posthog.capture('vendor_signup_ai')}>
+                                        <button style={{
+                                            backgroundColor: 'var(--primary-color, #A328F4)',
+                                            color: 'white',
+                                            border: 'none',
+                                            padding: '12px 24px',
+                                            borderRadius: '30px',
+                                            fontSize: '1rem',
+                                            fontWeight: '500',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.3s ease',
+                                            width: window.innerWidth <= 768 ? '100%' : 'auto'
+                                        }}>
+                                            🚀 Start AI Training
+                                        </button>
+                                    </Link>
+                                )
+                            ) : (
+                                <Link to="/signup" onClick={() => posthog.capture('vendor_signup_ai')}>
+                                    <button style={{
+                                        backgroundColor: 'var(--primary-color, #A328F4)',
+                                        color: 'white',
+                                        border: 'none',
+                                        padding: '12px 24px',
+                                        borderRadius: '30px',
+                                        fontSize: '1rem',
+                                        fontWeight: '500',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.3s ease',
+                                        width: window.innerWidth <= 768 ? '100%' : 'auto'
+                                    }}>
+                                        🚀 Start AI Training
+                                    </button>
+                                </Link>
+                            )}
+                            <Link to="/choose-pricing-plan" onClick={() => posthog.capture('vendor_pricing_ai')}>
+                                <button style={{
+                                    backgroundColor: 'transparent',
+                                    color: 'var(--primary-color, #A328F4)',
+                                    border: '2px solid var(--primary-color, #A328F4)',
+                                    padding: '12px 24px',
+                                    borderRadius: '30px',
+                                    fontSize: '1rem',
+                                    fontWeight: '500',
+                                    cursor: 'pointer',
+                                    transition: 'all 0.3s ease',
+                                    width: window.innerWidth <= 768 ? '100%' : 'auto'
+                                }}>
+                                    💰 View Pricing
+                                </button>
+                            </Link>
+                        </div>
+                    </div>
                 </div>
             </div>
 
