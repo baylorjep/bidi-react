@@ -135,7 +135,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         if (typeof window !== 'undefined' && window.gtag) {
           // Track engagement for modal open
           window.gtag('event', 'begin_checkout', {
-            'send_to': 'AW-16690782587/request_modal_open',
+            'send_to': 'AW-16690782587/E3K6CIiS7ocbEPvC5JY-',
             'value': 1.0,
             'currency': 'USD',
             'custom_parameters': {
@@ -1302,7 +1302,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         if (typeof window !== 'undefined' && window.gtag) {
           // Track conversion for request submission
           window.gtag('event', 'conversion', {
-            'send_to': 'AW-16690782587/request_submission',
+            'send_to': 'AW-16690782587/MfIlCPfN4IcbEPvC5JY-',
             'value': 1.0,
             'currency': 'USD',
             'transaction_id': `request_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -1379,9 +1379,9 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     try {
       // Check if gtag is available (Google Ads conversion tracking)
       if (typeof window !== 'undefined' && window.gtag) {
-        // Track conversion for authentication
-        window.gtag('event', 'conversion', {
-          'send_to': 'AW-16690782587/auth_success',
+                  // Track conversion for authentication
+          window.gtag('event', 'conversion', {
+            'send_to': 'AW-16690782587/y0RcCPvL4IcbEPvC5JY-',
           'value': 1.0,
           'currency': 'USD',
           'transaction_id': `auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
