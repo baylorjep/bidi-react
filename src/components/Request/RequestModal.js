@@ -1930,7 +1930,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         </div>
 
         {/* Event Details */}
-        <div className="tw-bg-gray-50 tw-p-4 tw-rounded-lg">
+        <div className="tw-bg-gray-50 tw-p-4 tw-rounded-lg tw-border tw-border-gray-200">
           <h4 className="tw-font-medium tw-mb-3 tw-flex tw-items-center tw-justify-between" style={{ color: colors.gray[700] }}>
             <span className="tw-flex tw-items-center">
               <FiCalendar className="tw-mr-2 tw-text-pink-500" />
@@ -1974,7 +1974,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
           const questions = getCategoryQuestions(category);
           
           return (
-            <div key={category} className="tw-bg-gray-50 tw-p-4 tw-rounded-lg">
+            <div key={category} className="tw-bg-gray-50 tw-p-4 tw-rounded-lg tw-border tw-border-gray-200">
               <h4 className="tw-font-medium tw-mb-3 tw-flex tw-items-center tw-justify-between" style={{ color: colors.gray[700] }}>
                 <span className="tw-flex tw-items-center">
                   {React.createElement(getCategoryIcon(category), { 
