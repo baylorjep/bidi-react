@@ -158,7 +158,7 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
     <div 
       style={{
         position: 'fixed',
-        bottom: window.innerWidth <= 768 ? '10px' : '0',
+        bottom: window.innerWidth <= 768 ? '10px' : '20px',
         right: window.innerWidth <= 768 ? '10px' : '20px',
         left: window.innerWidth <= 768 ? '10px' : 'auto',
         width: window.innerWidth <= 768 ? 'calc(100vw - 20px)' : '320px',
@@ -1166,9 +1166,12 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
                 fontWeight: 500,
                 transition: 'all 0.2s ease-in-out',
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                width: '100%',
+                width: 'auto',
                 justifyContent: 'center',
-                position: 'static'
+                position: 'fixed',
+                bottom: '20px',
+                right: '20px',
+                zIndex: 10000
               }}
               onMouseEnter={(e) => {
                 e.target.style.transform = 'translateY(-2px)';

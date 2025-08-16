@@ -1408,7 +1408,7 @@ const AutobidTrainer = () => {
         </button>
         
         <div className="header-content">
-          <div className="header-title">
+          <div className="header-title" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px', flexDirection: 'column'}}>
             <FaRobot className="header-icon" />
                 <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
           </div>
@@ -1438,7 +1438,7 @@ const AutobidTrainer = () => {
             </button>
             
             <div className="header-content">
-              <div className="header-title">
+              <div className="header-title" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px', flexDirection: 'column'}}>
                 <FaRobot className="header-icon" />
                 <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
               </div>
@@ -1479,7 +1479,7 @@ const AutobidTrainer = () => {
           </button>
           
           <div className="header-content">
-            <div className="header-title">
+            <div className="header-title" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px', flexDirection: 'column'}}>
               <FaRobot className="header-icon" />
               <h1>AI Sample Bid Test - {capitalizeCategory(currentCategory)}</h1>
             </div>
@@ -1635,7 +1635,7 @@ const AutobidTrainer = () => {
         </button>
         
         <div className="header-content">
-          <div className="header-title">
+          <div className="header-title" style={{display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '15px', marginBottom: '15px', flexDirection: 'column'}}>
             <FaRobot className="header-icon" />
             <h1>AI Bid Trainer - {capitalizeCategory(currentCategory)}</h1>
           </div>

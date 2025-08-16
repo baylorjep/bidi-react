@@ -2651,7 +2651,7 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
                                 disabled
                               >
                                 <i className="fas fa-lock me-2"></i>
-                                Complete Training First
+                                Needs Training
                               </button>
                             </div>
                           ) : (

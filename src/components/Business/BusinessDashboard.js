@@ -32,7 +32,7 @@ import ContractTemplateEditor from "./ContractTemplateEditor.js";
 import NewFeaturesModal from "./NewFeaturesModal";
 import NotificationBell from '../Notifications/NotificationBell';
 import TrainingVideos from './TrainingVideos.js';
-import SetupProgressPopup from './SetupProgressPopup.js';
+
 
 const BusinessDashSidebar = () => {
   const [connectedAccountId, setConnectedAccountId] = useState(null);
@@ -109,7 +109,7 @@ const BusinessDashSidebar = () => {
     }
   }, [activeSection]);
 
-  // Handle location state changes (from SetupProgressPopup navigation)
+  // Handle location state changes (from navigation)
   useEffect(() => {
     console.log('Location state changed:', location.state);
     if (location.state && location.state.scrollToSection) {
@@ -518,35 +518,7 @@ const BusinessDashSidebar = () => {
     }
   };
 
-  // Handle setup step navigation
-  const handleSetupStepNavigation = (stepKey) => {
-    switch (stepKey) {
-      case 'stripe':
-        handleSectionChange('onboarding');
-        break;
-      case 'profile':
-        handleViewPortfolio('profile');
-        break;
-      case 'photos':
-        handleViewPortfolio('photos');
-        break;
-      case 'paymentSettings':
-      case 'businessSettings':
-      case 'calendar':
-      case 'bidTemplate':
-      case 'aiBidder':
-        // Navigate to settings with scroll information in state
-        console.log('Navigating to settings with stepKey:', stepKey);
-        navigate('/business-dashboard/settings', { 
-          replace: true,
-          state: { scrollToSection: stepKey }
-        });
-        break;
-      default:
-        console.log('Unknown setup step:', stepKey);
-        break;
-    }
-  };
+
 
   // Function to reset new features modal for all users (admin only)
   const resetNewFeaturesForAllUsers = async () => {
@@ -1019,7 +991,7 @@ const BusinessDashSidebar = () => {
               onOnboardingComplete={() => {
                 // Refresh setup progress when onboarding is completed
                 if (user) {
-                  // Force a re-render of the SetupProgressPopup
+                  // Force a re-render
                   setUser({ ...user });
                 }
               }}
@@ -1194,13 +1166,7 @@ const BusinessDashSidebar = () => {
         loomVideoUrl="YOUR_LOOM_VIDEO_URL_HERE"
       />
 
-      {/* Setup Progress Popup */}
-      {user && (
-        <SetupProgressPopup
-          userId={user.id}
-          onNavigateToSection={handleSetupStepNavigation}
-        />
-      )}
+      {/* Setup Progress Popup - Removed duplicate, handled by App.js */}
     </div>
   );
 };

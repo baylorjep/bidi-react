@@ -293,6 +293,7 @@ const PricingSetup = () => {
         blocklist_keywords: existing.blocklist_keywords || [],
         default_message: existing.default_message || '',
         additional_comments: existing.additional_comments || '',
+        consultation_required: existing.consultation_required || false,
         wedding_premium: existing.wedding_premium?.toString() || '',
         service_addons: existing.service_addons || {},
         seasonal_pricing: existing.seasonal_pricing || {},
@@ -476,6 +477,7 @@ const PricingSetup = () => {
         blocklist_keywords: sanitizedData.blocklist_keywords || [],
         default_message: sanitizedData.default_message,
         additional_comments: sanitizedData.additional_comments,
+        consultation_required: sanitizedData.consultation_required || false,
         wedding_premium: sanitizedData.wedding_premium,
         duration_multipliers: sanitizedData.duration_multipliers || {},
         service_addons: sanitizedData.service_addons || {},
@@ -1228,15 +1230,20 @@ const PricingSetup = () => {
 
         {/* Consultation Required */}
         <div className="form-group">
-          <label className="checkbox-label">
-            <input
-              type="checkbox"
-              checked={pricingData.consultation_required}
-              onChange={(e) => handleInputChange('consultation_required', e.target.checked)}
-            />
-            <span>Require consultation call before final quote</span>
-          </label>
-          <small>When checked, bids will include a note about scheduling a consultation</small>
+          <div className="checkbox-group">
+            <label className="checkbox-label" style={{display: 'flex', alignItems: 'center', gap: '10px', justifyContent: 'space-between', width: '100%', height: '100%'}}>
+              <input
+                type="checkbox"
+                checked={pricingData.consultation_required || false}
+                onChange={(e) => {
+                  console.log('Consultation required changed:', e.target.checked);
+                  handleInputChange('consultation_required', e.target.checked);
+                }}
+              />
+              <span>Require consultation call before final quote</span>
+            </label>
+            <small>When checked, bids will include a note about scheduling a consultation</small>
+          </div>
         </div>
 
         {/* Dealbreakers */}
@@ -1428,7 +1435,7 @@ const PricingSetup = () => {
         <div className="step-actions">
           {currentStep > 0 && (
             <button 
-              className="btn-secondary" 
+              className="btn-secondary-pricing-setup" 
               onClick={handlePrevStep}
               disabled={isSaving}
             >
@@ -1437,7 +1444,7 @@ const PricingSetup = () => {
           )}
           
           <button 
-            className="btn-primary" 
+            className="btn-primary-pricing-setup" 
             onClick={handleNextStep}
             disabled={isSaving}
           >
