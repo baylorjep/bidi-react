@@ -840,7 +840,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
           location: formData.location,
           date_flexibility: formData.dateFlexibility,
           date_timeframe: formData.dateTimeframe,
-          start_date: formData.eventDate,
+          start_date: formData.eventDate || null, // Handle empty string as null
           // indoor_outdoor: Only include for tables that have this column
           ...(['photography', 'videography', 'dj'].includes(mappedCategory) ? { indoor_outdoor: formData.indoorOutdoor } : {}),
           price_range: typeof categoryResponses.budget === 'object' && categoryResponses.budget?.type === 'custom' 
@@ -931,8 +931,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               flower_preferences_text: categoryResponses.customArrangements, // Maps to customArrangements question
               specific_time_needed: !!formData.eventTime,
               specific_time: formData.eventTime,
-              start_date: formData.eventDate,
-              end_date: formData.endDate
+              start_date: formData.eventDate || null,
+              end_date: formData.endDate || null
             };
             break;
 
@@ -964,8 +964,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               dietary_restrictions: categoryResponses.dietaryRestrictions,
               equipment_notes: categoryResponses.equipmentNotes,
               other_dietary_details: categoryResponses.otherDietaryDetails,
-              start_date: formData.eventDate,
-              end_date: formData.endDate
+              start_date: formData.eventDate || null,
+              end_date: formData.endDate || null
             };
             break;
 
@@ -983,8 +983,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               budget_range: typeof categoryResponses.budget === 'object' && categoryResponses.budget?.type === 'custom' 
                 ? `$${categoryResponses.budget.min} - $${categoryResponses.budget.max}`
                 : categoryResponses.budget,
-              start_date: formData.eventDate,
-              end_date: formData.endDate
+              start_date: formData.eventDate || null,
+              end_date: formData.endDate || null
             };
             break;
 
@@ -1002,8 +1002,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               color_scheme: categoryResponses.colorScheme,
               theme_preferences: categoryResponses.themePreferences,
               communication_style: categoryResponses.communicationStyle,
-              start_date: formData.eventDate,
-              end_date: formData.endDate,
+              start_date: formData.eventDate || null,
+              end_date: formData.endDate || null,
               start_time: formData.startTime,
               end_time: formData.endTime
             };
@@ -1860,9 +1860,22 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
         {/* Event Details */}
         <div className="tw-bg-gray-50 tw-p-4 tw-rounded-lg">
-          <h4 className="tw-font-medium tw-mb-3 tw-flex tw-items-center" style={{ color: colors.gray[700] }}>
-            <FiCalendar className="tw-mr-2 tw-text-pink-500" />
-            Event Details
+          <h4 className="tw-font-medium tw-mb-3 tw-flex tw-items-center tw-justify-between" style={{ color: colors.gray[700] }}>
+            <span className="tw-flex tw-items-center">
+              <FiCalendar className="tw-mr-2 tw-text-pink-500" />
+              Event Details
+            </span>
+            <button
+              onClick={() => {
+                setIsReviewStep(false);
+                setShowEventDetails(true);
+                setCurrentQuestionIndex(0);
+              }}
+              className="tw-text-sm tw-text-purple-500 hover:tw-text-purple-700 tw-flex tw-items-center tw-border tw-border-purple-500 tw-rounded-full tw-px-2 tw-py-1 tw-bg-white"
+            >
+              <FiEdit3 className="tw-mr-1" size={14} />
+              Edit
+            </button>
           </h4>
           <div className="tw-grid tw-grid-cols-2 tw-gap-4 tw-text-sm">
             <div>
