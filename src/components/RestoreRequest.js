@@ -16,6 +16,9 @@ const RestoreRequest = () => {
             try {
                 // Get request context from location state
                 const context = location.state?.pendingRequestContext;
+                console.log('RestoreRequest: Received context from location state:', context);
+                console.log('RestoreRequest: Full location state:', location.state);
+                
                 if (!context) {
                     console.error('No pending request context found');
                     setError('No pending request found');
@@ -25,6 +28,7 @@ const RestoreRequest = () => {
 
                 // Verify user is authenticated
                 const { data: { user }, error: userError } = await supabase.auth.getUser();
+                console.log('RestoreRequest: Checking user authentication:', user?.id, userError);
                 if (userError || !user) {
                     console.error('User not authenticated:', userError);
                     setError('Please sign in to continue');
@@ -33,9 +37,11 @@ const RestoreRequest = () => {
                 }
 
                 // Set request context and show modal
+                console.log('RestoreRequest: Setting request context:', context);
                 setRequestContext(context);
                 setShowRequestModal(true);
                 setLoading(false);
+                console.log('RestoreRequest: Modal state set to show:', true);
 
             } catch (error) {
                 console.error('Error restoring request context:', error);
@@ -108,20 +114,24 @@ const RestoreRequest = () => {
     }
 
     if (!requestContext) {
+        console.log('RestoreRequest: No request context, returning null');
         return null;
     }
+    
+    console.log('RestoreRequest: Rendering RequestModal with context:', requestContext);
 
     return (
         <>
+            {console.log('RestoreRequest: Rendering, showRequestModal:', showRequestModal)}
             {showRequestModal && (
                 <RequestModal
                     isOpen={showRequestModal}
                     onClose={handleRequestModalClose}
-                    selectedVendors={requestContext.selectedVendors}
-                    searchFormData={requestContext.formData}
-                    vendor={requestContext.vendor}
-                    isEditMode={requestContext.isEditMode}
-                    existingRequestData={requestContext.existingRequestData}
+                    selectedVendors={requestContext.selectedVendors || []}
+                    searchFormData={requestContext.searchFormData || {}}
+                    vendor={requestContext.vendor || null}
+                    isEditMode={requestContext.isEditMode || false}
+                    existingRequestData={requestContext.existingRequestData || null}
                     onSuccess={handleRequestSubmit}
                 />
             )}

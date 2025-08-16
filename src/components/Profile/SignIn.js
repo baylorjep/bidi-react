@@ -144,22 +144,28 @@ const SignIn = ({ onSuccess, isModal = false }) => {
         setErrorMessage('');
         
         try {
-            // Store request context if we're in a RequestModal
-            const requestModal = document.querySelector('.request-modal');
-            if (requestModal) {
-                // Get the request data from the modal's state
-                const requestData = {
-                    formData: window.requestModalFormData || {},
-                    selectedVendors: window.requestModalSelectedVendors || [],
-                    vendor: window.requestModalVendor || null,
-                    isEditMode: window.requestModalIsEditMode || false,
-                    existingRequestData: window.requestModalExistingRequestData || null,
-                    timestamp: Date.now()
-                };
-                
-                // Store in sessionStorage for retrieval after OAuth
-                sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestData));
-                console.log('Stored request context before Google OAuth:', requestData);
+            // Check if there's already a pending request context in sessionStorage
+            const existingContext = sessionStorage.getItem('pendingRequestContext');
+            if (!existingContext) {
+                // Try to get context from RequestModal if available
+                const requestModal = document.querySelector('.request-modal');
+                if (requestModal) {
+                    // Get the request data from the modal's state
+                    const requestData = {
+                        formData: window.requestModalFormData || {},
+                        selectedVendors: window.requestModalSelectedVendors || [],
+                        vendor: window.requestModalVendor || null,
+                        isEditMode: window.requestModalIsEditMode || false,
+                        existingRequestData: window.requestModalExistingRequestData || null,
+                        timestamp: Date.now()
+                    };
+                    
+                    // Store in sessionStorage for retrieval after OAuth
+                    sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestData));
+                    console.log('Stored request context before Google OAuth:', requestData);
+                }
+            } else {
+                console.log('Using existing pending request context from sessionStorage');
             }
             
             const { error } = await supabase.auth.signInWithOAuth({
