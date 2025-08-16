@@ -129,6 +129,47 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     if (isOpen) {
       console.log('RequestModal: Modal opened, checking for pending context...');
       
+      // Google Ads Conversion Tracking - Track modal open/engagement start
+      try {
+        // Check if gtag is available (Google Ads conversion tracking)
+        if (typeof window !== 'undefined' && window.gtag) {
+          // Track engagement for modal open
+          window.gtag('event', 'begin_checkout', {
+            'send_to': 'AW-16690782587/request_modal_open',
+            'value': 1.0,
+            'currency': 'USD',
+            'custom_parameters': {
+              'event_category': 'engagement',
+              'event_label': 'request_modal_open',
+              'vendor_count': selectedVendors?.length || 0,
+              'is_edit_mode': isEditMode,
+              'has_vendor': !!vendor
+            }
+          });
+          
+          console.log('Google Ads conversion tracking fired for request modal open');
+        }
+        
+        // Also track with Google Tag Manager if available
+        if (typeof window !== 'undefined' && window.dataLayer) {
+          window.dataLayer.push({
+            'event': 'request_modal_open',
+            'event_category': 'engagement',
+            'event_action': 'begin_checkout',
+            'event_label': 'request_modal_open',
+            'vendor_count': selectedVendors?.length || 0,
+            'is_edit_mode': isEditMode,
+            'has_vendor': !!vendor,
+            'timestamp': new Date().toISOString()
+          });
+          
+          console.log('Google Tag Manager event pushed for request modal open');
+        }
+      } catch (trackingError) {
+        console.error('Error tracking modal open conversion:', trackingError);
+        // Don't fail the modal opening if tracking fails
+      }
+      
       // Check if we're restoring from a pending request context
       const pendingContext = sessionStorage.getItem('pendingRequestContext');
       if (pendingContext) {
@@ -1254,6 +1295,50 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
       // Success - show success slide
       setIsSuccess(true);
+      
+      // Google Ads Conversion Tracking - Track successful request submission
+      try {
+        // Check if gtag is available (Google Ads conversion tracking)
+        if (typeof window !== 'undefined' && window.gtag) {
+          // Track conversion for request submission
+          window.gtag('event', 'conversion', {
+            'send_to': 'AW-16690782587/request_submission',
+            'value': 1.0,
+            'currency': 'USD',
+            'transaction_id': `request_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            'custom_parameters': {
+              'event_category': 'request_submission',
+              'event_label': selectedVendors.join(','),
+              'vendor_count': selectedVendors.length,
+              'event_type': formData.eventType || 'Event',
+              'location': formData.location || 'Not specified'
+            }
+          });
+          
+          console.log('Google Ads conversion tracking fired for request submission');
+        }
+        
+        // Also track with Google Tag Manager if available
+        if (typeof window !== 'undefined' && window.dataLayer) {
+          window.dataLayer.push({
+            'event': 'request_submission',
+            'event_category': 'conversion',
+            'event_action': 'submit_request',
+            'event_label': selectedVendors.join(','),
+            'vendor_count': selectedVendors.length,
+            'event_type': formData.eventType || 'Event',
+            'location': formData.location || 'Not specified',
+            'user_id': authenticatedUser?.id || 'anonymous',
+            'timestamp': new Date().toISOString()
+          });
+          
+          console.log('Google Tag Manager event pushed for request submission');
+        }
+      } catch (trackingError) {
+        console.error('Error tracking conversion:', trackingError);
+        // Don't fail the request submission if tracking fails
+      }
+      
       // Don't close modal yet - let user see success slide
 
     } catch (error) {
@@ -1289,6 +1374,47 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   const handleAuthSuccess = async (userData) => {
     setUser(userData);
     setShowAuthModal(false);
+    
+    // Google Ads Conversion Tracking - Track successful authentication
+    try {
+      // Check if gtag is available (Google Ads conversion tracking)
+      if (typeof window !== 'undefined' && window.gtag) {
+        // Track conversion for authentication
+        window.gtag('event', 'conversion', {
+          'send_to': 'AW-16690782587/auth_success',
+          'value': 1.0,
+          'currency': 'USD',
+          'transaction_id': `auth_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          'custom_parameters': {
+            'event_category': 'authentication',
+            'event_label': 'request_modal_auth',
+            'auth_method': 'google_oauth',
+            'user_id': userData?.id || 'unknown'
+          }
+        });
+        
+        console.log('Google Ads conversion tracking fired for authentication success');
+      }
+      
+      // Also track with Google Tag Manager if available
+      if (typeof window !== 'undefined' && window.dataLayer) {
+        window.dataLayer.push({
+          'event': 'authentication_success',
+          'event_category': 'conversion',
+          'event_action': 'auth_success',
+          'event_label': 'request_modal_auth',
+          'auth_method': 'google_oauth',
+          'user_id': userData?.id || 'unknown',
+          'timestamp': new Date().toISOString()
+        });
+        
+        console.log('Google Tag Manager event pushed for authentication success');
+      }
+    } catch (trackingError) {
+      console.error('Error tracking authentication conversion:', trackingError);
+      // Don't fail the authentication if tracking fails
+    }
+    
     // Automatically submit the request after successful authentication
     setTimeout(async () => {
       await submitRequest(userData);
