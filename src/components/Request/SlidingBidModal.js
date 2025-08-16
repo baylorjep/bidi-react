@@ -257,20 +257,8 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                 setBidExpirationDate(expirationDate.toISOString().split('T')[0]);
             }
             
-            // Check if user needs to set up Stripe account
-            const needsStripeSetup = !profile?.stripe_account_id && !profile?.Bidi_Plus;
-            console.log('Profile:', profile);
-            console.log('Needs Stripe setup:', needsStripeSetup);
-            console.log('stripe_account_id:', profile?.stripe_account_id);
-            console.log('Bidi_Plus:', profile?.Bidi_Plus);
-            
-            if (needsStripeSetup) {
-                console.log('User needs Stripe setup - showing modal');
-                setShowModal(true);
-            } else {
-                console.log('User has Stripe setup or Bidi Plus');
-                setShowModal(false);
-            }
+            // No Stripe requirement - all users can bid
+            setShowModal(false);
         }
     };
 
@@ -494,12 +482,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
         console.log('Bidi_Plus:', Bidi_Plus);
         console.log('editMode:', editMode);
 
-        // Check if user needs to set up Stripe account (only for new bids)
-        if (!editMode && !connectedAccountId && !Bidi_Plus) {
-            console.log('User needs Stripe setup - showing modal in handleSubmit');
-            setShowModal(true);
-            return;
-        }
+        // No Stripe requirement - all users can bid
 
         if (!validateBidDescription(bidDescription)) {
             return;
@@ -1001,19 +984,18 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                                                     flexWrap: 'wrap', 
                                                     marginBottom: '12px' 
                                                 }}>
-                                                    <label style={{ 
-                                                        display: 'flex', 
-                                                        alignItems: 'center', 
-                                                        gap: 8,
-                                                        justifyContent: isMobile ? 'center' : 'flex-start'
-                                                    }}>
-                                                        <IPhoneToggle
-                                                            checked={!!discountType}
-                                                            onChange={() => setDiscountType(discountType ? '' : 'percentage')}
-                                                            disabled={!connectedAccountId && !Bidi_Plus}
-                                                        />
-                                                        <span style={{ fontSize: 14 }}>{discountType ? 'Yes' : 'No'}</span>
-                                                    </label>
+                                                                                                <label style={{ 
+                                                display: 'flex', 
+                                                alignItems: 'center', 
+                                                gap: 8,
+                                                justifyContent: isMobile ? 'center' : 'flex-start'
+                                            }}>
+                                                <IPhoneToggle
+                                                    checked={!!discountType}
+                                                    onChange={() => setDiscountType(discountType ? '' : 'percentage')}
+                                                />
+                                                <span style={{ fontSize: 14 }}>{discountType ? 'Yes' : 'No'}</span>
+                                            </label>
                                                     {discountType && (
                                                         <div style={{
                                                             display: 'flex',
@@ -2105,19 +2087,7 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
                     </form>
                 </div>
 
-                {/* Stripe Modal */}
-                {console.log('Modal show state:', showModal)}
-                <Modal show={showModal} onHide={() => setShowModal(false)}>
-                    <Modal.Header closeButton>
-                        <Modal.Title>Stripe Account Setup Required</Modal.Title>
-                    </Modal.Header>
-                    <Modal.Body className="d-flex flex-column align-items-center justify-content-center">
-                        <p className="text-center">
-                            To place bids and get paid for jobs you win, you'll need to set up a payment account. Bidi won't charge you to talk to users or bid — a small fee is only deducted after you've been paid.
-                        </p>
-                        <Button className="btn-secondary" onClick={() => navigate("/stripe-setup")}>Set Up Account</Button>
-                    </Modal.Body>
-                </Modal>
+
             </div>
         </>
     );
