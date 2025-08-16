@@ -142,6 +142,7 @@ const AuthCallback = () => {
         try {
             // Check for pending request context before redirecting
             const pendingRequestContext = sessionStorage.getItem('pendingRequestContext');
+            console.log('AuthCallback: Checking for pending request context:', pendingRequestContext);
             if (pendingRequestContext) {
                 try {
                     const requestData = JSON.parse(pendingRequestContext);
@@ -150,7 +151,7 @@ const AuthCallback = () => {
                     
                     // Only restore if request context is less than 10 minutes old
                     if (timeDiff < 10 * 60 * 1000) {
-                        console.log('Found pending request context, redirecting back to request flow');
+                        console.log('Found pending request context, redirecting back to request flow:', requestData);
                         sessionStorage.removeItem('pendingRequestContext');
                         
                         // Redirect to a special route that will restore the request modal

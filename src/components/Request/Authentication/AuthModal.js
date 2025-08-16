@@ -5,6 +5,17 @@ import Signup from '../../../components/Profile/Signup';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../../../supabaseClient';
 
+// Helper function to get pending request context
+const getPendingRequestContext = () => {
+  try {
+    const context = sessionStorage.getItem('pendingRequestContext');
+    return context ? JSON.parse(context) : null;
+  } catch (error) {
+    console.error('Error parsing pending request context:', error);
+    return null;
+  }
+};
+
 const AuthModal = ({ setIsModalOpen, onSuccess }) => {
     const [currentView, setCurrentView] = useState('options'); // 'options', 'signin', or 'signup'
     const navigate = useNavigate();
@@ -55,8 +66,21 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
                 }
             }
             
-            if (onSuccess) {
-                onSuccess(userData);
+            // Check if there's a pending request context
+            const pendingContext = getPendingRequestContext();
+            if (pendingContext) {
+                // Clear the context from sessionStorage
+                sessionStorage.removeItem('pendingRequestContext');
+                
+                // Call onSuccess with the user data
+                if (onSuccess) {
+                    onSuccess(userData);
+                }
+            } else {
+                // No pending request, just call onSuccess
+                if (onSuccess) {
+                    onSuccess(userData);
+                }
             }
         } catch (error) {
             console.error('Error in handleSignupSuccess:', error);

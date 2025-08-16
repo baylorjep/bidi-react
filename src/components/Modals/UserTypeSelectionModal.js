@@ -80,6 +80,8 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName }) 
         setLoading(true);
         setError('');
 
+        console.log('UserTypeSelectionModal: Starting profile creation for user:', user.id);
+
         try {
             // Create profile in profiles table
             const { error: profileError } = await supabase
@@ -123,7 +125,39 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName }) 
                 if (businessError) throw businessError;
             }
 
-            // Redirect based on user type
+            // Check for pending request context before redirecting
+            const pendingRequestContext = sessionStorage.getItem('pendingRequestContext');
+            console.log('UserTypeSelectionModal: Checking for pending request context:', pendingRequestContext);
+            if (pendingRequestContext) {
+                try {
+                    const requestData = JSON.parse(pendingRequestContext);
+                    const now = Date.now();
+                    const timeDiff = now - requestData.timestamp;
+                    
+                    // Only restore if request context is less than 10 minutes old
+                    if (timeDiff < 10 * 60 * 1000) {
+                        console.log('UserTypeSelectionModal: Found pending request context, redirecting back to request flow:', requestData);
+                        sessionStorage.removeItem('pendingRequestContext');
+                        
+                        // Redirect to restore-request route
+                        navigate('/restore-request', { 
+                            state: { 
+                                pendingRequestContext: requestData,
+                                fromOAuth: true
+                            } 
+                        });
+                        return;
+                    } else {
+                        console.log('UserTypeSelectionModal: Pending request context expired, removing');
+                        sessionStorage.removeItem('pendingRequestContext');
+                    }
+                } catch (error) {
+                    console.error('UserTypeSelectionModal: Error parsing pending request context:', error);
+                    sessionStorage.removeItem('pendingRequestContext');
+                }
+            }
+            
+            // Redirect based on user type (only if no pending request)
             if (userType === 'both') {
                 navigate('/wedding-planner/overview');
             } else if (userType === 'individual') {

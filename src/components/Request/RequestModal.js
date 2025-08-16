@@ -109,6 +109,7 @@ const PhotoModal = ({ photo, onClose }) => {
 };
 
 const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEditMode = false, existingRequestData = null, vendor = null }) => {
+  console.log('RequestModal: Props received:', { isOpen, selectedVendors, searchFormData, isEditMode, existingRequestData, vendor });
   const [currentStep, setCurrentStep] = useState(0);
   const [currentCategoryIndex, setCurrentCategoryIndex] = useState(0);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -126,6 +127,45 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   // Initialize form data when modal opens
   useEffect(() => {
     if (isOpen) {
+      console.log('RequestModal: Modal opened, checking for pending context...');
+      
+      // Check if we're restoring from a pending request context
+      const pendingContext = sessionStorage.getItem('pendingRequestContext');
+      if (pendingContext) {
+        try {
+          const requestData = JSON.parse(pendingContext);
+          console.log('RequestModal: Restoring from pending request context:', requestData);
+          
+          // Restore the form data from the pending context
+          if (requestData.formData) {
+            console.log('RequestModal: Restoring form data:', requestData.formData);
+            setFormData(requestData.formData);
+            // Also restore the responses if they exist
+            if (requestData.formData.responses) {
+              setFormData(prev => ({
+                ...prev,
+                responses: requestData.formData.responses
+              }));
+            }
+          }
+          
+          // Determine if we should show event details
+          if (requestData.vendor && !requestData.searchFormData) {
+            setShowEventDetails(true);
+          } else {
+            setShowEventDetails(false);
+          }
+          
+          // Clear the pending context since we've restored it
+          sessionStorage.removeItem('pendingRequestContext');
+          console.log('RequestModal: Successfully restored from pending context');
+          return;
+        } catch (error) {
+          console.error('Error parsing pending request context:', error);
+          sessionStorage.removeItem('pendingRequestContext');
+        }
+      }
+      
       if (isEditMode && existingRequestData) {
         // Edit mode: populate with existing request data
         setFormData({
@@ -201,7 +241,17 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     if (isOpen) {
       const checkUser = async () => {
         const { data: { session } } = await supabase.auth.getSession();
-        setUser(session?.user || null);
+        const currentUser = session?.user || null;
+        console.log('RequestModal: Checking user authentication:', currentUser?.id);
+        setUser(currentUser);
+        
+        // If user is authenticated and we have pending context, we can proceed
+        if (currentUser) {
+          const pendingContext = sessionStorage.getItem('pendingRequestContext');
+          if (pendingContext) {
+            console.log('RequestModal: User authenticated, pending context exists');
+          }
+        }
       };
       checkUser();
       // Reset success state when modal opens
@@ -1211,6 +1261,18 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   const handleSubmit = async () => {
     // Check if user is authenticated
     if (!user) {
+      // Store request context before showing auth modal
+      const requestContext = {
+        selectedVendors,
+        searchFormData,
+        vendor,
+        isEditMode,
+        existingRequestData,
+        formData,
+        timestamp: Date.now()
+      };
+      console.log('RequestModal: Storing request context:', requestContext);
+      sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestContext));
       setShowAuthModal(true);
       return;
     }
@@ -1280,7 +1342,10 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     return questionNumber;
   }, [selectedVendors, currentCategoryIndex, currentQuestionIndex, formData.responses, showEventDetails, shouldShowEventDetails, eventDetailQuestions.length]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    console.log('RequestModal: Modal not open, returning null');
+    return null;
+  }
 
   // Handle case where no vendors are selected
   if (!selectedVendors || selectedVendors.length === 0) {
@@ -1967,7 +2032,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
   const modalContent = (
     <div className="tw-fixed tw-inset-0 tw-bg-black tw-bg-opacity-50 tw-flex tw-items-center tw-justify-center tw-z-[9999] tw-p-4">
-      <div className="tw-bg-white tw-rounded-lg tw-w-full tw-max-w-2xl tw-overflow-hidden">
+      <div className="tw-bg-white tw-rounded-lg tw-w-full tw-max-w-2xl tw-overflow-hidden request-modal">
+        {console.log('RequestModal: Rendering modal content, user:', user?.id, 'formData:', formData)}
         {/* Header */}
         <div className="tw-flex tw-items-center tw-justify-between tw-p-6 tw-border-b tw-border-gray-200">
           <h2 className="tw-text-2xl tw-font-bold" style={{ color: colors.gray[800] }}>
@@ -2116,6 +2182,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
     </div>
   );
 
+  console.log('RequestModal: Creating portal with modal content');
   return createPortal(modalContent, document.body);
 };
 
