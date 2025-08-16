@@ -647,13 +647,19 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
   };
 
   const handleNext = () => {
-    if (showEventDetails && shouldShowEventDetails) {
-      // Handle navigation within event details (Portfolio.js flow only)
+    if (showEventDetails) {
+      // Handle navigation within event details
       if (currentQuestionIndex < eventDetailQuestions.length - 1) {
         setCurrentQuestionIndex(currentQuestionIndex + 1);
       } else {
-        // Move from event details to category questions
-        handleEventDetailsNext();
+        // Move from event details to category questions or back to review
+        if (shouldShowEventDetails) {
+          // Portfolio.js flow: move to category questions
+          handleEventDetailsNext();
+        } else {
+          // Edit flow: go back to review
+          setIsReviewStep(true);
+        }
       }
     } else {
       // Handle navigation within category questions (existing logic)
@@ -683,8 +689,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       const lastCategory = selectedVendors[selectedVendors.length - 1];
       const lastCategoryQuestions = getCategoryQuestions(lastCategory);
       setCurrentQuestionIndex(lastCategoryQuestions.length - 1);
-    } else if (showEventDetails && shouldShowEventDetails) {
-      // Handle navigation within event details (Portfolio.js flow only)
+    } else if (showEventDetails) {
+      // Handle navigation within event details
       if (currentQuestionIndex > 0) {
         setCurrentQuestionIndex(currentQuestionIndex - 1);
       } else {
@@ -1811,8 +1817,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
   const canGoNext = () => {
     if (isReviewStep) return false;
-    if (showEventDetails && shouldShowEventDetails) {
-      // For event details, all questions are optional (Portfolio.js flow only)
+    if (showEventDetails) {
+      // For event details, all questions are optional
       return true;
     }
     if (!currentQuestion) return false;
@@ -1838,7 +1844,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
   const canGoBack = () => {
     if (isReviewStep) return true;
-    if (showEventDetails && shouldShowEventDetails) {
+    if (showEventDetails) {
       return currentQuestionIndex > 0;
     }
     return currentQuestionIndex > 0 || currentCategoryIndex > 0 || (vendor && shouldShowEventDetails);
@@ -2097,13 +2103,13 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               />
             </div>
                          <p className="tw-text-sm tw-text-gray-600 tw-mt-2">
-               {showEventDetails && shouldShowEventDetails
+               {showEventDetails
                  ? `Event Details • Question ${currentQuestionIndex + 1} of ${eventDetailQuestions.length}`
                  : `${currentCategory ? currentCategory.charAt(0).toUpperCase() + currentCategory.slice(1) : 'Category'} • Question ${currentQuestionIndex + 1} of ${categoryQuestions?.length || 0}`
                }
                <br />
                <small className="tw-text-xs tw-text-gray-500">
-                 {shouldShowEventDetails 
+                 {showEventDetails 
                    ? `Overall Progress: ${currentQuestionNumber} of ${totalQuestions} questions`
                    : `Vendor Questions: ${currentQuestionNumber} of ${totalQuestions} questions`
                  }
@@ -2125,7 +2131,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
              💡 Scroll down to see more questions
            </div>
            
-           {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : ((showEventDetails && shouldShowEventDetails) ? renderEventDetails() : renderQuestion()))}
+           {isSuccess ? renderSuccessSlide() : (isReviewStep ? renderReviewScreen() : (showEventDetails ? renderEventDetails() : renderQuestion()))}
          </div>
 
         {/* Footer */}
@@ -2157,7 +2163,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                className="tw-flex tw-items-center tw-px-6 tw-py-2 tw-rounded-lg tw-text-white tw-font-medium tw-transition-colors tw-disabled:opacity-50 tw-disabled:cursor-not-allowed tw-border-none"
                style={{ backgroundColor: canGoNext() ? colors.primary : colors.gray[400] }}
              >
-               {(showEventDetails && shouldShowEventDetails)
+               {showEventDetails
                  ? (currentQuestionIndex < eventDetailQuestions.length - 1 ? 'Next' : 'Finish Event Details')
                  : (currentQuestion?.type === 'budget' && !formData.responses?.[currentCategory]?.[currentQuestion?.id] 
                      ? 'Budget Required' 
