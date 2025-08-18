@@ -338,7 +338,18 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
                 return;
             }
 
-            // Auto-sign in and redirect to appropriate dashboard
+            // Check if we're in modal mode and have an onSuccess callback
+            if (isModal && onSuccess) {
+                // In modal mode, call onSuccess instead of redirecting
+                setSuccessMessage('Account created successfully!');
+                setIsRedirecting(true);
+                setTimeout(() => {
+                    onSuccess(user);
+                }, 1500);
+                return;
+            }
+
+            // Auto-sign in and redirect to appropriate dashboard (non-modal mode)
             if (finalUserType === 'both') {
                 // Wedding planner - redirect to wedding planning dashboard
                 setSuccessMessage('Account created successfully! Redirecting to Wedding Planning Dashboard...');
@@ -375,7 +386,18 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
                 return;
             }
 
-            // Auto-sign in and redirect to business dashboard
+            // Check if we're in modal mode and have an onSuccess callback
+            if (isModal && onSuccess) {
+                // In modal mode, call onSuccess instead of redirecting
+                setSuccessMessage('Account created successfully!');
+                setIsRedirecting(true);
+                setTimeout(() => {
+                    onSuccess(user);
+                }, 1500);
+                return;
+            }
+
+            // Auto-sign in and redirect to business dashboard (non-modal mode)
             setSuccessMessage('Account created successfully! Redirecting to Business Dashboard...');
             setIsRedirecting(true);
             setTimeout(() => navigate('/business-dashboard/dashboard'), 1500);
@@ -383,7 +405,10 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
         }
 
         // Fallback redirect (shouldn't reach here)
-        if (!onSuccess) {
+        if (isModal && onSuccess) {
+            // In modal mode, call onSuccess instead of redirecting
+            onSuccess(user);
+        } else if (!onSuccess) {
             navigate(redirectUrl || '/success-signup');
         }
     };
