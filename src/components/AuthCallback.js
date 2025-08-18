@@ -121,6 +121,8 @@ const AuthCallback = () => {
                     .eq('id', currentUser.id)
                     .single();
 
+                console.log('Profile check result:', { profile, profileError, currentUser: { id: currentUser.id, email: currentUser.email } });
+
                 if (profileError && profileError.code !== 'PGRST116') {
                     // PGRST116 means no rows returned, which is expected for new users
                     console.error('Error checking profile:', profileError);
@@ -131,6 +133,7 @@ const AuthCallback = () => {
 
                 if (profile) {
                     // User already has a profile, redirect to appropriate dashboard
+                    console.log('User has profile, redirecting to dashboard');
                     await redirectToDashboard(currentUser.id, profile.role);
                 } else if (existingUsers && existingUsers.length > 0) {
                     // User exists with same email but different ID (OAuth linking case)
@@ -177,9 +180,11 @@ const AuthCallback = () => {
                     console.log('Successfully linked Google account with existing profile');
                     
                     // Redirect to dashboard with the existing profile
+                    console.log('Redirecting after account linking to role:', existingProfile.role);
                     await redirectToDashboard(currentUser.id, existingProfile.role);
                 } else {
                     // New user, show user type selection modal
+                    console.log('No existing profile found, showing user type selection modal');
                     setShowUserTypeModal(true);
                 }
 
@@ -232,7 +237,8 @@ const AuthCallback = () => {
             const isOnSigninPage = window.location.pathname.includes('/signin');
             const isOnSignupPage = window.location.pathname.includes('/signup');
             const isOnCreateAccountPage = window.location.pathname.includes('/createaccount');
-            const shouldRedirectToDashboard = isOnSigninPage || isOnSignupPage || isOnCreateAccountPage;
+            const isOnAuthCallback = window.location.pathname.includes('/auth-callback');
+            const shouldRedirectToDashboard = isOnSigninPage || isOnSignupPage || isOnCreateAccountPage || isOnAuthCallback;
             
             // Determine user type and redirect accordingly
             if (userRole === 'both') {
