@@ -1415,7 +1415,45 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       // Don't fail the authentication if tracking fails
     }
     
-    // Automatically submit the request after successful authentication
+    // Check if there's pending request context to restore
+    const pendingContext = sessionStorage.getItem('pendingRequestContext');
+    if (pendingContext) {
+      try {
+        const requestData = JSON.parse(pendingContext);
+        const now = Date.now();
+        const timeDiff = now - requestData.timestamp;
+        
+        // Only restore if request context is less than 10 minutes old
+        if (timeDiff < 10 * 60 * 1000) {
+          console.log('RequestModal: Found pending request context, restoring form data:', requestData);
+          
+          // Restore the form data
+          if (requestData.formData) {
+            setFormData(requestData.formData);
+          }
+          
+          // Restore other context
+          if (requestData.selectedVendors) {
+            // Note: selectedVendors is passed as props, so we can't modify it directly
+            // The form data should contain all the necessary information
+          }
+          
+          // Clear the pending context since we've restored it
+          sessionStorage.removeItem('pendingRequestContext');
+          console.log('RequestModal: Successfully restored from pending context');
+          return; // Don't submit request yet, let user continue
+        } else {
+          console.log('RequestModal: Pending request context expired, removing');
+          sessionStorage.removeItem('pendingRequestContext');
+        }
+      } catch (error) {
+        console.error('RequestModal: Error parsing pending request context:', error);
+        sessionStorage.removeItem('pendingRequestContext');
+      }
+    }
+    
+    // No pending context or context expired, automatically submit the request
+    console.log('RequestModal: No pending context, automatically submitting request');
     setTimeout(async () => {
       await submitRequest(userData);
     }, 500); // Small delay to ensure UI updates smoothly

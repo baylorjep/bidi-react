@@ -190,31 +190,7 @@ const SignIn = ({ onSuccess, isModal = false }) => {
 
                 // If we have an onSuccess callback (from AuthModal), use it
                 if (onSuccess) {
-                    // Check if there's a pending request context
-                    const pendingContext = sessionStorage.getItem('pendingRequestContext');
-                    if (pendingContext) {
-                        try {
-                            const requestData = JSON.parse(pendingContext);
-                            const now = Date.now();
-                            const timeDiff = now - requestData.timestamp;
-                            
-                            // Only restore if request context is less than 10 minutes old
-                            if (timeDiff < 10 * 60 * 1000) {
-                                console.log('Found pending request context, calling onSuccess with user data');
-                                sessionStorage.removeItem('pendingRequestContext');
-                                onSuccess(data.user);
-                                return;
-                            } else {
-                                console.log('Pending request context expired, removing');
-                                sessionStorage.removeItem('pendingRequestContext');
-                            }
-                        } catch (error) {
-                            console.error('Error parsing pending request context:', error);
-                            sessionStorage.removeItem('pendingRequestContext');
-                        }
-                    }
-                    
-                    // No pending request context, just call onSuccess
+                    // Let the RequestModal handle checking for pending request context
                     onSuccess(data.user);
                     return;
                 }

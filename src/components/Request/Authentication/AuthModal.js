@@ -66,21 +66,10 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
                 }
             }
             
-            // Check if there's a pending request context
-            const pendingContext = getPendingRequestContext();
-            if (pendingContext) {
-                // Clear the context from sessionStorage
-                sessionStorage.removeItem('pendingRequestContext');
-                
-                // Call onSuccess with the user data
-                if (onSuccess) {
-                    onSuccess(userData);
-                }
-            } else {
-                // No pending request, just call onSuccess
-                if (onSuccess) {
-                    onSuccess(userData);
-                }
+            // Always call onSuccess with the user data
+            // Let the RequestModal handle checking for pending request context
+            if (onSuccess) {
+                onSuccess(userData);
             }
         } catch (error) {
             console.error('Error in handleSignupSuccess:', error);
