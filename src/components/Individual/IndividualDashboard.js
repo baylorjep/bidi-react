@@ -114,7 +114,15 @@ const IndividualDashboard = () => {
           .eq("id", user.id)
           .single();
 
-        if (profileError) throw profileError;
+        if (profileError) {
+          if (profileError.code === 'PGRST116') {
+            // No profile found - this is expected for users who signed in but haven't completed profile setup
+            console.log("User has no individual profile yet - profile setup will be handled by MissingProfileModal");
+            setError("Profile not found. Please complete your profile setup.");
+            return;
+          }
+          throw profileError;
+        }
 
         // Check for profile photos
         const { data: photos, error: photosError } = await supabase
@@ -451,8 +459,14 @@ const IndividualDashboard = () => {
             .single();
 
           if (profileError) {
-            console.error('Error fetching profile:', profileError);
-            setError('Error loading profile data');
+            if (profileError.code === 'PGRST116') {
+              // No profile found - this is expected for users who signed in but haven't completed profile setup
+              console.log("User has no individual profile yet - profile setup will be handled by MissingProfileModal");
+              setError("Profile not found. Please complete your profile setup.");
+            } else {
+              console.error('Error fetching profile:', profileError);
+              setError('Error loading profile data');
+            }
           } else {
             setProfile(profileData);
             setFormData({

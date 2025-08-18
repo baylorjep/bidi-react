@@ -17,6 +17,9 @@ import { supabase } from "./supabaseClient";
 import { SupabaseStatusProvider } from './context/SupabaseStatusProvider';
 import SupabaseDownModal from './components/Modals/SupabaseDownModal';
 
+// Hooks
+import { useMissingProfile } from './hooks/useMissingProfile';
+
 // Layout Imports
 import Navbar from "./components/Layout/Navbar";
 import Footer from "./components/Layout/Footer";
@@ -68,6 +71,7 @@ import UpdatePassword from "./components/Profile/UpdatePassword";
 import ProfilePage from "./components/Profile/Profile";
 import AuthCallback from "./components/AuthCallback";
 import RestoreRequest from "./components/RestoreRequest";
+import MissingProfileModal from "./components/Modals/MissingProfileModal";
 
 // Individual Imports
 
@@ -171,6 +175,10 @@ function AppContent() {
   const [eventDetails, setEventDetails] = useState(null);
   const [userId, setUserId] = useState(null);
   const [userType, setUserType] = useState(null);
+  const [showMissingProfileModal, setShowMissingProfileModal] = useState(false);
+
+  // Check for missing profile
+  const { hasProfile, loading: profileLoading, isMissingProfile } = useMissingProfile(user);
 
   useEffect(() => {
     const getUser = async () => {
@@ -215,6 +223,14 @@ function AppContent() {
   useEffect(() => {
     console.log('User state changed:', { user, userRole, userId });
   }, [user, userRole, userId]);
+
+  // Show missing profile modal when user is authenticated but has no profile
+  useEffect(() => {
+    if (user && !profileLoading && isMissingProfile) {
+      console.log('User authenticated but missing profile, showing setup modal');
+      setShowMissingProfileModal(true);
+    }
+  }, [user, profileLoading, isMissingProfile]);
 
   // Function to check if current route is a dashboard
   const isDashboardRoute = () => {
@@ -605,6 +621,14 @@ function AppContent() {
         !location.pathname.includes('portfolio') && 
         !location.pathname.includes('request-categories') && 
         <Footer />}
+      
+      {/* Missing Profile Modal */}
+      <MissingProfileModal
+        isOpen={showMissingProfileModal}
+        onClose={() => setShowMissingProfileModal(false)}
+        user={user}
+      />
+      
       <ToastContainer
         position="top-right"
         autoClose={5000}

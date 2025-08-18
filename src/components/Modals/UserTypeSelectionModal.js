@@ -3,7 +3,7 @@ import { supabase } from '../../supabaseClient';
 import { useNavigate } from 'react-router-dom';
 import './UserTypeSelectionModal.css';
 
-const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName }) => {
+const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName, onProfileCreated }) => {
     const [userType, setUserType] = useState('');
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({
@@ -157,7 +157,13 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName }) 
                 }
             }
             
-            // Redirect based on user type (only if no pending request)
+            // Call onProfileCreated callback if provided (for missing profile modal)
+            if (onProfileCreated) {
+                onProfileCreated();
+                return;
+            }
+            
+            // Redirect based on user type (only if no pending request and no callback)
             if (userType === 'both') {
                 navigate('/wedding-planner/overview');
             } else if (userType === 'individual') {

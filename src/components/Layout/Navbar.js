@@ -58,7 +58,14 @@ function Navbar() {
         .eq('id', userId)
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        if (profileError.code === 'PGRST116') {
+          // No profile found - this is expected for users who signed in but haven't completed profile setup
+          console.log("User has no profile yet - skipping profile photo fetch");
+          return;
+        }
+        throw profileError;
+      }
 
       if (profileData.role === 'business') {
         const { data: photoData, error: photoError } = await supabase
@@ -87,7 +94,13 @@ function Navbar() {
       .single();
 
     if (error) {
-      console.error("Error fetching user role:", error.message);
+      if (error.code === 'PGRST116') {
+        // No profile found - this is expected for users who signed in but haven't completed profile setup
+        console.log("User has no profile yet - profile setup will be handled by MissingProfileModal");
+        setUserRole(null);
+      } else {
+        console.error("Error fetching user role:", error.message);
+      }
     } else {
       setUserRole(data.role);
     }

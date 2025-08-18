@@ -118,36 +118,40 @@ export default function ChatInterface({ initialChat }) {
       setCurrentUserId(user.id);
 
       // First check if user is a wedding planner
-      const { data: weddingPlanner } = await supabase
+      const { data: weddingPlanner, error: weddingPlannerError } = await supabase
         .from("wedding_planner_profiles")
         .select("id")
         .eq("id", user.id)
         .single();
 
-      if (weddingPlanner) {
+      if (!weddingPlannerError && weddingPlanner) {
         setUserType("business");
         return;
       }
 
       // Then check if user is an individual
-      const { data: individual } = await supabase
+      const { data: individual, error: individualError } = await supabase
         .from("individual_profiles")
         .select("id")
         .eq("id", user.id)
         .single();
 
-      if (individual) {
+      if (!individualError && individual) {
         setUserType("individual");
       } else {
         // If not individual or wedding planner, check business profiles
-        const { data: business } = await supabase
+        const { data: business, error: businessError } = await supabase
           .from("business_profiles")
           .select("id")
           .eq("id", user.id)
           .single();
 
-        if (business) {
+        if (!businessError && business) {
           setUserType("business");
+        } else {
+          // User has no profile - this will be handled by MissingProfileModal
+          console.log("User has no profile yet - profile setup will be handled by MissingProfileModal");
+          setUserType(null);
         }
       }
     })();

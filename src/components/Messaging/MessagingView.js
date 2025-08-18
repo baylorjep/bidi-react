@@ -226,7 +226,17 @@ export default function MessagingView({
               .eq("id", businessId)
               .single();
 
-            if (businessError) throw businessError;
+            if (businessError) {
+              if (businessError.code === 'PGRST116') {
+                // No profile found - this could be a user who hasn't completed profile setup
+                console.log("User has no profile yet - showing generic name");
+                setBusinessName("User");
+                setInitialLetter("U");
+                setIsBusinessProfile(false);
+                return;
+              }
+              throw businessError;
+            }
             setBusinessName(businessData.business_name || "Business");
             setInitialLetter(businessData.business_name?.charAt(0)?.toUpperCase() || "");
             userData = businessData;
