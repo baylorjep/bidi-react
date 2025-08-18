@@ -104,7 +104,17 @@ const AuthCallback = () => {
                 setUserEmail(currentUser.email || '');
                 setUserName(currentUser.user_metadata?.full_name || currentUser.user_metadata?.name || '');
 
-                // Check if user already has a profile
+                // First, check if there's an existing user with the same email (for OAuth linking)
+                const { data: existingUsers, error: existingUsersError } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('email', currentUser.email);
+
+                if (existingUsersError) {
+                    console.error('Error checking for existing users:', existingUsersError);
+                }
+
+                // Check if user already has a profile (by ID)
                 const { data: profile, error: profileError } = await supabase
                     .from('profiles')
                     .select('*')
@@ -122,6 +132,52 @@ const AuthCallback = () => {
                 if (profile) {
                     // User already has a profile, redirect to appropriate dashboard
                     await redirectToDashboard(currentUser.id, profile.role);
+                } else if (existingUsers && existingUsers.length > 0) {
+                    // User exists with same email but different ID (OAuth linking case)
+                    console.log('Existing user found with same email, handling OAuth linking');
+                    
+                    // Get the existing user's profile
+                    const existingProfile = existingUsers[0];
+                    
+                    // Update the existing profile to link it with the new OAuth user ID
+                    const { error: updateError } = await supabase
+                        .from('profiles')
+                        .update({ 
+                            id: currentUser.id, // Update to the new OAuth user ID
+                            updated_at: new Date().toISOString()
+                        })
+                        .eq('id', existingProfile.id);
+                    
+                    if (updateError) {
+                        console.error('Error linking accounts:', updateError);
+                        setError('Failed to link your Google account. Please try signing in with your original method.');
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    // Also update individual_profiles and business_profiles if they exist
+                    const { error: individualUpdateError } = await supabase
+                        .from('individual_profiles')
+                        .update({ id: currentUser.id })
+                        .eq('id', existingProfile.id);
+                    
+                    const { error: businessUpdateError } = await supabase
+                        .from('business_profiles')
+                        .update({ id: currentUser.id })
+                        .eq('id', existingProfile.id);
+                    
+                    if (individualUpdateError && individualUpdateError.code !== 'PGRST116') {
+                        console.error('Error updating individual profile:', individualUpdateError);
+                    }
+                    
+                    if (businessUpdateError && businessUpdateError.code !== 'PGRST116') {
+                        console.error('Error updating business profile:', businessUpdateError);
+                    }
+                    
+                    console.log('Successfully linked Google account with existing profile');
+                    
+                    // Redirect to dashboard with the existing profile
+                    await redirectToDashboard(currentUser.id, existingProfile.role);
                 } else {
                     // New user, show user type selection modal
                     setShowUserTypeModal(true);
