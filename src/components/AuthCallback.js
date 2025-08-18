@@ -172,13 +172,19 @@ const AuthCallback = () => {
                 }
             }
             
+            // Check if user came from auth pages and should be redirected to dashboard
+            const isOnSigninPage = window.location.pathname.includes('/signin');
+            const isOnSignupPage = window.location.pathname.includes('/signup');
+            const isOnCreateAccountPage = window.location.pathname.includes('/createaccount');
+            const shouldRedirectToDashboard = isOnSigninPage || isOnSignupPage || isOnCreateAccountPage;
+            
             // Determine user type and redirect accordingly
             if (userRole === 'both') {
-                // User with both profiles (wedding planner vendor)
-                navigate('/wedding-planner-dashboard/home');
+                // User with both profiles (event planner vendor)
+                navigate(shouldRedirectToDashboard ? '/event-planner-dashboard/home' : window.location.pathname);
             } else if (userRole === 'business') {
                 // Business user only
-                navigate('/business-dashboard/dashboard');
+                navigate(shouldRedirectToDashboard ? '/business-dashboard/dashboard' : window.location.pathname);
             } else if (userRole === 'individual') {
                 // Individual user only - check their preferred dashboard
                 const { data: individualProfile } = await supabase
@@ -189,16 +195,16 @@ const AuthCallback = () => {
                 
                 const preferredDashboard = individualProfile?.preferred_dashboard;
                 
-                if (preferredDashboard === 'wedding-planner') {
-                    // User prefers wedding planner dashboard (individual wedding planning)
-                    navigate('/wedding-planner');
+                if (preferredDashboard === 'event-planner') {
+                    // User prefers event planner dashboard (individual event planning)
+                    navigate(shouldRedirectToDashboard ? '/event-planner' : window.location.pathname);
                 } else {
                     // User prefers individual dashboard or no preference set
-                    navigate('/individual-dashboard/bids');
+                    navigate(shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname);
                 }
             } else {
                 // New user with no role set, default to individual dashboard
-                navigate('/individual-dashboard/bids');
+                navigate(shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname);
             }
         } catch (error) {
             console.error('Navigation error:', error);

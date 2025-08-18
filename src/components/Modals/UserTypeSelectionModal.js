@@ -28,9 +28,12 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName, on
         { id: 'catering', label: 'Catering' },
         { id: 'cake', label: 'Cake' },
         { id: 'beauty', label: 'Hair & Makeup' },
-        { id: 'wedding planner/coordinator', label: 'Wedding Planner/Coordinator' },
+        { id: 'event planner/coordinator', label: 'Event Planner/Coordinator' },
         { id: 'rental', label: 'Rental' },
         { id: 'photo_booth', label: 'Photo Booth' },
+        { id: 'entertainment', label: 'Entertainment' },
+        { id: 'decor', label: 'Decor' },
+        { id: 'transportation', label: 'Transportation' },
         { id: 'other', label: 'Other' }
     ];
 
@@ -163,13 +166,21 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName, on
                 return;
             }
             
+            // Check if user is on signin page and redirect to appropriate dashboard
+            const isOnSigninPage = window.location.pathname.includes('/signin');
+            const isOnSignupPage = window.location.pathname.includes('/signup');
+            const isOnCreateAccountPage = window.location.pathname.includes('/createaccount');
+            
+            // If user came from auth pages, redirect to dashboard. Otherwise, stay on current page
+            const shouldRedirectToDashboard = isOnSigninPage || isOnSignupPage || isOnCreateAccountPage;
+            
             // Redirect based on user type (only if no pending request and no callback)
             if (userType === 'both') {
-                navigate('/wedding-planner/overview');
+                navigate(shouldRedirectToDashboard ? '/event-planner/overview' : window.location.pathname);
             } else if (userType === 'individual') {
-                navigate('/individual-dashboard/bids');
+                navigate(shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname);
             } else if (userType === 'business') {
-                navigate('/business-dashboard/dashboard');
+                navigate(shouldRedirectToDashboard ? '/business-dashboard/dashboard' : window.location.pathname);
             }
 
         } catch (error) {
@@ -203,9 +214,9 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName, on
                             className="user-type-option"
                             onClick={() => handleUserTypeSelect('individual')}
                         >
-                            <div className="user-type-icon">👰</div>
+                            <div className="user-type-icon">🎉</div>
                             <h3>Individual</h3>
-                            <p>I'm planning a wedding and need vendors</p>
+                            <p>I'm planning an event and need vendors</p>
                         </div>
 
                         <div 
@@ -214,7 +225,7 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName, on
                         >
                             <div className="user-type-icon">🏢</div>
                             <h3>Business</h3>
-                            <p>I'm a vendor providing wedding services</p>
+                            <p>I'm a vendor providing event services</p>
                         </div>
 
                         <div 
@@ -222,8 +233,8 @@ const UserTypeSelectionModal = ({ isOpen, onClose, user, userEmail, userName, on
                             onClick={() => handleUserTypeSelect('both')}
                         >
                             <div className="user-type-icon">🎯</div>
-                            <h3>Wedding Planner</h3>
-                            <p>I plan weddings and also provide services</p>
+                            <h3>Event Planner</h3>
+                            <p>I plan events and also provide services</p>
                         </div>
                     </div>
                 )}

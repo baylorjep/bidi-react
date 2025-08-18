@@ -62,7 +62,7 @@ const MissingProfileModal = ({ isOpen, onClose, user }) => {
                     Complete Your Profile Setup
                 </h2>
                 <p style={{ marginBottom: '24px', color: '#6b7280', lineHeight: '1.5' }}>
-                    We noticed you don't have a complete profile yet. Let's set up your account so you can start using Bidi.
+                    We noticed you don't have a complete profile yet. Let's set up your account so you can start using Bidi Events.
                 </p>
                 
                 {showUserTypeModal && (
