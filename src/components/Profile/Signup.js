@@ -33,6 +33,33 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
     // Check if user is already authenticated and redirect to appropriate dashboard
     useEffect(() => {
         const checkAuthAndRedirect = async () => {
+            // Check for access token in URL hash (Google OAuth redirect)
+            const hash = window.location.hash;
+            if (hash && hash.includes('access_token')) {
+                console.log('Access token found in URL hash, processing OAuth redirect');
+                
+                // Wait a moment for Supabase to process the session
+                setTimeout(async () => {
+                    try {
+                        const { data, error } = await supabase.auth.getSession();
+                        if (error) {
+                            console.error('Error getting session from hash:', error);
+                            return;
+                        }
+                        
+                        if (data.session?.user) {
+                            console.log('OAuth session established, redirecting to auth-callback');
+                            // Redirect to auth-callback to handle profile creation
+                            navigate('/auth-callback');
+                            return;
+                        }
+                    } catch (error) {
+                        console.error('Error processing OAuth redirect:', error);
+                    }
+                }, 1000);
+                return;
+            }
+
             const { data: { session } } = await supabase.auth.getSession();
             
             if (session?.user) {
@@ -78,6 +105,20 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
         };
 
         checkAuthAndRedirect();
+
+        // Also listen for auth state changes
+        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session?.user) {
+                console.log('Auth state change: SIGNED_IN, redirecting to auth-callback');
+                navigate('/auth-callback');
+            }
+        });
+
+        return () => {
+            if (authListener?.subscription) {
+                authListener.subscription.unsubscribe();
+            }
+        };
     }, [navigate]);
 
     const businessCategories = [
