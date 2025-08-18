@@ -5,6 +5,7 @@ import LoadingSpinner from '../LoadingSpinner';
 import '../../styles/VendorListWithFilters.css';
 import { supabase } from '../../supabaseClient';
 import { Helmet } from 'react-helmet';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 
 const categories = [
     { id: 'photography', name: 'Photography' },
@@ -24,13 +25,50 @@ const sortOptions = [
 ];
 
 const VendorListWithFilters = ({ showAds = true }) => {
-    const [selectedCategory, setSelectedCategory] = useState('photography');
-    const [sortOrder, setSortOrder] = useState(sortOptions[0].id);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
+    
+    // Initialize state from URL parameters or defaults
+    const [selectedCategory, setSelectedCategory] = useState(() => {
+        return searchParams.get('category') || 'photography';
+    });
+    const [sortOrder, setSortOrder] = useState(() => {
+        return searchParams.get('sort') || sortOptions[0].id;
+    });
+    const [currentPage, setCurrentPage] = useState(() => {
+        const page = parseInt(searchParams.get('page')) || 1;
+        return Math.max(1, page); // Ensure page is at least 1
+    });
+    const [searchQuery, setSearchQuery] = useState(() => {
+        return searchParams.get('search') || '';
+    });
+    
     const [vendorCount, setVendorCount] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [searchQuery, setSearchQuery] = useState('');
     const [isLoadingCount, setIsLoadingCount] = useState(true);
     const vendorsPerPage = 5;
+
+    // Update URL when state changes
+    const updateURL = (updates) => {
+        const newSearchParams = new URLSearchParams(searchParams);
+        Object.entries(updates).forEach(([key, value]) => {
+            if (value && value !== '') {
+                newSearchParams.set(key, value);
+            } else {
+                newSearchParams.delete(key);
+            }
+        });
+        setSearchParams(newSearchParams);
+    };
+
+    // Update URL when filter state changes
+    useEffect(() => {
+        updateURL({
+            category: selectedCategory,
+            sort: sortOrder,
+            page: currentPage.toString(),
+            search: searchQuery
+        });
+    }, [selectedCategory, sortOrder, currentPage, searchQuery]);
 
     useEffect(() => {
         const fetchVendorCount = async () => {
@@ -75,6 +113,43 @@ const VendorListWithFilters = ({ showAds = true }) => {
     const handleSearchChange = (event) => {
         setSearchQuery(event.target.value);
         setCurrentPage(1); // Reset to first page when search changes
+    };
+
+    const handlePageChange = (newPage) => {
+        setCurrentPage(newPage);
+        // Scroll to top when changing pages
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
+
+    // Calculate total pages
+    const totalPages = Math.ceil(vendorCount / vendorsPerPage);
+
+    // Generate page numbers for pagination
+    const getPageNumbers = () => {
+        const pages = [];
+        const maxVisiblePages = 5;
+        
+        if (totalPages <= maxVisiblePages) {
+            // Show all pages if total is small
+            for (let i = 1; i <= totalPages; i++) {
+                pages.push(i);
+            }
+        } else {
+            // Show pages around current page
+            let start = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+            let end = Math.min(totalPages, start + maxVisiblePages - 1);
+            
+            // Adjust start if we're near the end
+            if (end === totalPages) {
+                start = Math.max(1, end - maxVisiblePages + 1);
+            }
+            
+            for (let i = start; i <= end; i++) {
+                pages.push(i);
+            }
+        }
+        
+        return pages;
     };
 
     return (
@@ -166,7 +241,7 @@ const VendorListWithFilters = ({ showAds = true }) => {
                         sortOrder={sortOrder} 
                         currentPage={currentPage}
                         vendorsPerPage={vendorsPerPage}
-                        setCurrentPage={setCurrentPage}
+                        setCurrentPage={handlePageChange}
                         totalCount={vendorCount}
                         setTotalCount={setVendorCount}
                         searchQuery={searchQuery}
@@ -178,6 +253,75 @@ const VendorListWithFilters = ({ showAds = true }) => {
                     </aside>
                 )}
             </div>
+
+            {/* Enhanced Pagination */}
+            {totalPages > 1 && (
+                <div className="enhanced-pagination">
+                    <div className="pagination-controls">
+                        {/* First Page */}
+                        {currentPage > 1 && (
+                            <button 
+                                className="pagination-btn pagination-btn-first"
+                                onClick={() => handlePageChange(1)}
+                                title="Go to first page"
+                            >
+                                « First
+                            </button>
+                        )}
+                        
+                        {/* Previous Page */}
+                        {currentPage > 1 && (
+                            <button 
+                                className="pagination-btn pagination-btn-prev"
+                                onClick={() => handlePageChange(currentPage - 1)}
+                                title="Previous page"
+                            >
+                                ‹ Previous
+                            </button>
+                        )}
+                        
+                        {/* Page Numbers */}
+                        <div className="page-numbers">
+                            {getPageNumbers().map(pageNum => (
+                                <button
+                                    key={pageNum}
+                                    className={`pagination-btn page-number ${currentPage === pageNum ? 'active' : ''}`}
+                                    onClick={() => handlePageChange(pageNum)}
+                                >
+                                    {pageNum}
+                                </button>
+                            ))}
+                        </div>
+                        
+                        {/* Next Page */}
+                        {currentPage < totalPages && (
+                            <button 
+                                className="pagination-btn pagination-btn-next"
+                                onClick={() => handlePageChange(currentPage + 1)}
+                                title="Next page"
+                            >
+                                Next ›
+                            </button>
+                        )}
+                        
+                        {/* Last Page */}
+                        {currentPage < totalPages && (
+                            <button 
+                                className="pagination-btn pagination-btn-last"
+                                onClick={() => handlePageChange(totalPages)}
+                                title="Go to last page"
+                            >
+                                Last »
+                            </button>
+                        )}
+                    </div>
+                    
+                    <div className="pagination-info">
+                        <span>Page {currentPage} of {totalPages}</span>
+                        <span>• {vendorCount} total vendors</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

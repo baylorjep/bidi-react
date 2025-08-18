@@ -63,7 +63,11 @@ const VendorListWithFilters = ({
         if (vendor.business_name) {
             const formattedName = formatBusinessName(vendor.business_name);
             navigate(`/portfolio/${vendor.id}/${formattedName}`, {
-                state: { fromVendorSelection: true }
+                state: { 
+                    fromVendorSelection: true,
+                    fromVendorList: true,
+                    returnUrl: window.location.href // Preserve the current URL with all filters
+                }
             });
         }
     };

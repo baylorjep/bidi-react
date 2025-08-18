@@ -264,3 +264,148 @@
         font-size: 1rem;
     }
 }
+
+/* Enhanced Pagination Styles */
+.enhanced-pagination {
+    margin-top: 40px;
+    padding: 20px 0;
+    border-top: 1px solid #E5E7EB;
+}
+
+.pagination-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+.pagination-btn {
+    background: white;
+    color: #374151;
+    border: 1px solid #E5E7EB;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: Outfit, sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn:hover {
+    background-color: #F9F5FF;
+    border-color: #ae18ed;
+    color: #ae18ed;
+    transform: translateY(-1px);
+}
+
+.pagination-btn:active {
+    transform: translateY(0);
+}
+
+.pagination-btn.active {
+    background-color: #ae18ed;
+    color: white;
+    border-color: #ae18ed;
+}
+
+.pagination-btn:disabled {
+    background-color: #F3F4F6;
+    color: #9CA3AF;
+    border-color: #E5E7EB;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.pagination-btn:disabled:hover {
+    background-color: #F3F4F6;
+    color: #9CA3AF;
+    border-color: #E5E7EB;
+    transform: none;
+}
+
+.page-numbers {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+}
+
+.page-number {
+    min-width: 36px;
+    height: 36px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pagination-btn-first,
+.pagination-btn-last {
+    font-weight: 600;
+}
+
+.pagination-btn-prev,
+.pagination-btn-next {
+    font-weight: 500;
+}
+
+.pagination-info {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 16px;
+    font-size: 14px;
+    color: #6B7280;
+    font-family: Outfit, sans-serif;
+}
+
+.pagination-info span {
+    display: flex;
+    align-items: center;
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .pagination-controls {
+        gap: 4px;
+    }
+    
+    .pagination-btn {
+        padding: 6px 12px;
+        font-size: 13px;
+        min-width: 32px;
+    }
+    
+    .page-number {
+        min-width: 32px;
+        height: 32px;
+    }
+    
+    .pagination-btn-first,
+    .pagination-btn-last {
+        display: none; /* Hide first/last on mobile to save space */
+    }
+    
+    .pagination-info {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    .pagination-controls {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .page-numbers {
+        order: -1; /* Show page numbers first on very small screens */
+    }
+}

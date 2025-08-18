@@ -1239,7 +1239,14 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
   };
 
   const handleBack = () => {
-    navigate(-1);
+    // Check if user came from vendor list with a specific return URL
+    if (location.state?.fromVendorList && location.state?.returnUrl) {
+      // Navigate back to the vendor list with preserved filters
+      window.location.href = location.state.returnUrl;
+    } else {
+      // Default back navigation
+      navigate(-1);
+    }
   };
 
   const handleToggleSelection = () => {

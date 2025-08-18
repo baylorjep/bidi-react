@@ -1008,7 +1008,12 @@ const VendorList = ({
 
     const handleMoreInfo = (vendor) => {
         const formattedName = formatBusinessName(vendor.business_name);
-        navigate(`/portfolio/${vendor.id}/${formattedName}`);
+        navigate(`/portfolio/${vendor.id}/${formattedName}`, {
+            state: { 
+                fromVendorList: true,
+                returnUrl: window.location.href // Preserve the current URL with all filters
+            }
+        });
     };
 
     // Add click handler for loading more photos
@@ -1513,21 +1518,7 @@ const VendorList = ({
                     </div>
                 </div>
             )}
-            {totalPages > 1 && (
-                <div className="pagination">
-                    {currentPage > 1 && (
-                        <button className='pagination-btn' onClick={() => handlePageChange(currentPage - 1)}>
-                            Previous
-                        </button>
-                    )}
-                    <span>Page {currentPage} of {totalPages}</span>
-                    {currentPage < totalPages && (
-                        <button className='pagination-btn' onClick={() => handlePageChange(currentPage + 1)}>
-                            Next
-                        </button>
-                    )}
-                </div>
-            )}
+            {/* Pagination is now handled by the parent component */}
             <ImageModal
                 isOpen={!!selectedImage}
                 mediaUrl={selectedImage?.url}
