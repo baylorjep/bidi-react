@@ -580,13 +580,6 @@ function SlidingBidModal({ isOpen, onClose, requestId, editMode = false, bidId =
 
                 if (insertError) throw insertError;
 
-                const subject = 'New Bid Received';
-                const htmlContent = `<p>A new bid has been placed on your request.</p>
-                                      <p><strong>Bid Amount:</strong> ${bidAmount}</p>
-                                      <p><strong>Description:</strong> ${bidDescription}</p>
-                                      <p><strong>Expires:</strong> ${parseLocalDate(bidExpirationDate) ? parseLocalDate(bidExpirationDate).toLocaleDateString() : 'Date not specified'}</p>`;
-
-                await sendEmailNotification('savewithbidi@gmail.com', subject, htmlContent);
                 setSuccess('Bid successfully placed!');
                 onClose();
                 navigate('/bid-success');
