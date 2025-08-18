@@ -958,15 +958,15 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
             categorySpecificData = {
               profile_id: authenticatedUser.id, // photography_requests uses profile_id instead of user_id
               date_type: formData.dateFlexibility,
-              time_of_day: formData.eventTime,
+              time_of_day: formData.eventTime || null,
               num_people: parseInt(formData.guestCount) || null,
               duration: categoryResponses.coverageHours, // Maps to coverage hours question
               extras: categoryResponses.extras ? JSON.stringify(categoryResponses.extras) : null,
               style_preferences: null, // Removed photoStyle question - using inspiration photos instead
               deliverables: categoryResponses.deliverables ? JSON.stringify(categoryResponses.deliverables) : null,
               wedding_details: categoryResponses.weddingDetails ? JSON.stringify(categoryResponses.weddingDetails) : null,
-              start_time: formData.eventTime,
-              end_time: formData.endTime,
+              start_time: formData.eventTime || null,
+              end_time: formData.endTime || null,
               start_time_unknown: !formData.eventTime,
               end_time_unknown: !formData.endTime,
               duration_unknown: !categoryResponses.coverageHours,
@@ -979,15 +979,15 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
           case 'videography':
             categorySpecificData = {
-              time_of_day: formData.eventTime,
+              time_of_day: formData.eventTime || null,
               num_people: parseInt(formData.guestCount) || null,
               duration: parseInt(categoryResponses.coverageHours?.replace(/[^\d]/g, '')) || null, // Extract hours from coverage hours
               style_preferences: null, // Removed videoStyle question - using inspiration photos instead
               deliverables: categoryResponses.deliverables ? JSON.stringify(categoryResponses.deliverables) : null,
               wedding_details: categoryResponses.weddingDetails ? JSON.stringify(categoryResponses.weddingDetails) : null,
               coverage: categoryResponses.coverage ? JSON.stringify(categoryResponses.coverage) : null,
-              start_time: formData.eventTime,
-              end_time: formData.endTime,
+              start_time: formData.eventTime || null,
+              end_time: formData.endTime || null,
               start_time_unknown: !formData.eventTime,
               end_time_unknown: !formData.endTime,
               duration_unknown: !categoryResponses.coverageHours,
@@ -1013,7 +1013,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               on_site_service_needed: categoryResponses.onSiteServiceNeeded,
               num_people: parseInt(formData.guestCount) || null,
               specific_time_needed: !!formData.eventTime,
-              specific_time: formData.eventTime,
+              specific_time: formData.eventTime || null,
               start_date: formData.eventDate ? new Date(formData.eventDate).toISOString() : null,
               end_date: formData.endDate ? new Date(formData.endDate).toISOString() : null
             };
@@ -1027,7 +1027,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               colors: categoryResponses.colorScheme ? JSON.stringify([categoryResponses.colorScheme]) : null, // Maps to colorScheme question
               flower_preferences_text: categoryResponses.customArrangements, // Maps to customArrangements question
               specific_time_needed: !!formData.eventTime,
-              specific_time: formData.eventTime,
+              specific_time: formData.eventTime || null,
               start_date: formData.eventDate || null,
               end_date: formData.endDate || null
             };
@@ -1101,8 +1101,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               communication_style: categoryResponses.communicationStyle,
               start_date: formData.eventDate || null,
               end_date: formData.endDate || null,
-              start_time: formData.startTime,
-              end_time: formData.endTime
+              start_time: formData.startTime || null,
+              end_time: formData.endTime || null
             };
             break;
         }
