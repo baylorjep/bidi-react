@@ -91,7 +91,7 @@ const AuthModal = ({ setIsModalOpen, onSuccess }) => {
         switch (currentView) {
             case 'signin':
                 console.log('Rendering SignIn component with isModal=true');
-                return <SignIn onSuccess={onSuccess} isModal={true} />;
+                return <SignIn onSuccess={handleSignupSuccess} isModal={true} />;
             case 'signup':
                 return (
                     <Signup 

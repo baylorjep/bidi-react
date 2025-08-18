@@ -190,6 +190,31 @@ const SignIn = ({ onSuccess, isModal = false }) => {
 
                 // If we have an onSuccess callback (from AuthModal), use it
                 if (onSuccess) {
+                    // Check if there's a pending request context
+                    const pendingContext = sessionStorage.getItem('pendingRequestContext');
+                    if (pendingContext) {
+                        try {
+                            const requestData = JSON.parse(pendingContext);
+                            const now = Date.now();
+                            const timeDiff = now - requestData.timestamp;
+                            
+                            // Only restore if request context is less than 10 minutes old
+                            if (timeDiff < 10 * 60 * 1000) {
+                                console.log('Found pending request context, calling onSuccess with user data');
+                                sessionStorage.removeItem('pendingRequestContext');
+                                onSuccess(data.user);
+                                return;
+                            } else {
+                                console.log('Pending request context expired, removing');
+                                sessionStorage.removeItem('pendingRequestContext');
+                            }
+                        } catch (error) {
+                            console.error('Error parsing pending request context:', error);
+                            sessionStorage.removeItem('pendingRequestContext');
+                        }
+                    }
+                    
+                    // No pending request context, just call onSuccess
                     onSuccess(data.user);
                     return;
                 }
@@ -237,26 +262,10 @@ const SignIn = ({ onSuccess, isModal = false }) => {
         try {
             // Check if there's already a pending request context in sessionStorage
             const existingContext = sessionStorage.getItem('pendingRequestContext');
-            if (!existingContext) {
-                // Try to get context from RequestModal if available
-                const requestModal = document.querySelector('.request-modal');
-                if (requestModal) {
-                    // Get the request data from the modal's state
-                    const requestData = {
-                        formData: window.requestModalFormData || {},
-                        selectedVendors: window.requestModalSelectedVendors || [],
-                        vendor: window.requestModalVendor || null,
-                        isEditMode: window.requestModalIsEditMode || false,
-                        existingRequestData: window.requestModalExistingRequestData || null,
-                        timestamp: Date.now()
-                    };
-                    
-                    // Store in sessionStorage for retrieval after OAuth
-                    sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestData));
-                    console.log('Stored request context before Google OAuth:', requestData);
-                }
-            } else {
+            if (existingContext) {
                 console.log('Using existing pending request context from sessionStorage');
+            } else {
+                console.log('No pending request context found in sessionStorage');
             }
             
             const { error } = await supabase.auth.signInWithOAuth({
