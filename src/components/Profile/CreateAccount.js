@@ -14,17 +14,43 @@ function CreateAccount() {
         const checkSession = async () => {
             const { data: { session }, error } = await supabase.auth.getSession();
             if (session) {
-                // If user is already logged in, redirect to appropriate dashboard
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role')
+                console.log('User already authenticated, redirecting to dashboard');
+                
+                // Check user's profile to determine where to redirect
+                const { data: individualProfile } = await supabase
+                    .from('individual_profiles')
+                    .select('*')
                     .eq('id', session.user.id)
                     .single();
 
-                if (profile?.role === 'business') {
-                    navigate('/business-dashboard');
-                } else if (profile?.role === 'individual') {
-                    navigate('/individual-dashboard');
+                const { data: businessProfile } = await supabase
+                    .from('business_profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                // Handle individual user
+                if (individualProfile && !businessProfile) {
+                    const preferredDashboard = individualProfile.preferred_dashboard;
+                    
+                    if (preferredDashboard === 'event-planner') {
+                        navigate('/event-planner');
+                    } else {
+                        navigate('/individual-dashboard/bids');
+                    }
+                }
+                // Handle business user
+                else if (businessProfile && !individualProfile) {
+                    navigate('/business-dashboard/dashboard');
+                }
+                // Handle user with both profiles (event planner)
+                else if (businessProfile && individualProfile) {
+                    navigate('/event-planner-dashboard/home');
+                }
+                // Handle new user with no profiles (should be handled by MissingProfileModal)
+                else {
+                    // User has no profile, MissingProfileModal will handle this
+                    console.log('User authenticated but no profile found - MissingProfileModal will handle');
                 }
             }
         };

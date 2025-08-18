@@ -30,6 +30,56 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
     const navigate = useNavigate();
     const location = useLocation();
 
+    // Check if user is already authenticated and redirect to appropriate dashboard
+    useEffect(() => {
+        const checkAuthAndRedirect = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session?.user) {
+                console.log('User already authenticated, redirecting to dashboard');
+                
+                // Check user's profile to determine where to redirect
+                const { data: individualProfile } = await supabase
+                    .from('individual_profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                const { data: businessProfile } = await supabase
+                    .from('business_profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                // Handle individual user
+                if (individualProfile && !businessProfile) {
+                    const preferredDashboard = individualProfile.preferred_dashboard;
+                    
+                    if (preferredDashboard === 'event-planner') {
+                        navigate('/event-planner');
+                    } else {
+                        navigate('/individual-dashboard/bids');
+                    }
+                }
+                // Handle business user
+                else if (businessProfile && !individualProfile) {
+                    navigate('/business-dashboard/dashboard');
+                }
+                // Handle user with both profiles (event planner)
+                else if (businessProfile && individualProfile) {
+                    navigate('/event-planner-dashboard/home');
+                }
+                // Handle new user with no profiles (should be handled by MissingProfileModal)
+                else {
+                    // User has no profile, MissingProfileModal will handle this
+                    console.log('User authenticated but no profile found - MissingProfileModal will handle');
+                }
+            }
+        };
+
+        checkAuthAndRedirect();
+    }, [navigate]);
+
     const businessCategories = [
         { id: 'photography', label: 'Photography' },
         { id: 'videography', label: 'Videography' },
@@ -39,9 +89,12 @@ const Signup = ({ onSuccess, initialUserType, isModal = false }) => {
         { id: 'catering', label: 'Catering' },
         { id: 'cake', label: 'Cake' },
         { id: 'beauty', label: 'Hair & Makeup' },
-        { id: 'wedding planner/coordinator', label: 'Wedding Planner/Coordinator' },
+        { id: 'event planner/coordinator', label: 'Event Planner/Coordinator' },
         { id: 'rental', label: 'Rental' },
         { id: 'photo_booth', label: 'Photo Booth' },
+        { id: 'entertainment', label: 'Entertainment' },
+        { id: 'decor', label: 'Decor' },
+        { id: 'transportation', label: 'Transportation' },
         { id: 'other', label: 'Other' }
     ];
 

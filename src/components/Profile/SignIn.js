@@ -19,6 +19,56 @@ const SignIn = ({ onSuccess, isModal = false }) => {
 
     const redirectTo = location.state?.from || '/';
 
+    // Check if user is already authenticated and redirect to appropriate dashboard
+    useEffect(() => {
+        const checkAuthAndRedirect = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            
+            if (session?.user) {
+                console.log('User already authenticated, redirecting to dashboard');
+                
+                // Check user's profile to determine where to redirect
+                const { data: individualProfile } = await supabase
+                    .from('individual_profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                const { data: businessProfile } = await supabase
+                    .from('business_profiles')
+                    .select('*')
+                    .eq('id', session.user.id)
+                    .single();
+
+                // Handle individual user
+                if (individualProfile && !businessProfile) {
+                    const preferredDashboard = individualProfile.preferred_dashboard;
+                    
+                    if (preferredDashboard === 'event-planner') {
+                        navigate('/event-planner');
+                    } else {
+                        navigate('/individual-dashboard/bids');
+                    }
+                }
+                // Handle business user
+                else if (businessProfile && !individualProfile) {
+                    navigate('/business-dashboard/dashboard');
+                }
+                // Handle user with both profiles (event planner)
+                else if (businessProfile && individualProfile) {
+                    navigate('/event-planner-dashboard/home');
+                }
+                // Handle new user with no profiles (should be handled by MissingProfileModal)
+                else {
+                    // User has no profile, MissingProfileModal will handle this
+                    console.log('User authenticated but no profile found - MissingProfileModal will handle');
+                }
+            }
+        };
+
+        checkAuthAndRedirect();
+    }, [navigate]);
+
     // Helper function to check if user has a wedding plan
     const checkForWeddingPlan = async (userId) => {
         try {
@@ -109,9 +159,9 @@ const SignIn = ({ onSuccess, isModal = false }) => {
                     // Check user's preferred dashboard
                     const preferredDashboard = individualProfile.preferred_dashboard;
                     
-                    if (preferredDashboard === 'wedding-planner') {
-                        // User prefers wedding planner dashboard
-                        navigate('/wedding-planner');
+                    if (preferredDashboard === 'event-planner') {
+                        // User prefers event planner dashboard
+                        navigate('/event-planner');
                     } else {
                         // User prefers individual dashboard or no preference set
                         navigate('/individual-dashboard/bids');
@@ -119,11 +169,11 @@ const SignIn = ({ onSuccess, isModal = false }) => {
                 }
                 // Handle business user
                 else if (businessProfile && !individualProfile) {
-                    navigate('/business-dashboard');
+                    navigate('/business-dashboard/dashboard');
                 }
-                // Handle user with both profiles (wedding planner)
+                // Handle user with both profiles (event planner)
                 else if (businessProfile && individualProfile) {
-                    navigate('/wedding-planner-dashboard/home');
+                    navigate('/event-planner-dashboard/home');
                 }
                 // Handle new user with no profiles
                 else {
