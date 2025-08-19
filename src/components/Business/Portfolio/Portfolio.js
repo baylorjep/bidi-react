@@ -1966,69 +1966,74 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
 
               <div className="section-divider"></div>
 
-              <div className="business-details">
-                <div className="business-detail">
-                  <p className="business-description">
-                    Meet {business.business_name}
-                  </p>
-                </div>
-                <div className="vendor-profile-container" id="vendor-profile-section">
-                  <div 
-                    className="vendor-profile-left" 
-                    onClick={() => handleImageClick({ 
-                      url: convertedUrls.profile || profileImage, 
-                      isVideo: false,
-                      isProfile: true 
-                    })} 
-                    style={{ cursor: 'pointer' }}
-                  >
-                    <img
-                      src={convertedUrls.profile || profileImage}
-                      alt={`${business.business_name} profile`}
-                      className="vendor-profile-image-portfolio"
-                    />
-                    <div className="vendor-profile-name">
-                      {business.business_owner}
-                    </div>
-                    <div className="vendor-profile-owner">Owner</div>
+              {/* Only show profile section if there's a profile image or story */}
+              {(profileImage || business.story) && (
+                <div className="business-details">
+                  <div className="business-detail">
+                    <p className="business-description">
+                      Meet {business.business_name}
+                    </p>
                   </div>
-                  <div className="vendor-profile-right">
-                    {business.story ? (
+                  <div className="vendor-profile-container" id="vendor-profile-section">
+                    {profileImage && (
                       <div 
-                        className="vendor-profile-description"
-                        dangerouslySetInnerHTML={{ __html: business.story }}
-                      />
-                    ) : (
-                      <EmptyStateGuidance
-                        title="No Vendor Story Yet"
-                        description="Share your personal story, experience, and what drives you. This helps customers connect with you on a personal level and builds trust."
-                        actionText="Add Story"
-                        onClick={() => openEditModal({
-                          business_owner: business.business_owner,
-                          story: business.story,
-                          profile_picture: true,
-                        }, 'profile')}
-                        icon="👤"
-                        isOwner={isOwner}
-                      />
+                        className="vendor-profile-left" 
+                        onClick={() => handleImageClick({ 
+                          url: convertedUrls.profile || profileImage, 
+                          isVideo: false,
+                          isProfile: true 
+                        })} 
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <img
+                          src={convertedUrls.profile || profileImage}
+                          alt={`${business.business_name} profile`}
+                          className="vendor-profile-image-portfolio"
+                        />
+                        <div className="vendor-profile-name">
+                          {business.business_owner}
+                        </div>
+                        <div className="vendor-profile-owner">Owner</div>
+                      </div>
+                    )}
+                    <div className={`vendor-profile-right ${!profileImage ? 'full-width' : ''}`}>
+                      {business.story ? (
+                        <div 
+                          className="vendor-profile-description"
+                          dangerouslySetInnerHTML={{ __html: business.story }}
+                        />
+                      ) : (
+                        <EmptyStateGuidance
+                          title="No Vendor Story Yet"
+                          description="Share your personal story, experience, and what drives you. This helps customers connect with you on a personal level and builds trust."
+                          actionText="Add Story"
+                          onClick={() => openEditModal({
+                            business_owner: business.business_owner,
+                            story: business.story,
+                            profile_picture: true,
+                          }, 'profile')}
+                          icon="👤"
+                          isOwner={isOwner}
+                        />
+                      )}
+                    </div>
+                    {isOwner && (
+                      <button
+                        className="edit-icon"
+                        style={{ position: "absolute", right: "10px", top: "10px" }}
+                        onClick={() =>
+                          openEditModal({
+                            business_owner: business.business_owner,
+                            story: business.story,
+                            profile_picture: true,
+                          }, 'profile')}
+                      >
+                        ✎
+                      </button>
                     )}
                   </div>
-                  {isOwner && (
-                    <button
-                      className="edit-icon"
-                      style={{ position: "absolute", right: "10px", top: "10px" }}
-                      onClick={() =>
-                        openEditModal({
-                          business_owner: business.business_owner,
-                          story: business.story,
-                          profile_picture: true,
-                        }, 'profile')}
-                    >
-                      ✎
-                    </button>
-                  )}
                 </div>
-              </div>
+              )}
 
               <div className="section-divider"></div>
 
@@ -3319,6 +3324,12 @@ const styles = `
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+/* Profile section styling when no profile image */
+.vendor-profile-right.full-width {
+  width: 100%;
+  max-width: none;
 }
 
 .gallery-corner-button:hover {
