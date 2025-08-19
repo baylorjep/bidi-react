@@ -37,7 +37,8 @@ const SERVICE_CATEGORY_MAPPING = {
   "wedding planner/coordinator": { 
     table: "wedding_planning_requests", 
     legacy: "wedding planning" 
-  }
+  },
+  venue: { table: "requests", legacy: "venue" }
 };
 
 // Helper function to normalize category names
@@ -343,7 +344,8 @@ function OpenRequests({ onMessageClick }) {
           "florist",
           "hair and makeup artist",
           "beauty",
-          "wedding planner/coordinator"
+          "wedding planner/coordinator",
+          "venue"
         ];
         
         // Get all requests from different tables
@@ -1043,6 +1045,7 @@ function OpenRequests({ onMessageClick }) {
       case "florist": table = "florist_requests"; break;
       case "wedding planning": table = "wedding_planning_requests"; break;
       case "wedding planner": table = "wedding_planning_requests"; break;
+      case "venue": table = "requests"; break;
       default: table = "requests";
     }
     console.log('Determined table for request:', table, request);
@@ -1073,6 +1076,7 @@ function OpenRequests({ onMessageClick }) {
       case "beauty": return "Beauty";
       case "wedding planning": return "Wedding Planning";
       case "wedding planner": return "Wedding Planning";
+      case "venue": return "Venue";
       default: return category;
     }
   };

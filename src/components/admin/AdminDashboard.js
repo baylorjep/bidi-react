@@ -8,6 +8,8 @@ import ImageConverter from '../admin/ImageConverter';
 import MessageNotifier from './MessageNotifier';
 import OldRequests from './OldRequests';
 import UncontactedBusinesses from './UncontactedBusinesses';
+import AdminManagedBusinesses from './AdminManagedBusinesses';
+import BusinessSwitcher from './BusinessSwitcher';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
 
 // Add API URL configuration
@@ -26,6 +28,7 @@ function AdminDashboard() {
     const [businesses, setBusinesses] = useState([]);
     const [businessSearchQuery, setBusinessSearchQuery] = useState('');
     const [showBusinessDropdown, setShowBusinessDropdown] = useState(false);
+    const [currentBusinessContext, setCurrentBusinessContext] = useState(null);
 
     // Add useEffect to fetch businesses when component mounts
     useEffect(() => {
@@ -511,7 +514,8 @@ function AdminDashboard() {
             tabs: [
                 { id: 'verification', label: 'Verification' },
                 { id: 'users', label: 'Users List' },
-                { id: 'messages', label: 'Message Notifier' }
+                { id: 'messages', label: 'Message Notifier' },
+                { id: 'admin-businesses', label: 'Admin Businesses' }
             ]
         },
         tools: {
@@ -622,7 +626,32 @@ function AdminDashboard() {
                 </button>
             </div>
             <div className="admin-dashboard-content">
-                <h2 className="admin-dashboard-title">Admin Dashboard</h2>
+                <div className="tw-flex tw-justify-between tw-items-center tw-mb-6">
+                    <h2 className="admin-dashboard-title">Admin Dashboard</h2>
+                    <div className="tw-flex tw-items-center tw-gap-4">
+                        <div className="tw-text-sm tw-text-gray-600">
+                            <span className="tw-font-medium">Business Context:</span>
+                        </div>
+                        <BusinessSwitcher 
+                            onBusinessSwitch={setCurrentBusinessContext}
+                            currentBusinessId={currentBusinessContext?.id}
+                        />
+                        {currentBusinessContext && (
+                            <div className="tw-flex tw-items-center tw-gap-2">
+                                <span className="tw-text-sm tw-text-gray-600">Currently viewing:</span>
+                                <span className="tw-font-medium tw-text-blue-600">
+                                    {currentBusinessContext.business_name}
+                                </span>
+                                <button
+                                    onClick={() => setCurrentBusinessContext(null)}
+                                    className="tw-text-gray-400 hover:tw-text-gray-600 tw-text-sm"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* Group Navigation */}
                 <div className="admin-groups-container">
@@ -672,6 +701,16 @@ function AdminDashboard() {
                     )}
                     {activeTab === 'old-requests' && <OldRequests />}
                     {activeTab === 'uncontacted-businesses' && <UncontactedBusinesses />}
+                    {activeTab === 'admin-businesses' && (
+                        <div className="admin-card">
+                            <div className="admin-card-header">
+                                <h5>Admin-Managed Business Accounts</h5>
+                            </div>
+                            <div className="admin-card-body">
+                                <AdminManagedBusinesses />
+                            </div>
+                        </div>
+                    )}
                     {activeTab === 'users' && (
                         <div className="admin-card">
                             <div className="admin-card-header">
