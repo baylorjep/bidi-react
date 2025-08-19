@@ -1966,8 +1966,8 @@ const Portfolio = ({ businessId: propBusinessId, onOpenGallery = null, scrollToS
 
               <div className="section-divider"></div>
 
-              {/* Only show profile section if there's a profile image or story */}
-              {(profileImage || business.story) && (
+                             {/* Show profile section if there's a profile image, story, or if user is the owner */}
+               {(profileImage || business.story || isOwner) && (
                 <div className="business-details">
                   <div className="business-detail">
                     <p className="business-description">
