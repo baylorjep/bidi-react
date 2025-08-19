@@ -415,7 +415,7 @@ const handleCreateBusiness = async (e) => {
             }
 
             // Call the backend scraping API with Bearer token
-            const response = await fetch('/api/admin/scrape-website', {
+            const response = await fetch('https://bidi-express.vercel.app/api/admin/scrape-website', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -461,7 +461,7 @@ const handleCreateBusiness = async (e) => {
                     throw new Error('No valid session found. Please sign in again.');
                 }
 
-                const response = await fetch(`/api/admin/scraping-status/${businessId}`, {
+                const response = await fetch(`https://bidi-express.vercel.app/api/admin/scraping-status/${businessId}`, {
                     headers: {
                         'Authorization': `Bearer ${session.access_token}`
                     }
@@ -553,7 +553,7 @@ const handleCreateBusiness = async (e) => {
             }
 
             // Call the backend API to save the scraped images
-            const response = await fetch('/api/admin/save-scraped-images', {
+            const response = await fetch('https://bidi-express.vercel.app/api/admin/save-scraped-images', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -605,7 +605,7 @@ const handleCreateBusiness = async (e) => {
                 throw new Error('No valid session found. Please sign in again.');
             }
 
-            const response = await fetch(`/api/admin/portfolio-photo/${photoId}`, {
+            const response = await fetch(`https://bidi-express.vercel.app/api/admin/portfolio-photo/${photoId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${session.access_token}`
