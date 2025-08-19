@@ -2631,132 +2631,109 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
               <div className="settings-section" id="aiBidder">
                 <div className="settings-section-title">AI Bid Trainer</div>
                 <div className="settings-section-content">
-                  {autobidEnabled ? (
-                    <>
-                      {/* Autobid Status Toggle */}
-                      <div className="settings-row">
-                        <div>
-                          <div className="settings-label">Autobid Status</div>
-                          <div className="settings-desc">Control whether your AI autobidder is actively responding to requests or paused.</div>
-                        </div>
-                        <div className="settings-control">
-                          {autobidStatus === null ? (
-                            <div className="d-flex align-items-center gap-3">
-                              <span className="badge bg-secondary">
-                                <i className="fas fa-clock me-1"></i>
-                                Not Ready
-                              </span>
-                              <button
-                                className="btn btn-secondary"
-                                disabled
-                              >
-                                <i className="fas fa-lock me-2"></i>
-                                Needs Training
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="d-flex align-items-center gap-3">
-                              <span className={`badge ${autobidStatus === 'live' ? 'bg-success' : 'bg-warning'}`}>
-                                <i className={`fas ${autobidStatus === 'live' ? 'fa-play' : 'fa-pause'} me-1`}></i>
-                                {autobidStatus === 'live' ? 'Live' : 'Paused'}
-                              </span>
-                              <button
-                                className={`btn ${autobidStatus === 'live' ? 'btn-warning' : 'btn-success'}`}
-                                onClick={handleToggleAutobidStatus}
-                              >
-                                <i className={`fas ${autobidStatus === 'live' ? 'fa-pause' : 'fa-play'} me-2`}></i>
-                                {autobidStatus === 'live' ? 'Pause' : 'Activate'}
-                              </button>
-                            </div>
-                          )}
-                          <small className="text-muted d-block mt-2">
-                            {autobidStatus === null
-                              ? "Complete AI training to activate your autobidder and start responding to requests automatically."
-                              : autobidStatus === 'live' 
-                              ? "Your AI autobidder is actively responding to requests and generating bids automatically."
-                              : "Your AI autobidder is paused and will not respond to new requests until activated."
-                            }
-                          </small>
-                        </div>
-                      </div>
-
-                      {/* AI Training Section */}
-                      <div className="settings-row">
-                        <div>
-                          <div className="settings-label">AI Bid Trainer</div>
-                          <div className="settings-desc">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</div>
-                        </div>
-                        <div className="settings-control">
-                          {trainingLoading ? (
-                            <button className="btn-secondary flex-fill" disabled>
-                              <i className="fas fa-spinner fa-spin me-2"></i>
-                              Loading...
-                            </button>
-                          ) : trainingCompleted ? (
-                            <div className="d-flex gap-2">
-                              <button
-                                className="btn-success flex-fill"
-                                disabled
-                              >
-                                <i className="fas fa-check me-2"></i>
-                                Training Complete
-                              </button>
-                              <button
-                                className="btn-outline-primary"
-                                onClick={() => navigate('/autobid-trainer')}
-                                title="Retrain AI with new scenarios"
-                              >
-                                <i className="fas fa-redo"></i>
-                              </button>
-                            </div>
-                          ) : trainingInProgress ? (
-                            <button
-                              className="btn-warning flex-fill pulse"
-                              onClick={() => navigate('/autobid-trainer')}
-                            >
-                              <i className="fas fa-play me-2"></i>
-                              Resume Training
-                            </button>
-                          ) : (
-                            <button
-                              className="btn-primary flex-fill pulse"
-                              onClick={() => navigate('/autobid-trainer')}
-                            >
-                              <i className="fas fa-graduation-cap me-2"></i>
-                              Start Training
-                            </button>
-                          )}
-                          <small className="text-muted d-block mt-2">
-                            {trainingCompleted
-                              ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
-                              : trainingInProgress
-                              ? "Continue where you left off to complete your AI training."
-                              : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
-                            }
-                          </small>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="settings-row">
-                      <div>
-                        <div className="settings-label">AI Bid Trainer</div>
-                        <div className="settings-desc">AI Bid Trainer is not enabled for your account. Enable it to start training your AI with sample bids.</div>
-                      </div>
-                      <div className="settings-control">
-                        <button
-                          className="btn-primary flex-fill"
-                          onClick={handleEnableAutobid}
-                        >
-                          <i className="fas fa-toggle-on me-2"></i>
-                          Enable Autobid
-                        </button>
-                        <small className="text-muted d-block mt-2">
-                          Enable autobid to access the AI training features and help our AI learn your pricing strategy.
-                        </small>
-                      </div>
+                  {/* Autobid Status Toggle */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">Autobid Status</div>
+                      <div className="settings-desc">Control whether your AI autobidder is actively responding to requests or paused.</div>
                     </div>
-                  )}
+                    <div className="settings-control">
+                      {autobidStatus === null ? (
+                        <div className="d-flex align-items-center gap-3">
+                          <span className="badge bg-secondary">
+                            <i className="fas fa-clock me-1"></i>
+                            Not Ready
+                          </span>
+                          <button
+                            className="btn btn-secondary"
+                            disabled
+                          >
+                            <i className="fas fa-lock me-2"></i>
+                            Needs Training
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="d-flex align-items-center gap-3">
+                          <span className={`badge ${autobidStatus === 'live' ? 'bg-success' : 'bg-warning'}`}>
+                            <i className={`fas ${autobidStatus === 'live' ? 'fa-play' : 'fa-pause'} me-1`}></i>
+                            {autobidStatus === 'live' ? 'Live' : 'Paused'}
+                          </span>
+                          <button
+                            className={`btn ${autobidStatus === 'live' ? 'btn-warning' : 'btn-success'}`}
+                            onClick={handleToggleAutobidStatus}
+                          >
+                            <i className={`fas ${autobidStatus === 'live' ? 'fa-pause' : 'fa-play'} me-2`}></i>
+                            {autobidStatus === 'live' ? 'Pause' : 'Activate'}
+                          </button>
+                        </div>
+                      )}
+                      <small className="text-muted d-block mt-2">
+                        {autobidStatus === null
+                          ? "Complete AI training to activate your autobidder and start responding to requests automatically."
+                          : autobidStatus === 'live' 
+                          ? "Your AI autobidder is actively responding to requests and generating bids automatically."
+                          : "Your AI autobidder is paused and will not respond to new requests until activated."
+                        }
+                      </small>
+                    </div>
+                  </div>
+
+                  {/* AI Training Section */}
+                  <div className="settings-row">
+                    <div>
+                      <div className="settings-label">AI Bid Trainer</div>
+                      <div className="settings-desc">Help our AI learn your pricing strategy by providing sample bids for training scenarios.</div>
+                    </div>
+                    <div className="settings-control">
+                      {trainingLoading ? (
+                        <button className="btn-secondary flex-fill" disabled>
+                          <i className="fas fa-spinner fa-spin me-2"></i>
+                          Loading...
+                        </button>
+                      ) : trainingCompleted ? (
+                        <div className="d-flex gap-2">
+                          <button
+                            className="btn-success flex-fill"
+                            disabled
+                          >
+                            <i className="fas fa-check me-2"></i>
+                            Training Complete
+                          </button>
+                          <button
+                            className="btn-outline-primary"
+                            onClick={() => navigate('/autobid-trainer')}
+                            title="Retrain AI with new scenarios"
+                          >
+                            <i className="fas fa-redo"></i>
+                          </button>
+                        </div>
+                      ) : trainingInProgress ? (
+                        <button
+                          className="btn-warning flex-fill pulse"
+                          onClick={() => navigate('/autobid-trainer')}
+                        >
+                          <i className="fas fa-play me-2"></i>
+                          Resume Training
+                        </button>
+                      ) : (
+                        <button
+                          className="btn-primary flex-fill pulse"
+                          onClick={() => navigate('/autobid-trainer')}
+                        >
+                          <i className="fas fa-graduation-cap me-2"></i>
+                          Start Training
+                        </button>
+                      )}
+                      <small className="text-muted d-block mt-2">
+                        {trainingCompleted
+                          ? "Your AI has been trained! Use the refresh button to retrain with new scenarios."
+                          : trainingInProgress
+                          ? "Continue where you left off to complete your AI training."
+                          : "Help our AI learn your pricing strategy by providing sample bids for training scenarios."
+                        }
+                      </small>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
