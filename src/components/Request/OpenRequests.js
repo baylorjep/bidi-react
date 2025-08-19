@@ -285,6 +285,12 @@ function OpenRequests({ onMessageClick }) {
           ? profileData.business_category 
           : [profileData.business_category];
         
+        console.log('=== BUSINESS PROFILE DEBUG ===');
+        console.log('Raw business_category from DB:', profileData.business_category);
+        console.log('Processed categories:', categories);
+        console.log('Categories type:', typeof categories);
+        console.log('Is array:', Array.isArray(categories));
+        
         setBusinessCategories(categories);
         setMinimumPrice(profileData.minimum_price);
         setBusinessId(userData.user.id);
@@ -399,6 +405,7 @@ function OpenRequests({ onMessageClick }) {
             videoData,
             floristData,
             weddingPlanningData,
+            venueData,
             legacyData,
           ] = await Promise.all([
             supabase
@@ -435,6 +442,12 @@ function OpenRequests({ onMessageClick }) {
               .from("wedding_planning_requests")
               .select("*")
               .in("status", ["pending", "open"])
+              .order("created_at", { ascending: false }),
+            supabase
+              .from("requests")
+              .select("*")
+              .eq("service_category", "venue")
+              .eq("open", true)
               .order("created_at", { ascending: false }),
             supabase
               .from("requests")
@@ -488,6 +501,12 @@ function OpenRequests({ onMessageClick }) {
               service_title: req.event_title || "Wedding Planning Request",
               service_category: "Wedding Planning",
             })) || []),
+            ...(venueData.data?.map((req) => ({
+              ...req,
+              table_name: "requests",
+              service_title: req.service_title || req.title || "Venue Request",
+              service_category: "venue",
+            })) || []),
             ...(legacyData.data || []),
           ];
 
@@ -535,6 +554,15 @@ function OpenRequests({ onMessageClick }) {
         const otherCategories = businessCategories.filter(category => 
           !["photography", "videography"].includes(normalizeCategory(category))
         );
+
+        console.log('=== CATEGORY SEPARATION DEBUG ===');
+        console.log('All business categories:', businessCategories);
+        console.log('Photo/video categories:', photoVideoCategories);
+        console.log('Other categories:', otherCategories);
+        console.log('Has venue category:', otherCategories.some(cat => normalizeCategory(cat) === 'venue'));
+        console.log('Venue category found in otherCategories:', otherCategories.find(cat => normalizeCategory(cat) === 'venue'));
+        console.log('Normalized venue category:', normalizeCategory('venue'));
+        console.log('Other categories normalized:', otherCategories.map(cat => ({ original: cat, normalized: normalizeCategory(cat) })));
 
         // Fetch photo/video requests if applicable
         let photoVideoRequests = [];
@@ -588,11 +616,63 @@ function OpenRequests({ onMessageClick }) {
         // Fetch other category requests
         let otherRequests = [];
         if (otherCategories.length > 0) {
+          console.log('=== STARTING OTHER CATEGORY FETCH ===');
+          console.log('otherCategories:', otherCategories);
+          
+          // Test: Let's see if we can fetch ANY requests from the requests table
+          const testAllRequests = await supabase
+            .from("requests")
+            .select("id, service_category, open, service_title")
+            .limit(5);
+          
+          console.log('Test: All requests from requests table:', testAllRequests);
+          console.log('Test: Any venue requests?', testAllRequests.data?.filter(r => r.service_category === 'venue'));
           const categoryPromises = otherCategories.map(async (category) => {
             const normalizedCategory = normalizeCategory(category);
             const serviceMapping = SERVICE_CATEGORY_MAPPING[normalizedCategory];
             
             if (!serviceMapping) return [];
+
+            // Special handling for venue category - fetch ALL open requests from requests table
+            if (normalizedCategory === "venue") {
+              console.log('=== VENUE REQUESTS DEBUG ===');
+              console.log('Fetching ALL open requests for venue user...');
+              console.log('Query: SELECT * FROM requests WHERE open = true');
+              
+              // First, let's check what's actually in the requests table
+              const allRequestsCheck = await supabase
+                .from("requests")
+                .select("id, service_category, open, service_title")
+                .limit(10);
+              
+              console.log('Sample requests from table:', allRequestsCheck.data);
+              
+              // Fetch ALL open requests (not just venue-specific ones)
+              const allOpenRequestsData = await supabase
+                .from("requests")
+                .select("*")
+                .eq("open", true)
+                .order("created_at", { ascending: false });
+
+              console.log('All open requests query result:', allOpenRequestsData);
+              console.log('All open requests fetched:', allOpenRequestsData.data?.length || 0);
+              
+              if (allOpenRequestsData.error) {
+                console.error('Error fetching all open requests:', allOpenRequestsData.error);
+              }
+              
+              const mappedAllRequests = (allOpenRequestsData.data?.map((req) => ({
+                ...req,
+                table_name: "requests",
+                service_title: req.service_title || req.title || req.service_category || "Service Request",
+                service_category: req.service_category || "general",
+              })) || []);
+              
+              console.log('Mapped all open requests:', mappedAllRequests);
+              console.log('Returning all open requests count:', mappedAllRequests.length);
+              
+              return mappedAllRequests;
+            }
 
             const [categoryData, legacyRequestsData] = await Promise.all([
               supabase
@@ -624,12 +704,26 @@ function OpenRequests({ onMessageClick }) {
             ];
           });
 
+          console.log('=== CATEGORY PROMISES DEBUG ===');
+          console.log('Category promises count:', categoryPromises.length);
+          console.log('Category promises:', categoryPromises);
+          
           const allCategoryRequests = await Promise.all(categoryPromises);
+          console.log('All category requests result:', allCategoryRequests);
+          console.log('All category requests lengths:', allCategoryRequests.map(arr => arr.length));
+          
           otherRequests = allCategoryRequests.flat();
+          console.log('Flattened other requests:', otherRequests);
+          console.log('Other requests count after flatten:', otherRequests.length);
         }
 
         // Combine all requests
         const allRequests = [...photoVideoRequests, ...otherRequests];
+        
+        console.log('=== REQUEST COMBINATION DEBUG ===');
+        console.log('Photo/video requests count:', photoVideoRequests.length);
+        console.log('Other requests count:', otherRequests.length);
+        console.log('Total combined requests:', allRequests.length);
         
         // Debug: Show the actual request IDs and their types for non-admin users
         if (allRequests.length > 0) {

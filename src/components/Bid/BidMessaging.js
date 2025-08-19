@@ -465,6 +465,24 @@ const BidMessaging = ({
         message: `Great! I've accepted your bid. Let's proceed with the booking details.`
       };
 
+      // Save bid acceptance message to database
+      const { error: messageError } = await supabase
+        .from('messages')
+        .insert([{
+          sender_id: currentUserId,
+          receiver_id: otherUserId,
+          message: JSON.stringify(confirmationMessage),
+          type: "bid_accepted",
+          seen: false,
+          bid_id: bid.id // Link message to the bid
+        }]);
+
+      if (messageError) {
+        console.error('Error saving bid acceptance message to database:', messageError);
+        // Don't throw here as the bid was already accepted successfully
+      }
+
+      // Emit socket event for real-time communication
       socket.emit("send_message", {
         sender_id: currentUserId,
         receiver_id: otherUserId,
@@ -590,8 +608,41 @@ const BidMessaging = ({
     };
 
     console.log('Sending payment request message:', messageData);
-    socket.emit("send_message", messageData);
-    setShowPaymentModal(false);
+    
+    // Save payment request message to database
+    const savePaymentRequest = async () => {
+      try {
+        const { error: dbError } = await supabase
+          .from('messages')
+          .insert([{
+            sender_id: currentUserId,
+            receiver_id: otherUserId,
+            message: messageData.message,
+            type: 'payment_request',
+            payment_amount: total,
+            payment_status: 'pending',
+            payment_data: messageData.payment_data,
+            seen: false,
+            bid_id: bid.id // Link message to the bid
+          }]);
+
+        if (dbError) {
+          console.error('Error saving payment request to database:', dbError);
+          toast.error('Failed to send payment request. Please try again.');
+          return;
+        }
+
+        // Emit socket event for real-time communication
+        socket.emit("send_message", messageData);
+        setShowPaymentModal(false);
+        toast.success('Payment request sent successfully!');
+      } catch (error) {
+        console.error('Error in savePaymentRequest:', error);
+        toast.error('Failed to send payment request. Please try again.');
+      }
+    };
+
+    savePaymentRequest();
   };
 
   // Handle file upload
@@ -638,6 +689,25 @@ const BidMessaging = ({
     }
   
     if (imageUrl) {
+      // Save image message to database
+      const { error: imageError } = await supabase
+        .from('messages')
+        .insert([{
+          sender_id: currentUserId,
+          receiver_id: otherUserId,
+          message: imageUrl,
+          type: "image",
+          seen: false,
+          bid_id: bid.id // Link message to the bid
+        }]);
+
+      if (imageError) {
+        console.error("Error saving image message to database:", imageError);
+        toast.error("Failed to send image. Please try again.");
+        return;
+      }
+
+      // Emit socket event for real-time communication
       socket.emit("send_message", {
         sender_id: currentUserId,
         receiver_id: otherUserId,
@@ -648,6 +718,25 @@ const BidMessaging = ({
     }
   
     if (newMessage.trim()) {
+      // Save text message to database
+      const { error: textError } = await supabase
+        .from('messages')
+        .insert([{
+          sender_id: currentUserId,
+          receiver_id: otherUserId,
+          message: newMessage.trim(),
+          type: "text",
+          seen: false,
+          bid_id: bid.id // Link message to the bid
+        }]);
+
+      if (textError) {
+        console.error("Error saving text message to database:", textError);
+        toast.error("Failed to send message. Please try again.");
+        return;
+      }
+
+      // Emit socket event for real-time communication
       socket.emit("send_message", {
         sender_id: currentUserId,
         receiver_id: otherUserId,

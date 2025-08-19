@@ -250,6 +250,7 @@ function RequestDisplayMini({
             'beauty': 'fa-solid fa-spa',
             'florist': 'fa-solid fa-leaf',
             'wedding_planning': 'fa-solid fa-ring',
+            'venue': 'fa-solid fa-building',
             'regular': 'fa-solid fa-star'
         };
         return iconMap[category] || iconMap.regular;
