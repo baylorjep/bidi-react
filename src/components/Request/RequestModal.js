@@ -655,10 +655,12 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       const currentCategoryResponses = formData.responses?.[category] || {};
       const triggerAnswer = currentCategoryResponses[question.showWhen];
       
-      if (question.showWhen === 'arrangements' && question.showValue === 'Other (specify on next page)') {
-        // Show if "Other (specify on next page)" is selected in arrangements
-        return triggerAnswer && typeof triggerAnswer === 'object' && triggerAnswer['Other (specify on next page)'] === 'selected';
-      }
+             if (question.showWhen === 'arrangements' && question.showValue === 'Other (specify on next page)') {
+         // Show if "Other (specify on next page)" is selected in arrangements
+         // Convert "Other (specify on next page)" to camelCase key
+         const otherKey = 'Other (specify on next page)'.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+         return triggerAnswer && typeof triggerAnswer === 'object' && triggerAnswer[otherKey] === true;
+       }
       
       if (question.showWhen === 'wantsDessert' && question.showValue === 'Yes') {
         // Show dessert preferences if user wants dessert
@@ -1856,17 +1858,30 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
             </div>
             {currentQuestion.options.map((option) => {
               const currentQuantities = currentAnswer || {};
-              const quantity = currentQuantities[option] || '';
-              const isSelected = option in currentQuantities;
               const isOtherOption = option === 'Other (specify on next page)';
+              
+              // Convert option name to camelCase for the boolean key (matching FloristStepper.js pattern)
+              const optionKey = option.toLowerCase().replace(/\s+/g, '').replace(/[^a-zA-Z0-9]/g, '');
+              const quantityKey = `${optionKey}Quantity`;
+              
+              const isSelected = currentQuantities[optionKey] === true;
+              const quantity = currentQuantities[quantityKey] || '';
               
               const toggleSelection = () => {
                 const newQuantities = { ...currentQuantities };
                 if (isSelected) {
-                  delete newQuantities[option];
+                  // Remove both the boolean flag and quantity
+                  delete newQuantities[optionKey];
+                  delete newQuantities[quantityKey];
                 } else {
                   // For "Other" option, just mark as selected without quantity
-                  newQuantities[option] = isOtherOption ? 'selected' : '1';
+                  if (isOtherOption) {
+                    newQuantities[optionKey] = true;
+                  } else {
+                    // Set boolean flag to true and default quantity to 1
+                    newQuantities[optionKey] = true;
+                    newQuantities[quantityKey] = '1';
+                  }
                 }
                 handleAnswer(currentQuestion.id, newQuantities);
               };
@@ -1898,16 +1913,15 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                         value={quantity}
                         onChange={(e) => {
                           const newQuantities = { ...currentQuantities };
-                          // Keep the item selected even if input is temporarily empty
-                          // Only set to empty string if input is empty, don't delete the key
-                          newQuantities[option] = e.target.value || '';
+                          // Update the quantity for this item
+                          newQuantities[quantityKey] = e.target.value || '';
                           handleAnswer(currentQuestion.id, newQuantities);
                         }}
                         onBlur={(e) => {
                           // If user leaves input empty, set default to 1
                           if (!e.target.value) {
                             const newQuantities = { ...currentQuantities };
-                            newQuantities[option] = '1';
+                            newQuantities[quantityKey] = '1';
                             handleAnswer(currentQuestion.id, newQuantities);
                           }
                         }}
@@ -2210,18 +2224,29 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
                           ) : (
                             'No photos uploaded'
                           )
-                        ) : question.type === 'quantity' ? (
-                          typeof answer === 'object' && answer ? (
-                            <div className="tw-mt-1">
-                              {Object.entries(answer).map(([item, qty]) => (
-                                <div key={item} className="tw-text-sm">
-                                  • {item}{qty === 'selected' ? '' : `: ${qty}`}
-                                </div>
-                              ))}
-                            </div>
-                          ) : (
-                            'No items selected'
-                          )
+                                                 ) : question.type === 'quantity' ? (
+                           typeof answer === 'object' && answer ? (
+                             <div className="tw-mt-1">
+                               {Object.entries(answer).map(([key, value]) => {
+                                 // Skip quantity keys, only show boolean flags
+                                 if (key.endsWith('Quantity')) return null;
+                                 
+                                 // For boolean flags, show the item name and quantity if available
+                                 if (value === true) {
+                                   const quantity = answer[`${key}Quantity`];
+                                   const displayName = key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+                                   return (
+                                     <div key={key} className="tw-text-sm">
+                                       • {displayName}{quantity ? `: ${quantity}` : ''}
+                                     </div>
+                                   );
+                                 }
+                                 return null;
+                               })}
+                             </div>
+                           ) : (
+                             'No items selected'
+                           )
                         ) : question.type === 'budget' && typeof answer === 'object' && answer?.type === 'custom' ? (
                           `$${answer.min} - $${answer.max}`
                         ) : (
