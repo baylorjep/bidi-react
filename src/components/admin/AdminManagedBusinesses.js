@@ -7,11 +7,21 @@ const AdminManagedBusinesses = () => {
     const [showCreateModal, setShowCreateModal] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showWebScraperModal, setShowWebScraperModal] = useState(false);
     const [selectedBusiness, setSelectedBusiness] = useState(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [users, setUsers] = useState([]);
     const [transferUserId, setTransferUserId] = useState('');
     const [transferNotes, setTransferNotes] = useState('');
+
+    // Web scraper state
+    const [scrapeUrl, setScrapeUrl] = useState('');
+    const [scrapingStatus, setScrapingStatus] = useState('idle'); // idle, scraping, success, error
+    const [scrapingProgress, setScrapingProgress] = useState(0);
+    const [scrapedImages, setScrapedImages] = useState([]);
+    const [scrapingError, setScrapingError] = useState('');
+    const [currentPortfolioImages, setCurrentPortfolioImages] = useState([]);
+    const [loadingPortfolio, setLoadingPortfolio] = useState(false);
 
     // Form state for creating new business
     const [newBusiness, setNewBusiness] = useState({
@@ -348,6 +358,259 @@ const handleCreateBusiness = async (e) => {
         }
     };
 
+    // Web scraping functions
+    const handleOpenWebScraper = (business) => {
+        setSelectedBusiness(business);
+        setScrapeUrl(business.website || '');
+        setScrapingStatus('idle');
+        setScrapingProgress(0);
+        setScrapedImages([]);
+        setScrapingError('');
+        setCurrentPortfolioImages([]);
+        setShowWebScraperModal(true);
+        
+        // Fetch current portfolio images
+        fetchCurrentPortfolioImages(business.id);
+    };
+
+    const fetchCurrentPortfolioImages = async (businessId) => {
+        try {
+            setLoadingPortfolio(true);
+            
+            // Fetch portfolio images from the profile_photos table
+            const { data, error } = await supabaseAdmin
+                .from('profile_photos')
+                .select('*')
+                .eq('user_id', businessId)
+                .eq('photo_type', 'portfolio')
+                .order('display_order', { ascending: true });
+
+            if (error) throw error;
+            
+            setCurrentPortfolioImages(data || []);
+        } catch (error) {
+            console.error('Error fetching portfolio images:', error);
+            setCurrentPortfolioImages([]);
+        } finally {
+            setLoadingPortfolio(false);
+        }
+    };
+
+    const handleStartScraping = async () => {
+        if (!scrapeUrl.trim()) {
+            alert('Please enter a valid URL');
+            return;
+        }
+
+        try {
+            setScrapingStatus('scraping');
+            setScrapingProgress(0);
+            setScrapingError('');
+
+            // Call the backend scraping API
+            const response = await fetch('/api/admin/scrape-website', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    businessId: selectedBusiness.id,
+                    businessName: selectedBusiness.business_name,
+                    websiteUrl: scrapeUrl,
+                    businessCategory: selectedBusiness.business_category
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                // Start polling for progress updates
+                pollScrapingStatus(selectedBusiness.id);
+            } else {
+                throw new Error(data.error || 'Scraping failed');
+            }
+        } catch (error) {
+            console.error('Error during web scraping:', error);
+            setScrapingStatus('error');
+            setScrapingError(error.message);
+            alert('Failed to scrape website: ' + error.message);
+        }
+    };
+
+    const pollScrapingStatus = async (businessId) => {
+        const maxAttempts = 60; // 5 minutes max
+        let attempts = 0;
+        
+        const poll = async () => {
+            try {
+                const response = await fetch(`/api/admin/scraping-status/${businessId}`, {
+                    credentials: 'include'
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (data.status === 'completed') {
+                    setScrapedImages(data.images || []);
+                    setScrapingStatus('success');
+                    setScrapingProgress(100);
+                    
+                    // Update the business website if it was different
+                    if (scrapeUrl !== selectedBusiness.website) {
+                        await updateBusinessWebsite(selectedBusiness.id, scrapeUrl);
+                    }
+                    
+                    alert(`Successfully scraped ${data.images?.length || 0} images from ${scrapeUrl}`);
+                } else if (data.status === 'failed') {
+                    setScrapingStatus('error');
+                    setScrapingError(data.error || 'Scraping failed');
+                    alert('Scraping failed: ' + (data.error || 'Unknown error'));
+                } else if (data.status === 'processing') {
+                    // Update progress
+                    setScrapingProgress(data.progress || 0);
+                    
+                    // Continue polling
+                    if (attempts < maxAttempts) {
+                        attempts++;
+                        setTimeout(poll, 2000); // Poll every 2 seconds
+                    } else {
+                        setScrapingStatus('error');
+                        setScrapingError('Scraping timed out after 5 minutes');
+                        alert('Scraping timed out. Please try again.');
+                    }
+                }
+            } catch (error) {
+                console.error('Error polling scraping status:', error);
+                if (attempts < maxAttempts) {
+                    attempts++;
+                    setTimeout(poll, 2000);
+                } else {
+                    setScrapingStatus('error');
+                    setScrapingError('Failed to check scraping status');
+                    alert('Failed to check scraping status. Please try again.');
+                }
+            }
+        };
+
+        // Start polling
+        poll();
+    };
+
+    const updateBusinessWebsite = async (businessId, newWebsite) => {
+        try {
+            const { error } = await supabaseAdmin
+                .from('business_profiles')
+                .update({ website: newWebsite })
+                .eq('id', businessId);
+
+            if (error) throw error;
+            
+            // Update local state
+            setBusinesses(prev => prev.map(business => 
+                business.id === businessId 
+                    ? { ...business, website: newWebsite }
+                    : business
+            ));
+        } catch (error) {
+            console.error('Error updating business website:', error);
+        }
+    };
+
+    const handleSaveScrapedImages = async () => {
+        if (scrapedImages.length === 0) {
+            alert('No images to save');
+            return;
+        }
+
+        try {
+            // Call the backend API to save the scraped images
+            const response = await fetch('/api/admin/save-scraped-images', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    businessId: selectedBusiness.id,
+                    images: scrapedImages
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                alert(`Successfully saved ${data.savedCount || 0} images to ${selectedBusiness.business_name}'s portfolio!`);
+                
+                // Clear scraped images and reset status
+                setScrapedImages([]);
+                setScrapingStatus('idle');
+                setScrapingProgress(0);
+                
+                // Refresh the current portfolio images
+                await fetchCurrentPortfolioImages(selectedBusiness.id);
+                
+                // Refresh the business data to show new images
+                fetchAdminManagedBusinesses();
+            } else {
+                throw new Error(data.error || 'Failed to save images');
+            }
+        } catch (error) {
+            console.error('Error saving scraped images:', error);
+            alert('Failed to save images: ' + error.message);
+        }
+    };
+
+    const handleRemovePortfolioPhoto = async (photoId) => {
+        if (!window.confirm('Are you sure you want to remove this image from the portfolio?')) {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/admin/portfolio-photo/${photoId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                alert('Image removed successfully!');
+                // Refresh the business data
+                fetchAdminManagedBusinesses();
+            } else {
+                throw new Error(data.error || 'Failed to remove image');
+            }
+        } catch (error) {
+            console.error('Error removing portfolio photo:', error);
+            alert('Failed to remove image: ' + error.message);
+        }
+    };
+
+    const validateUrl = (url) => {
+        try {
+            new URL(url);
+            return true;
+        } catch {
+            return false;
+        }
+    };
+
     const filteredBusinesses = businesses.filter(business => {
         const searchLower = searchQuery.toLowerCase();
         return (
@@ -476,6 +739,14 @@ const handleCreateBusiness = async (e) => {
                                      title="Sign in as this business to access their account"
                                  >
                                      👤 Sign In
+                                 </button>
+                                 
+                                 <button
+                                     className="tw-px-3 tw-py-1.5 tw-text-xs tw-border tw-border-purple-600 tw-text-purple-600 hover:tw-bg-purple-600 hover:tw-text-white tw-rounded tw-transition-colors tw-duration-200"
+                                     onClick={() => handleOpenWebScraper(business)}
+                                     title="Scrape website for portfolio images"
+                                 >
+                                     🕷️ Scrape Website
                                  </button>
                                  
                                  <button
@@ -912,6 +1183,236 @@ const handleCreateBusiness = async (e) => {
                                  </button>
                              </div>
                          </form>
+                     </div>
+                 </div>
+             )}
+
+             {/* Web Scraper Modal */}
+             {showWebScraperModal && selectedBusiness && (
+                 <div className="tw-fixed tw-inset-0 tw-bg-black tw-bg-opacity-50 tw-flex tw-justify-center tw-items-center tw-z-50">
+                     <div className="tw-bg-white tw-rounded-lg tw-shadow-2xl tw-max-w-4xl tw-w-11/12 tw-max-h-screen tw-overflow-y-auto">
+                         <div className="tw-px-6 tw-py-5 tw-border-b tw-border-gray-200 tw-flex tw-justify-between tw-items-center">
+                             <h4 className="tw-text-xl tw-font-semibold tw-text-gray-800 tw-m-0">
+                                 🕷️ Web Scraper - {selectedBusiness.business_name}
+                             </h4>
+                             <button 
+                                 className="tw-bg-none tw-border-none tw-text-2xl tw-text-gray-400 hover:tw-text-gray-600 tw-cursor-pointer tw-p-0 tw-w-8 tw-h-8 tw-flex tw-items-center tw-justify-center tw-rounded-full hover:tw-bg-gray-100 tw-transition-all tw-duration-200"
+                                 onClick={() => setShowWebScraperModal(false)}
+                             >
+                                 ×
+                             </button>
+                         </div>
+                         
+                         <div className="tw-p-6">
+                             {/* Business Info */}
+                             <div className="tw-mb-6 tw-p-4 tw-bg-gray-50 tw-rounded-lg">
+                                 <h5 className="tw-text-lg tw-font-semibold tw-text-gray-800 tw-mb-2">Business Information</h5>
+                                 <div className="tw-grid tw-grid-cols-2 tw-gap-4 tw-text-sm">
+                                     <div>
+                                         <span className="tw-font-medium tw-text-gray-700">Name:</span> {selectedBusiness.business_name}
+                                     </div>
+                                     <div>
+                                         <span className="tw-font-medium tw-text-gray-700">Category:</span> {Array.isArray(selectedBusiness.business_category) ? selectedBusiness.business_category.join(', ') : selectedBusiness.business_category}
+                                     </div>
+                                     <div>
+                                         <span className="tw-font-medium tw-text-gray-700">Current Website:</span> {selectedBusiness.website || 'None'}
+                                     </div>
+                                     <div>
+                                         <span className="tw-font-medium tw-text-gray-700">Business ID:</span> {selectedBusiness.id}
+                                     </div>
+                                 </div>
+                             </div>
+
+                             {/* URL Input */}
+                             <div className="tw-mb-6">
+                                 <label className="tw-block tw-mb-2 tw-text-gray-700 tw-font-medium tw-text-sm">
+                                     Website URL to Scrape *
+                                 </label>
+                                 <div className="tw-flex tw-gap-3">
+                                     <input
+                                         type="url"
+                                         value={scrapeUrl}
+                                         onChange={(e) => setScrapeUrl(e.target.value)}
+                                         placeholder="https://example.com"
+                                         className="tw-flex-1 tw-px-3 tw-py-2 tw-border tw-border-gray-300 tw-rounded tw-text-sm focus:tw-outline-none focus:tw-border-purple-500 focus:tw-ring-2 focus:tw-ring-purple-200"
+                                         disabled={scrapingStatus === 'scraping'}
+                                     />
+                                     <button
+                                         onClick={handleStartScraping}
+                                         disabled={!validateUrl(scrapeUrl) || scrapingStatus === 'scraping'}
+                                         className="tw-px-4 tw-py-2 tw-bg-purple-600 hover:tw-bg-purple-700 disabled:tw-bg-gray-400 tw-text-white tw-rounded tw-font-medium tw-text-sm tw-transition-colors tw-duration-200 disabled:tw-cursor-not-allowed"
+                                     >
+                                         {scrapingStatus === 'scraping' ? 'Scraping...' : 'Start Scraping'}
+                                     </button>
+                                 </div>
+                                 {!validateUrl(scrapeUrl) && scrapeUrl && (
+                                     <p className="tw-text-red-500 tw-text-xs tw-mt-1">Please enter a valid URL</p>
+                                 )}
+                             </div>
+
+                             {/* Progress Bar */}
+                             {scrapingStatus === 'scraping' && (
+                                 <div className="tw-mb-6">
+                                     <div className="tw-flex tw-justify-between tw-items-center tw-mb-2">
+                                         <span className="tw-text-sm tw-font-medium tw-text-gray-700">Scraping Progress</span>
+                                         <span className="tw-text-sm tw-text-gray-500">{scrapingProgress}%</span>
+                                     </div>
+                                     <div className="tw-w-full tw-bg-gray-200 tw-rounded-full tw-h-2">
+                                         <div 
+                                             className="tw-bg-purple-600 tw-h-2 tw-rounded-full tw-transition-all tw-duration-300"
+                                             style={{ width: `${scrapingProgress}%` }}
+                                         ></div>
+                                     </div>
+                                 </div>
+                             )}
+
+                             {/* Error Display */}
+                             {scrapingStatus === 'error' && scrapingError && (
+                                 <div className="tw-mb-6 tw-p-4 tw-bg-red-50 tw-border tw-border-red-200 tw-rounded-lg">
+                                     <h5 className="tw-text-lg tw-font-semibold tw-text-red-800 tw-mb-2">Scraping Error</h5>
+                                     <p className="tw-text-red-700 tw-text-sm">{scrapingError}</p>
+                                 </div>
+                             )}
+
+                             {/* Results */}
+                             {scrapingStatus === 'success' && scrapedImages.length > 0 && (
+                                 <div className="tw-mb-6">
+                                     <h5 className="tw-text-lg tw-font-semibold tw-text-gray-800 tw-mb-4">
+                                         Scraped Images ({scrapedImages.length})
+                                     </h5>
+                                     
+                                     <div className="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-4">
+                                         {scrapedImages.map((image, index) => (
+                                             <div key={index} className="tw-border tw-border-gray-200 tw-rounded-lg tw-overflow-hidden">
+                                                 <img 
+                                                     src={image.url} 
+                                                     alt={`Scraped ${index + 1}`}
+                                                     className="tw-w-full tw-h-32 tw-object-cover"
+                                                     onError={(e) => {
+                                                         e.target.src = '/images/default.jpg';
+                                                         e.target.alt = 'Image failed to load';
+                                                     }}
+                                                 />
+                                                 <div className="tw-p-2 tw-bg-gray-50">
+                                                     <p className="tw-text-xs tw-text-gray-600 tw-truncate" title={image.url}>
+                                                         {image.url}
+                                                     </p>
+                                                     {image.alt && (
+                                                         <p className="tw-text-xs tw-text-gray-500 tw-mt-1" title={image.alt}>
+                                                             {image.alt}
+                                                         </p>
+                                                     )}
+                                                 </div>
+                                             </div>
+                                         ))}
+                                     </div>
+                                 </div>
+                             )}
+
+                             {/* Current Portfolio Images */}
+                             <div className="tw-mb-6">
+                                 <div className="tw-flex tw-justify-between tw-items-center tw-mb-4">
+                                     <h5 className="tw-text-lg tw-font-semibold tw-text-gray-800">
+                                         Current Portfolio Images ({currentPortfolioImages.length})
+                                     </h5>
+                                     <button
+                                         onClick={() => fetchCurrentPortfolioImages(selectedBusiness.id)}
+                                         disabled={loadingPortfolio}
+                                         className="tw-px-3 tw-py-1 tw-bg-gray-600 hover:tw-bg-gray-700 disabled:tw-bg-gray-400 tw-text-white tw-rounded tw-text-xs tw-font-medium tw-transition-colors tw-duration-200 disabled:tw-cursor-not-allowed"
+                                         title="Refresh portfolio images"
+                                     >
+                                         {loadingPortfolio ? '🔄' : '🔄 Refresh'}
+                                     </button>
+                                 </div>
+                                 
+                                 {loadingPortfolio ? (
+                                     <div className="tw-bg-gray-50 tw-p-4 tw-rounded-lg tw-border tw-border-gray-200">
+                                         <p className="tw-text-sm tw-text-gray-600">Loading portfolio images...</p>
+                                     </div>
+                                 ) : currentPortfolioImages.length > 0 ? (
+                                     <div className="tw-grid tw-grid-cols-2 md:tw-grid-cols-3 lg:tw-grid-cols-4 tw-gap-4">
+                                         {currentPortfolioImages.map((image, index) => (
+                                             <div key={image.id} className="tw-border tw-border-gray-200 tw-rounded-lg tw-overflow-hidden tw-relative">
+                                                 <img 
+                                                     src={image.photo_url} 
+                                                     alt={image.alt_text || `Portfolio ${index + 1}`}
+                                                     className="tw-w-full tw-h-32 tw-object-cover"
+                                                     onError={(e) => {
+                                                         e.target.src = '/images/default.jpg';
+                                                         e.target.alt = 'Image failed to load';
+                                                     }}
+                                                 />
+                                                 <div className="tw-p-2 tw-bg-gray-50">
+                                                     <p className="tw-text-xs tw-text-gray-600 tw-truncate" title={image.photo_url}>
+                                                         {image.filename || `Image ${index + 1}`}
+                                                     </p>
+                                                     {image.alt_text && (
+                                                         <p className="tw-text-xs tw-text-gray-500 tw-mt-1" title={image.alt_text}>
+                                                             {image.alt_text}
+                                                         </p>
+                                                     )}
+                                                     <p className="tw-text-xs tw-text-gray-400 tw-mt-1">
+                                                         Order: {image.display_order || index + 1}
+                                                     </p>
+                                                 </div>
+                                                 
+                                                 {/* Remove button */}
+                                                 <button
+                                                     onClick={() => handleRemovePortfolioPhoto(image.id)}
+                                                     className="tw-absolute tw-top-2 tw-right-2 tw-bg-red-500 hover:tw-bg-red-600 tw-text-white tw-rounded-full tw-w-6 tw-h-6 tw-flex tw-items-center tw-justify-center tw-text-xs tw-font-bold tw-transition-colors tw-duration-200"
+                                                     title="Remove image"
+                                                 >
+                                                     ×
+                                                 </button>
+                                             </div>
+                                         ))}
+                                     </div>
+                                 ) : (
+                                     <div className="tw-bg-gray-50 tw-p-4 tw-rounded-lg tw-border tw-border-gray-200">
+                                         <p className="tw-text-sm tw-text-gray-600 tw-mb-3">
+                                             No portfolio images found for this business.
+                                         </p>
+                                         <p className="tw-text-xs tw-text-gray-500">
+                                             Use the web scraper above to add images from their website.
+                                         </p>
+                                     </div>
+                                 )}
+                             </div>
+
+                             {/* Instructions */}
+                             <div className="tw-mb-6 tw-p-4 tw-bg-blue-50 tw-border tw-border-blue-200 tw-rounded-lg">
+                                 <h5 className="tw-text-lg tw-font-semibold tw-text-blue-800 tw-mb-2">How it works</h5>
+                                 <ol className="tw-text-blue-700 tw-text-sm tw-list-decimal tw-list-inside tw-space-y-1">
+                                     <li>Enter the vendor's website URL above</li>
+                                     <li>Click "Start Scraping" to begin the process</li>
+                                     <li>The system will crawl the website and find relevant images</li>
+                                     <li>Review the scraped images and click "Save to Portfolio"</li>
+                                     <li>Images will be automatically added to the vendor's portfolio</li>
+                                 </ol>
+                                 <p className="tw-text-blue-600 tw-text-xs tw-mt-3 tw-italic">
+                                     Note: Only images that are relevant to the business category and appear to be portfolio/work images will be included.
+                                 </p>
+                             </div>
+
+                             {/* Action Buttons */}
+                             <div className="tw-flex tw-gap-3 tw-justify-end tw-pt-5 tw-border-t tw-border-gray-200">
+                                 {scrapingStatus === 'success' && scrapedImages.length > 0 && (
+                                     <button 
+                                         onClick={handleSaveScrapedImages}
+                                         className="tw-px-4 tw-py-2 tw-bg-green-600 hover:tw-bg-green-700 tw-text-white tw-rounded tw-font-medium tw-text-sm tw-transition-colors tw-duration-200"
+                                     >
+                                         💾 Save to Portfolio
+                                     </button>
+                                 )}
+                                 
+                                 <button 
+                                     className="tw-bg-gray-600 hover:tw-bg-gray-700 tw-text-white tw-px-5 tw-py-2.5 tw-rounded tw-font-medium tw-text-sm tw-transition-colors tw-duration-200"
+                                     onClick={() => setShowWebScraperModal(false)}
+                                 >
+                                     Close
+                                 </button>
+                             </div>
+                         </div>
                      </div>
                  </div>
              )}
