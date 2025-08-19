@@ -148,20 +148,22 @@ const EditGalleryModal = ({ isOpen, onClose, businessId, categories: initialCate
     }
   };
 
-  const handleFileChange = async (e) => {
-    const files = Array.from(e.target.files);
-    
-    // Filter out invalid files
-    const invalidFiles = files.filter(file => {
-      const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/quicktime'];
-      return !validTypes.includes(file.type);
-    });
+// ... existing code ...
+const handleFileChange = async (e) => {
+  const files = Array.from(e.target.files);
+  
+  // Filter out invalid files
+  const invalidFiles = files.filter(file => {
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime'];
+    return !validTypes.includes(file.type);
+  });
 
-    if (invalidFiles.length > 0) {
-      alert('Only JPG, PNG, and MP4 files are supported.');
-      e.target.value = '';
-      return;
-    }
+  if (invalidFiles.length > 0) {
+    alert('Only JPG, PNG, WebP, and MP4 files are supported.');
+    e.target.value = '';
+    return;
+  }
+// ... existing code ...
 
     setUploading(true);
 

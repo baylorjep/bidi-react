@@ -412,7 +412,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
 
   // Add a function to check file type
   const isValidFileType = (file) => {
-    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'video/mp4', 'video/quicktime'];
+    const validTypes = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp', 'video/mp4', 'video/quicktime'];
     return validTypes.includes(file.type);
   };
 
@@ -426,7 +426,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
     const invalidFiles = files.filter(file => !isValidFileType(file));
     if (invalidFiles.length > 0) {
       console.log('Invalid files found:', invalidFiles);
-      alert('Only JPG, PNG, and MP4 files are supported. HEIC files are not accepted.');
+      alert('Only JPG, PNG, WebP, and MP4 files are supported. HEIC files are not accepted.');
       e.target.value = ''; // Clear the file input
       return;
     }
@@ -857,7 +857,7 @@ const EditProfileModal = ({ isOpen, onClose, businessId, initialData, business }
     if (!file) return;
 
     if (!isValidFileType(file)) {
-      alert('Only JPG and PNG files are supported. HEIC files are not accepted.');
+      alert('Only JPG, PNG, WebP, and MP4 files are supported. HEIC files are not accepted.');
       e.target.value = '';
       return;
     }
