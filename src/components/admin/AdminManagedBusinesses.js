@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabaseAdmin } from '../../lib/supabaseAdmin';
+import { supabase } from '../../supabaseClient';
 
 const AdminManagedBusinesses = () => {
     const [businesses, setBusinesses] = useState([]);
@@ -407,13 +408,19 @@ const handleCreateBusiness = async (e) => {
             setScrapingProgress(0);
             setScrapingError('');
 
-            // Call the backend scraping API
+            // Get the current session and access token
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                throw new Error('No valid session found. Please sign in again.');
+            }
+
+            // Call the backend scraping API with Bearer token
             const response = await fetch('/api/admin/scrape-website', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
                 },
-                credentials: 'include',
                 body: JSON.stringify({
                     businessId: selectedBusiness.id,
                     businessName: selectedBusiness.business_name,
@@ -448,8 +455,16 @@ const handleCreateBusiness = async (e) => {
         
         const poll = async () => {
             try {
+                // Get the current session and access token
+                const { data: { session } } = await supabase.auth.getSession();
+                if (!session?.access_token) {
+                    throw new Error('No valid session found. Please sign in again.');
+                }
+
                 const response = await fetch(`/api/admin/scraping-status/${businessId}`, {
-                    credentials: 'include'
+                    headers: {
+                        'Authorization': `Bearer ${session.access_token}`
+                    }
                 });
 
                 if (!response.ok) {
@@ -531,13 +546,19 @@ const handleCreateBusiness = async (e) => {
         }
 
         try {
+            // Get the current session and access token
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                throw new Error('No valid session found. Please sign in again.');
+            }
+
             // Call the backend API to save the scraped images
             const response = await fetch('/api/admin/save-scraped-images', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${session.access_token}`
                 },
-                credentials: 'include',
                 body: JSON.stringify({
                     businessId: selectedBusiness.id,
                     images: scrapedImages
@@ -578,9 +599,17 @@ const handleCreateBusiness = async (e) => {
         }
 
         try {
+            // Get the current session and access token
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session?.access_token) {
+                throw new Error('No valid session found. Please sign in again.');
+            }
+
             const response = await fetch(`/api/admin/portfolio-photo/${photoId}`, {
                 method: 'DELETE',
-                credentials: 'include'
+                headers: {
+                    'Authorization': `Bearer ${session.access_token}`
+                }
             });
 
             if (!response.ok) {
