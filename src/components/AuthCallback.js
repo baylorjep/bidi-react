@@ -204,6 +204,8 @@ const AuthCallback = () => {
             // Check for pending request context before redirecting
             const pendingRequestContext = sessionStorage.getItem('pendingRequestContext');
             console.log('AuthCallback: Checking for pending request context:', pendingRequestContext);
+            console.log('AuthCallback: Current location:', window.location.pathname);
+            console.log('AuthCallback: User role:', userRole);
             if (pendingRequestContext) {
                 try {
                     const requestData = JSON.parse(pendingRequestContext);
@@ -240,13 +242,25 @@ const AuthCallback = () => {
             const isOnAuthCallback = window.location.pathname.includes('/auth-callback');
             const shouldRedirectToDashboard = isOnSigninPage || isOnSignupPage || isOnCreateAccountPage || isOnAuthCallback;
             
+            console.log('AuthCallback: Redirect logic:', {
+                isOnSigninPage,
+                isOnSignupPage,
+                isOnCreateAccountPage,
+                isOnAuthCallback,
+                shouldRedirectToDashboard
+            });
+            
             // Determine user type and redirect accordingly
             if (userRole === 'both') {
                 // User with both profiles (event planner vendor)
-                navigate(shouldRedirectToDashboard ? '/event-planner-dashboard/home' : window.location.pathname);
+                const redirectPath = shouldRedirectToDashboard ? '/event-planner-dashboard/home' : window.location.pathname;
+                console.log('AuthCallback: Final redirect destination (both):', redirectPath);
+                navigate(redirectPath);
             } else if (userRole === 'business') {
                 // Business user only
-                navigate(shouldRedirectToDashboard ? '/business-dashboard/dashboard' : window.location.pathname);
+                const redirectPath = shouldRedirectToDashboard ? '/business-dashboard/dashboard' : window.location.pathname;
+                console.log('AuthCallback: Final redirect destination (business):', redirectPath);
+                navigate(redirectPath);
             } else if (userRole === 'individual') {
                 // Individual user only - check their preferred dashboard
                 const { data: individualProfile } = await supabase
@@ -259,14 +273,20 @@ const AuthCallback = () => {
                 
                 if (preferredDashboard === 'event-planner') {
                     // User prefers event planner dashboard (individual event planning)
-                    navigate(shouldRedirectToDashboard ? '/event-planner' : window.location.pathname);
+                    const redirectPath = shouldRedirectToDashboard ? '/event-planner' : window.location.pathname;
+                    console.log('AuthCallback: Final redirect destination (individual event-planner):', redirectPath);
+                    navigate(redirectPath);
                 } else {
                     // User prefers individual dashboard or no preference set
-                    navigate(shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname);
+                    const redirectPath = shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname;
+                    console.log('AuthCallback: Final redirect destination (individual default):', redirectPath);
+                    navigate(redirectPath);
                 }
             } else {
                 // New user with no role set, default to individual dashboard
-                navigate(shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname);
+                const redirectPath = shouldRedirectToDashboard ? '/individual-dashboard/bids' : window.location.pathname;
+                console.log('AuthCallback: Final redirect destination:', redirectPath);
+                navigate(redirectPath);
             }
         } catch (error) {
             console.error('Navigation error:', error);

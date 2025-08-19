@@ -207,6 +207,28 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         }
       }
       
+      // Check if we're being opened with context from RestoreRequest component
+      // This happens when the modal is opened with existingRequestData that contains form data
+      if (existingRequestData && existingRequestData.formData) {
+        console.log('RequestModal: Restoring from existingRequestData context:', existingRequestData);
+        
+        // Restore the form data from the existingRequestData
+        if (existingRequestData.formData) {
+          console.log('RequestModal: Restoring form data from existingRequestData:', existingRequestData.formData);
+          setFormData(existingRequestData.formData);
+        }
+        
+        // Determine if we should show event details
+        if (existingRequestData.vendor && !existingRequestData.searchFormData) {
+          setShowEventDetails(true);
+        } else {
+          setShowEventDetails(false);
+        }
+        
+        console.log('RequestModal: Successfully restored from existingRequestData context');
+        return;
+      }
+      
       if (isEditMode && existingRequestData) {
         // Edit mode: populate with existing request data
         setFormData({
@@ -958,15 +980,15 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
             categorySpecificData = {
               profile_id: authenticatedUser.id, // photography_requests uses profile_id instead of user_id
               date_type: formData.dateFlexibility,
-              time_of_day: formData.eventTime,
+              time_of_day: formData.eventTime || null,
               num_people: parseInt(formData.guestCount) || null,
               duration: categoryResponses.coverageHours, // Maps to coverage hours question
               extras: categoryResponses.extras ? JSON.stringify(categoryResponses.extras) : null,
               style_preferences: null, // Removed photoStyle question - using inspiration photos instead
               deliverables: categoryResponses.deliverables ? JSON.stringify(categoryResponses.deliverables) : null,
               wedding_details: categoryResponses.weddingDetails ? JSON.stringify(categoryResponses.weddingDetails) : null,
-              start_time: formData.eventTime,
-              end_time: formData.endTime,
+              start_time: formData.eventTime || null,
+              end_time: formData.endTime || null,
               start_time_unknown: !formData.eventTime,
               end_time_unknown: !formData.endTime,
               duration_unknown: !categoryResponses.coverageHours,
@@ -979,15 +1001,15 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
 
           case 'videography':
             categorySpecificData = {
-              time_of_day: formData.eventTime,
+              time_of_day: formData.eventTime || null,
               num_people: parseInt(formData.guestCount) || null,
               duration: parseInt(categoryResponses.coverageHours?.replace(/[^\d]/g, '')) || null, // Extract hours from coverage hours
               style_preferences: null, // Removed videoStyle question - using inspiration photos instead
               deliverables: categoryResponses.deliverables ? JSON.stringify(categoryResponses.deliverables) : null,
               wedding_details: categoryResponses.weddingDetails ? JSON.stringify(categoryResponses.weddingDetails) : null,
               coverage: categoryResponses.coverage ? JSON.stringify(categoryResponses.coverage) : null,
-              start_time: formData.eventTime,
-              end_time: formData.endTime,
+              start_time: formData.eventTime || null,
+              end_time: formData.endTime || null,
               start_time_unknown: !formData.eventTime,
               end_time_unknown: !formData.endTime,
               duration_unknown: !categoryResponses.coverageHours,
@@ -1013,7 +1035,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               on_site_service_needed: categoryResponses.onSiteServiceNeeded,
               num_people: parseInt(formData.guestCount) || null,
               specific_time_needed: !!formData.eventTime,
-              specific_time: formData.eventTime,
+              specific_time: formData.eventTime || null,
               start_date: formData.eventDate ? new Date(formData.eventDate).toISOString() : null,
               end_date: formData.endDate ? new Date(formData.endDate).toISOString() : null
             };
@@ -1027,7 +1049,7 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               colors: categoryResponses.colorScheme ? JSON.stringify([categoryResponses.colorScheme]) : null, // Maps to colorScheme question
               flower_preferences_text: categoryResponses.customArrangements, // Maps to customArrangements question
               specific_time_needed: !!formData.eventTime,
-              specific_time: formData.eventTime,
+              specific_time: formData.eventTime || null,
               start_date: formData.eventDate || null,
               end_date: formData.endDate || null
             };
@@ -1101,8 +1123,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
               communication_style: categoryResponses.communicationStyle,
               start_date: formData.eventDate || null,
               end_date: formData.endDate || null,
-              start_time: formData.startTime,
-              end_time: formData.endTime
+              start_time: formData.startTime || null,
+              end_time: formData.endTime || null
             };
             break;
         }
@@ -1363,6 +1385,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         timestamp: Date.now()
       };
       console.log('RequestModal: Storing request context:', requestContext);
+      console.log('RequestModal: Form data being stored:', formData);
+      console.log('RequestModal: Form data responses being stored:', formData.responses);
       sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestContext));
       setShowAuthModal(true);
       return;
@@ -1415,7 +1439,47 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
       // Don't fail the authentication if tracking fails
     }
     
-    // Automatically submit the request after successful authentication
+    // Check if there's pending request context to restore
+    const pendingContext = sessionStorage.getItem('pendingRequestContext');
+    if (pendingContext) {
+      try {
+        const requestData = JSON.parse(pendingContext);
+        const now = Date.now();
+        const timeDiff = now - requestData.timestamp;
+        
+        // Only restore if request context is less than 10 minutes old
+        if (timeDiff < 10 * 60 * 1000) {
+          console.log('RequestModal: Found pending request context, restoring form data:', requestData);
+          
+          // Restore the form data
+          if (requestData.formData) {
+            console.log('RequestModal: Restoring form data:', requestData.formData);
+            console.log('RequestModal: Form data responses:', requestData.formData.responses);
+            setFormData(requestData.formData);
+          }
+          
+          // Restore other context
+          if (requestData.selectedVendors) {
+            console.log('RequestModal: Selected vendors from context:', requestData.selectedVendors);
+            console.log('RequestModal: Current selectedVendors prop:', selectedVendors);
+          }
+          
+          // Clear the pending context since we've restored it
+          sessionStorage.removeItem('pendingRequestContext');
+          console.log('RequestModal: Successfully restored from pending context');
+          return; // Don't submit request yet, let user continue
+        } else {
+          console.log('RequestModal: Pending request context expired, removing');
+          sessionStorage.removeItem('pendingRequestContext');
+        }
+      } catch (error) {
+        console.error('RequestModal: Error parsing pending request context:', error);
+        sessionStorage.removeItem('pendingRequestContext');
+      }
+    }
+    
+    // No pending context or context expired, automatically submit the request
+    console.log('RequestModal: No pending context, automatically submitting request');
     setTimeout(async () => {
       await submitRequest(userData);
     }, 500); // Small delay to ensure UI updates smoothly

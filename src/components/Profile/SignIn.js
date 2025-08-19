@@ -95,19 +95,22 @@ const SignIn = ({ onSuccess, isModal = false }) => {
 
         checkAuthAndRedirect();
 
-        // Also listen for auth state changes
-        const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (event === 'SIGNED_IN' && session?.user) {
-                console.log('Auth state change: SIGNED_IN, redirecting to auth-callback');
-                navigate('/auth-callback');
-            }
-        });
+        // Only listen for auth state changes if we're not in modal mode
+        // In modal mode, the handleSignIn function will handle the flow
+        if (!isModal) {
+            const { data: authListener } = supabase.auth.onAuthStateChange(async (event, session) => {
+                if (event === 'SIGNED_IN' && session?.user) {
+                    console.log('Auth state change: SIGNED_IN, redirecting to auth-callback');
+                    navigate('/auth-callback');
+                }
+            });
 
-        return () => {
-            if (authListener?.subscription) {
-                authListener.subscription.unsubscribe();
-            }
-        };
+            return () => {
+                if (authListener?.subscription) {
+                    authListener.subscription.unsubscribe();
+                }
+            };
+        }
     }, [navigate]);
 
     // Helper function to check if user has a wedding plan
@@ -190,6 +193,7 @@ const SignIn = ({ onSuccess, isModal = false }) => {
 
                 // If we have an onSuccess callback (from AuthModal), use it
                 if (onSuccess) {
+                    // Let the RequestModal handle checking for pending request context
                     onSuccess(data.user);
                     return;
                 }
@@ -237,26 +241,10 @@ const SignIn = ({ onSuccess, isModal = false }) => {
         try {
             // Check if there's already a pending request context in sessionStorage
             const existingContext = sessionStorage.getItem('pendingRequestContext');
-            if (!existingContext) {
-                // Try to get context from RequestModal if available
-                const requestModal = document.querySelector('.request-modal');
-                if (requestModal) {
-                    // Get the request data from the modal's state
-                    const requestData = {
-                        formData: window.requestModalFormData || {},
-                        selectedVendors: window.requestModalSelectedVendors || [],
-                        vendor: window.requestModalVendor || null,
-                        isEditMode: window.requestModalIsEditMode || false,
-                        existingRequestData: window.requestModalExistingRequestData || null,
-                        timestamp: Date.now()
-                    };
-                    
-                    // Store in sessionStorage for retrieval after OAuth
-                    sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestData));
-                    console.log('Stored request context before Google OAuth:', requestData);
-                }
-            } else {
+            if (existingContext) {
                 console.log('Using existing pending request context from sessionStorage');
+            } else {
+                console.log('No pending request context found in sessionStorage');
             }
             
             const { error } = await supabase.auth.signInWithOAuth({
