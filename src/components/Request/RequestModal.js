@@ -207,6 +207,28 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         }
       }
       
+      // Check if we're being opened with context from RestoreRequest component
+      // This happens when the modal is opened with existingRequestData that contains form data
+      if (existingRequestData && existingRequestData.formData) {
+        console.log('RequestModal: Restoring from existingRequestData context:', existingRequestData);
+        
+        // Restore the form data from the existingRequestData
+        if (existingRequestData.formData) {
+          console.log('RequestModal: Restoring form data from existingRequestData:', existingRequestData.formData);
+          setFormData(existingRequestData.formData);
+        }
+        
+        // Determine if we should show event details
+        if (existingRequestData.vendor && !existingRequestData.searchFormData) {
+          setShowEventDetails(true);
+        } else {
+          setShowEventDetails(false);
+        }
+        
+        console.log('RequestModal: Successfully restored from existingRequestData context');
+        return;
+      }
+      
       if (isEditMode && existingRequestData) {
         // Edit mode: populate with existing request data
         setFormData({
@@ -1363,6 +1385,8 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
         timestamp: Date.now()
       };
       console.log('RequestModal: Storing request context:', requestContext);
+      console.log('RequestModal: Form data being stored:', formData);
+      console.log('RequestModal: Form data responses being stored:', formData.responses);
       sessionStorage.setItem('pendingRequestContext', JSON.stringify(requestContext));
       setShowAuthModal(true);
       return;
@@ -1429,13 +1453,15 @@ const RequestModal = ({ isOpen, onClose, selectedVendors, searchFormData, isEdit
           
           // Restore the form data
           if (requestData.formData) {
+            console.log('RequestModal: Restoring form data:', requestData.formData);
+            console.log('RequestModal: Form data responses:', requestData.formData.responses);
             setFormData(requestData.formData);
           }
           
           // Restore other context
           if (requestData.selectedVendors) {
-            // Note: selectedVendors is passed as props, so we can't modify it directly
-            // The form data should contain all the necessary information
+            console.log('RequestModal: Selected vendors from context:', requestData.selectedVendors);
+            console.log('RequestModal: Current selectedVendors prop:', selectedVendors);
           }
           
           // Clear the pending context since we've restored it

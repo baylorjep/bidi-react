@@ -119,6 +119,8 @@ const RestoreRequest = () => {
     }
     
     console.log('RestoreRequest: Rendering RequestModal with context:', requestContext);
+    console.log('RestoreRequest: Selected vendors being passed:', requestContext.selectedVendors);
+    console.log('RestoreRequest: Form data being passed:', requestContext.formData);
 
     return (
         <>
@@ -131,7 +133,7 @@ const RestoreRequest = () => {
                     searchFormData={requestContext.searchFormData || {}}
                     vendor={requestContext.vendor || null}
                     isEditMode={requestContext.isEditMode || false}
-                    existingRequestData={requestContext.existingRequestData || null}
+                    existingRequestData={requestContext.formData ? { formData: requestContext.formData } : (requestContext.existingRequestData || null)}
                     onSuccess={handleRequestSubmit}
                 />
             )}
