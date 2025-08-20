@@ -10,6 +10,242 @@
   box-sizing: border-box;
 }
 
+/* Follow-up status styles */
+.follow-up-ready {
+  background: #28a745;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.follow-up-ready:hover {
+  background: #218838;
+  transform: translateY(-1px);
+}
+
+.follow-up-waiting {
+  color: #ffc107;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.follow-up-recent {
+  color: #6c757d;
+  font-weight: 500;
+  font-size: 0.8rem;
+}
+
+.follow-up-completed {
+  color: #28a745;
+  font-style: italic;
+  font-size: 0.7rem;
+}
+
+/* Enhanced table styles */
+.bids-table-container {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+
+.bids-table-header {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border-bottom: 2px solid #dee2e6;
+  font-weight: 600;
+  color: #495057;
+}
+
+.bids-table-header > div {
+  padding: 16px 12px;
+  border-right: 1px solid #dee2e6;
+}
+
+.bids-table-header > div:last-child {
+  border-right: none;
+}
+
+.bids-table-header > div:hover {
+  background: rgba(0, 0, 0, 0.02);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+/* Responsive table */
+@media (max-width: 768px) {
+  .bids-table-container {
+    overflow-x: auto;
+  }
+  
+  .bids-table-header,
+  .bids-table-body > div {
+    min-width: 800px;
+  }
+}
+
+/* Mobile bid card follow-up styles */
+@media (max-width: 768px) {
+  .bid-card-mobile .follow-up-section {
+    background: #f8f9fa;
+    border-radius: 12px;
+    padding: 16px;
+    margin: 12px 0;
+    border: 1px solid #e9ecef;
+  }
+  
+  .bid-card-mobile .follow-up-status-label {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #495057;
+    margin-bottom: 8px;
+  }
+  
+  .bid-card-mobile .follow-up-button {
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+    width: 100%;
+    transition: all 0.2s ease;
+  }
+  
+  .bid-card-mobile .follow-up-button:hover {
+    background: #218838;
+    transform: translateY(-1px);
+  }
+  
+  .bid-card-mobile .follow-up-button:active {
+    transform: translateY(0);
+  }
+  
+  .bid-card-mobile .follow-up-waiting {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #ffc107;
+    font-weight: 500;
+  }
+  
+  .bid-card-mobile .follow-up-recent {
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    font-size: 0.9rem;
+    color: #6c757d;
+    font-weight: 500;
+  }
+  
+  .bid-card-mobile .follow-up-completed {
+    background: rgba(40, 167, 69, 0.1);
+    border: 1px solid rgba(40, 167, 69, 0.2);
+    border-radius: 8px;
+    padding: 8px 12px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #28a745;
+    font-style: italic;
+  }
+}
+
+/* Sign-up encouragement section */
+.signup-encouragement {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  padding: 24px;
+  margin: 24px auto;
+  max-width: 500px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.signup-encouragement h4 {
+  margin-bottom: 12px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.signup-encouragement p {
+  margin-bottom: 16px;
+  font-size: 14px;
+  opacity: 0.9;
+  line-height: 1.5;
+}
+
+.signup-button {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: white;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.signup-button:hover {
+  background: rgba(255, 255, 255, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 16px rgba(255, 255, 255, 0.2);
+}
+
+/* Enhanced status tabs */
+.status-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.tab-button {
+  padding: 10px 16px;
+  border: 1px solid #e2e8f0;
+  background: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.tab-button:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.tab-button.active {
+  background: #9633eb;
+  color: white;
+  border-color: #9633eb;
+}
+
 /* Each section (Pending, Approved, Denied) */
 .bids-status-column {
   flex: 1;
@@ -350,6 +586,7 @@
   margin: 0 auto;
 }
 
+/* Chat modal styles */
 .chat-modal-overlay {
   position: fixed;
   top: 0;
@@ -361,43 +598,35 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  padding: 20px;
 }
 
 .chat-modal {
   background: white;
   border-radius: 12px;
-  width: 90%;
-  max-width: 800px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+  width: 100%;
+  max-width: 1200px;
   height: 80vh;
+  max-height: 800px;
   position: relative;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
 }
 
-@media (max-width: 768px) {
-  .chat-modal-overlay {
-    padding: 1rem;
-  }
-
-  .chat-modal {
-    width: 100%;
-    height: 90vh;
-    border-radius: 8px;
-  }
-}
-
 .chat-modal-close {
   position: absolute;
-  top: 1rem;
-  right: 1rem;
+  top: 15px;
+  right: 20px;
   background: none;
   border: none;
-  font-size: 1.5rem;
+  font-size: 24px;
   cursor: pointer;
   color: #666;
-  z-index: 1001;
-  width: 2rem;
-  height: 2rem;
+  z-index: 10;
+  width: 30px;
+  height: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -406,7 +635,21 @@
 }
 
 .chat-modal-close:hover {
-  background-color: #f0f0f0;
+  background: #f0f0f0;
+}
+
+/* Responsive chat modal */
+@media (max-width: 768px) {
+  .chat-modal {
+    width: 100%;
+    height: 100vh;
+    max-height: none;
+    border-radius: 0;
+  }
+  
+  .chat-modal-overlay {
+    padding: 0;
+  }
 }
 
 /* New Row-based Table Styles */

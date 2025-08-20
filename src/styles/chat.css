@@ -57,7 +57,8 @@
   color: var(--bidi-text-dark);
   gap: 1rem;
   padding: 1rem;
-  min-height: 100vh;
+  min-height: 400px; /* Reduced from 100vh for modal compatibility */
+  max-height: 80vh; /* Add max height for modal usage */
 }
 
 /* Sidebar */
@@ -70,7 +71,7 @@
   background: white;
   border-radius: 12px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  height: 80vh;
+  min-height: 300px; /* Reduced from 80vh for modal compatibility */
 }
 .chat-sidebar header {
   padding: 1rem;
@@ -2940,4 +2941,36 @@ body.modal-open {
   font-weight: 500 !important;
   cursor: default !important;
   opacity: 0.7 !important;
+}
+
+/* Modal-specific overrides */
+.chat-modal .chat-app-chat-interface {
+  min-height: 300px;
+  max-height: 70vh;
+  height: auto;
+  padding: 0.5rem;
+}
+
+.chat-modal .chat-sidebar {
+  min-height: 250px;
+  max-height: 60vh;
+}
+
+.chat-modal .chat-main {
+  min-height: 250px;
+  max-height: 60vh;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+  .chat-app-chat-interface {
+    min-height: 300px;
+    max-height: 70vh;
+    padding: 0.5rem;
+  }
+  
+  .chat-sidebar {
+    min-height: 200px;
+    max-height: 50vh;
+  }
 }

@@ -304,6 +304,45 @@ const BusinessBids = ({ setActiveSection }) => {
     );
   };
 
+  const getFollowUpStatus = (bid) => {
+    if (!bid.created_at) return { canFollowUp: false, message: 'Invalid bid date' };
+    
+    const bidCreatedAt = new Date(bid.created_at);
+    const now = new Date();
+    const hoursSinceBid = (now - bidCreatedAt) / (1000 * 60 * 60);
+    
+    // Can't follow up within first 24 hours
+    if (hoursSinceBid < 24) {
+      const remainingHours = Math.ceil(24 - hoursSinceBid);
+      return { 
+        canFollowUp: false, 
+        message: `Can follow up in ${remainingHours}h`,
+        status: 'waiting'
+      };
+    }
+    
+    // Check if already followed up recently
+    if (bid.followed_up) {
+      const lastFollowUp = new Date(bid.updated_at);
+      const daysSinceLastFollowUp = (now - lastFollowUp) / (1000 * 60 * 60 * 24);
+      
+      if (daysSinceLastFollowUp < 7) {
+        const remainingDays = Math.ceil(7 - daysSinceLastFollowUp);
+        return { 
+          canFollowUp: false, 
+          message: `Can follow up in ${remainingDays}d`,
+          status: 'recent'
+        };
+      }
+    }
+    
+    return { 
+      canFollowUp: true, 
+      message: 'Ready to follow up',
+      status: 'ready'
+    };
+  };
+
   const renderBidsTable = () => (
     <div className="bids-table-container">
       {/* Table Header */}
@@ -320,6 +359,7 @@ const BusinessBids = ({ setActiveSection }) => {
         <div style={{ flex: 2 }}>Request</div>
         <div style={{ flex: 1, textAlign: 'center' }}>Bid Amount</div>
         <div style={{ flex: 1, textAlign: 'center' }}>Status</div>
+        <div style={{ flex: 1, textAlign: 'center' }}>Follow-up</div>
         <div style={{ flex: 1, textAlign: 'center' }}>Actions</div>
       </div>
 
@@ -328,6 +368,7 @@ const BusinessBids = ({ setActiveSection }) => {
         {filteredBids.length > 0 ? (
           filteredBids.map((bid) => {
             const request = requests.find((req) => req.id === bid.request_id);
+            const followUpStatus = getFollowUpStatus(bid);
             return (
               request && (
                 <BidDisplayRow
@@ -335,6 +376,7 @@ const BusinessBids = ({ setActiveSection }) => {
                   bid={bid}
                   request={request}
                   bidDate={bid.created_at}
+                  followUpStatus={followUpStatus}
                   onEditBid={handleEditBid}
                   openWithdrawModal={openWithdrawModal}
                   onContractUpload={handleContractUpload}
@@ -475,10 +517,36 @@ const BusinessBids = ({ setActiveSection }) => {
 
   const handleFollowUp = async (bid) => {
     try {
+      // Check if 24 hours have passed since the bid was created
+      const bidCreatedAt = new Date(bid.created_at);
+      const now = new Date();
+      const hoursSinceBid = (now - bidCreatedAt) / (1000 * 60 * 60);
+      
+      if (hoursSinceBid < 24) {
+        const remainingHours = Math.ceil(24 - hoursSinceBid);
+        alert(`You can follow up in ${remainingHours} hour${remainingHours !== 1 ? 's' : ''}. Please wait at least 24 hours after placing your bid before following up.`);
+        return;
+      }
+
+      // Check if already followed up recently (within 7 days)
+      if (bid.followed_up) {
+        const lastFollowUp = new Date(bid.updated_at);
+        const daysSinceLastFollowUp = (now - lastFollowUp) / (1000 * 60 * 60 * 24);
+        
+        if (daysSinceLastFollowUp < 7) {
+          const remainingDays = Math.ceil(7 - daysSinceLastFollowUp);
+          alert(`You can follow up again in ${remainingDays} day${remainingDays !== 1 ? 's' : ''}. Please wait at least 7 days between follow-ups.`);
+          return;
+        }
+      }
+
       // Mark the bid as followed up in the database
       const { error } = await supabase
         .from('bids')
-        .update({ followed_up: true })
+        .update({ 
+          followed_up: true,
+          updated_at: new Date().toISOString()
+        })
         .eq('id', bid.id);
 
       if (error) throw error;
@@ -486,20 +554,23 @@ const BusinessBids = ({ setActiveSection }) => {
       // Update local state to reflect the change
       setBids(prevBids => 
         prevBids.map(b => 
-          b.id === bid.id ? { ...b, followed_up: true } : b
+          b.id === bid.id ? { 
+            ...b, 
+            followed_up: true,
+            updated_at: new Date().toISOString()
+          } : b
         )
       );
 
-      // Find the request to get the correct user ID
+      // Find the request to get the correct user ID and open messenger
       const request = requests.find(req => req.id === bid.request_id);
       if (request) {
-        handleMessageClick(
-          request.user_id || request.profile_id, 
-          "Hi! I wanted to follow up about your request. Are you still looking for services?"
-        );
+        // Just open the messenger without a preset message
+        handleMessageClick(request.user_id || request.profile_id);
       }
     } catch (error) {
       console.error('Error sending follow-up:', error);
+      alert('Error sending follow-up. Please try again.');
     }
   };
 
@@ -684,6 +755,7 @@ const BusinessBids = ({ setActiveSection }) => {
                 <span style={{ marginLeft: 4 }}>{sortOrder === 'desc' ? '▼' : '▲'}</span>
               )}
             </div>
+            <div style={{ flex: 1, textAlign: 'center' }}>Follow-up</div>
             <div style={{ flex: 1, textAlign: 'center' }}>Actions</div>
           </div>
 
@@ -746,12 +818,14 @@ const BusinessBids = ({ setActiveSection }) => {
             })
             .map((bid) => {
               const request = requests.find((req) => req.id === bid.request_id);
+              const followUpStatus = getFollowUpStatus(bid);
               return (
                 <BidDisplayRow
                   key={bid.id}
                   bid={bid}
                   request={request}
                   bidDate={bid.created_at}
+                  followUpStatus={followUpStatus}
                   onEditBid={handleEditBid}
                   openWithdrawModal={openWithdrawModal}
                   onContractUpload={handleContractUpload}
@@ -779,6 +853,24 @@ const BusinessBids = ({ setActiveSection }) => {
                 : `No ${activeTab} bids found.`
             }
           </p>
+          {/* Add sign-up encouragement */}
+          {activeTab === 'all' && !searchQuery && (
+            <div className="signup-encouragement">
+              <h4>
+                <i className="fas fa-rocket" style={{ marginRight: '8px' }}></i>
+                Ready to grow your business?
+              </h4>
+              <p>
+                Start bidding on client requests and expand your customer base. Our platform connects you with clients actively seeking your services.
+              </p>
+              <button 
+                className="signup-button"
+                onClick={() => navigate('/requests')}
+              >
+                Browse Requests
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -806,11 +898,13 @@ const BusinessBids = ({ setActiveSection }) => {
                 onBack={() => setShowChatModal(false)}
               />
             ) : (
-              <ChatInterface 
-                currentUserId={user?.id}
-                userType="business"
-                initialChat={selectedChat}
-              />
+              <div className="chat-modal">
+                <ChatInterface 
+                  currentUserId={user?.id}
+                  userType="business"
+                  initialChat={selectedChat}
+                />
+              </div>
             )}
           </div>
         </div>

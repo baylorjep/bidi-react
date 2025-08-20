@@ -16,6 +16,7 @@ const BidDisplayRow = ({
   bid, 
   request, 
   bidDate, 
+  followUpStatus,
   onEditBid, 
   openWithdrawModal, 
   onContractUpload,
@@ -99,12 +100,8 @@ const BidDisplayRow = ({
   }, []);
 
   useEffect(() => {
-    if (bid.created_at && bid.status === 'pending' && !bid.followed_up) {
-      const bidDate = new Date(bid.created_at);
-      const followUpDate = new Date(bidDate.getTime() + (3 * 24 * 60 * 60 * 1000)); // 3 days after bid
-      const now = new Date();
-      setShowFollowUpButton(now >= followUpDate);
-    }
+    // Remove the old follow-up logic since we're now using followUpStatus prop
+    setShowFollowUpButton(false);
   }, [bid.created_at, bid.status, bid.followed_up]);
 
   const getTitle = () => {
@@ -289,10 +286,8 @@ const BidDisplayRow = ({
         if (error) throw error;
 
         if (onMessageClick) {
-          onMessageClick(
-            request.profile_id || request.user_id,
-            "Hi! I wanted to follow up about your request. Are you still looking for services?"
-          );
+          // Just open the messenger without a preset message
+          onMessageClick(request.profile_id || request.user_id);
         } else {
           console.error('onMessageClick prop is not provided');
           toast.error('Messaging functionality is not available');
@@ -337,6 +332,9 @@ const BidDisplayRow = ({
     request?.created_at ||
     null;
 
+  // Debug log for followUpStatus
+  console.log('BidDisplayRow - followUpStatus:', followUpStatus, 'bid:', bid.id);
+
   if (isMobile) {
     // Card/stacked layout for mobile
     return (
@@ -361,6 +359,33 @@ const BidDisplayRow = ({
           <div style={{ flex: 1, minWidth: 120 }}><span style={{ fontWeight: 500 }}>Bid Amount:</span> ${bid.bid_amount || '0'}</div>
           <div style={{ flex: 1, minWidth: 120 }}><span style={{ fontWeight: 500 }}>Status:</span> {getStatusDisplay()}</div>
         </div>
+        
+        {/* Follow-up Status for Mobile */}
+        {followUpStatus && (
+          <div className="follow-up-section">
+            <div className="follow-up-status-label">Follow-up Status:</div>
+            {followUpStatus.status === 'ready' ? (
+              <button
+                className="follow-up-button"
+                onClick={() => onFollowUp(bid)}
+                title="Send follow-up message to client"
+              >
+                <FaCommentAlt style={{ fontSize: '0.8rem' }} />
+                Follow-up
+              </button>
+            ) : (
+              <div className={followUpStatus.status === 'waiting' ? 'follow-up-waiting' : 'follow-up-recent'}>
+                {followUpStatus.message}
+              </div>
+            )}
+            {bid.followed_up && (
+              <div className="follow-up-completed">
+                ✓ Followed up
+              </div>
+            )}
+          </div>
+        )}
+        
         <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
           <button
             onClick={() => onEditBid(bid.request_id, bid.id)}
@@ -491,6 +516,63 @@ const BidDisplayRow = ({
         )}
       </div>
 
+      {/* Follow-up Status */}
+      <div style={{ flex: 1, textAlign: 'center' }}>
+        {followUpStatus ? (
+          <div style={{ 
+            display: 'flex', 
+            flexDirection: 'column', 
+            alignItems: 'center', 
+            gap: '4px' 
+          }}>
+            {followUpStatus.status === 'ready' ? (
+              <button
+                onClick={() => onFollowUp(bid)}
+                style={{
+                  background: '#28a745',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 12px',
+                  cursor: 'pointer',
+                  fontSize: '0.8rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  fontWeight: '500'
+                }}
+                title="Send follow-up message to client"
+              >
+                <FaCommentAlt style={{ fontSize: '0.7rem' }} />
+                Follow-up
+              </button>
+            ) : (
+              <div style={{
+                fontSize: '0.8rem',
+                color: followUpStatus.status === 'waiting' ? '#ffc107' : '#6c757d',
+                fontWeight: '500',
+                textAlign: 'center'
+              }}>
+                {followUpStatus.message}
+              </div>
+            )}
+            {bid.followed_up && (
+              <div style={{
+                fontSize: '0.7rem',
+                color: '#28a745',
+                fontStyle: 'italic'
+              }}>
+                ✓ Followed up
+              </div>
+            )}
+          </div>
+        ) : (
+          <div style={{ fontSize: '0.8rem', color: '#6c757d' }}>
+            -
+          </div>
+        )}
+      </div>
+
       {/* Actions (all buttons and contract/follow-up logic go here) */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
         <div style={{ display: 'flex', gap: '6px', justifyContent: 'center' }}>
@@ -558,29 +640,7 @@ const BidDisplayRow = ({
           </button>
         </div>
 
-        {/* Follow-up Button */}
-        {showFollowUpButton && (
-          <button
-            onClick={handleFollowUp}
-            style={{
-              background: '#ffc107',
-              color: 'white',
-              border: 'none',
-              borderRadius: '6px',
-              padding: '6px 10px',
-              cursor: 'pointer',
-              fontSize: '0.8rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '4px',
-              marginTop: 4
-            }}
-          >
-            <FaCommentAlt style={{ fontSize: '0.7rem' }} />
-            Follow-up
-          </button>
-        )}
+        {/* Remove the old follow-up button since it's now in the follow-up column */}
       </div>
 
       {/* ContractSignatureModal */}
