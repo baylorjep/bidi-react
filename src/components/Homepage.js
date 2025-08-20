@@ -709,58 +709,58 @@ function VendorManagerDemo() {
                                             overflow: 'visible'
                                         }} className="search-field tw-flex tw-flex-col tw-flex-1 tw-min-w-0">
                                             <div className="tw-text-sm tw-text-gray-600 tw-mb-2 tw-text-left tw-truncate">Vendors</div>
-                                        <div ref={dropdownRef} className="tw-relative vendor-dropdown" style={{ overflow: 'visible' }}>
-                                            <button
-                                                onClick={() => setIsVendorDropdownOpen(!isVendorDropdownOpen)}
+                                            <div ref={dropdownRef} className="tw-relative vendor-dropdown" style={{ overflow: 'visible', padding:'12px' }}>
+                                                <button
+                                                    onClick={() => setIsVendorDropdownOpen(!isVendorDropdownOpen)}
                                                     className="tw-flex tw-items-center tw-justify-between tw-w-full tw-text-sm tw-text-gray-600 tw-bg-transparent focus:tw-outline-none tw-border-none tw-truncate"
-                                                style={{ outline: 'none' }}
-                                            >
-                                                {selectedVendors.length === 0 ? (
-                                                        <span style={{ color: colors.gray[400] }} className="tw-truncate tw-flex-1 tw-text-left">Select Categories</span>
-                                                ) : (
-                                                        <span style={{ color: colors.gray[600] }} className="tw-truncate tw-flex-1 tw-text-left">{selectedVendors.length} selected</span>
-                                                )}
-                                                    <FiChevronDown className={`tw-ml-1 tw-transition-transform tw-flex-shrink-0 ${isVendorDropdownOpen ? 'tw-rotate-180' : ''}`} size={14} />
-                                            </button>
-                                            
-                                            {isVendorDropdownOpen && (
-                                                <div 
-                                                    className="tw-absolute tw-left-0 tw-right-0 tw-mt-1 tw-rounded-lg tw-shadow-lg tw-border tw-border-gray-200 tw-max-h-[200px] tw-overflow-y-auto" 
-                                                    style={{ 
-                                                        backgroundColor: colors.white,
-                                                        zIndex: 9999,
-                                                        position: 'absolute',
-                                                        top: '100%',
-                                                        left: 0,
-                                                        right: 0,
-                                                        minWidth: '200px',
-                                                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                                                        border: '1px solid #e5e7eb'
-                                                    }}
+                                                    style={{ outline: 'none' }}
                                                 >
-                                                    <div className="tw-p-2">
-                                                        {vendorOptions.map((option) => (
+                                                    {selectedVendors.length === 0 ? (
+                                                        <span style={{ color: colors.gray[400] }} className="tw-truncate tw-flex-1 tw-text-left">Select Categories</span>
+                                                    ) : (
+                                                        <span style={{ color: colors.gray[600] }} className="tw-truncate tw-flex-1 tw-text-left">{selectedVendors.length} selected</span>
+                                                    )}
+                                                    <FiChevronDown className={`tw-ml-1 tw-transition-transform tw-flex-shrink-0 ${isVendorDropdownOpen ? 'tw-rotate-180' : ''}`} size={14} />
+                                                </button>
+                                                
+                                                {isVendorDropdownOpen && (
+                                                    <div 
+                                                        className="tw-absolute tw-left-0 tw-right-0 tw-mt-1 tw-rounded-lg tw-shadow-lg tw-border tw-border-gray-200 tw-max-h-[200px] tw-overflow-y-auto" 
+                                                        style={{ 
+                                                            backgroundColor: colors.white,
+                                                            zIndex: 9999,
+                                                            position: 'absolute',
+                                                            top: '100%',
+                                                            left: 0,
+                                                            right: 0,
+                                                            minWidth: '200px',
+                                                            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                                                            border: '1px solid #e5e7eb'
+                                                        }}
+                                                    >
+                                                        <div className="tw-p-2">
+                                                            {vendorOptions.map((option) => (
                                                                 <label key={option.value} className="tw-flex tw-items-center tw-p-2 tw-rounded tw-cursor-pointer hover:tw-bg-gray-50">
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={selectedVendors.includes(option.value)}
-                                                                    onChange={() => toggleVendor(option.value)}
-                                                                    className="tw-mr-2 tw-appearance-none tw-w-4 tw-h-4 tw-rounded focus:tw-outline-none cursor-pointer"
-                                                                    style={{
-                                                                        border: `2px solid ${colors.primary}`,
-                                                                        backgroundColor: selectedVendors.includes(option.value) ? colors.primary : colors.white,
-                                                                        backgroundImage: selectedVendors.includes(option.value) ? `url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e")` : '',
-                                                                        backgroundSize: '100% 100%'
-                                                                    }}
-                                                                />
-                                                                <span style={{ color: colors.gray[700] }} className="tw-text-sm">{option.label}</span>
-                                                            </label>
-                                                        ))}
+                                                                    <input
+                                                                        type="checkbox"
+                                                                        checked={selectedVendors.includes(option.value)}
+                                                                        onChange={() => toggleVendor(option.value)}
+                                                                        className="tw-mr-2 tw-appearance-none tw-w-4 tw-h-4 tw-rounded focus:tw-outline-none cursor-pointer"
+                                                                        style={{
+                                                                            border: `2px solid ${colors.primary}`,
+                                                                            backgroundColor: selectedVendors.includes(option.value) ? colors.primary : colors.white,
+                                                                            backgroundImage: selectedVendors.includes(option.value) ? `url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e")` : '',
+                                                                            backgroundSize: '100% 100%'
+                                                                        }}
+                                                                    />
+                                                                    <span style={{ color: colors.gray[700] }} className="tw-text-sm">{option.label}</span>
+                                                                </label>
+                                                            ))}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div> 
+                                                )}
+                                            </div>
+                                        </div> 
 
                                         <div style={{ 
                                             borderRight: `1px solid ${colors.primary}`,
@@ -830,10 +830,11 @@ function VendorManagerDemo() {
                                  
                                         <div className="tw-flex tw-items-center tw-justify-center tw-flex-shrink-0 tw-pl-4">
                                     <button 
-                                                className="tw-py-2 tw-px-6 tw-rounded-full tw-font-semibold tw-whitespace-nowrap tw-cursor-pointer tw-border-none tw-shadow-md tw-transition-colors tw-text-sm"
+                                                className="tw-py-2 tw-px-6 tw-rounded-full tw-font-semibold tw-whitespace-nowrap tw-cursor-pointer tw-border-none tw-shadow-md tw-transition-colors tw-text-sm tw-hover:tw-scale-105 tw-shadow-sm"
                                         style={{ 
                                             backgroundColor: colors.primary,
-                                                    color: colors.white
+                                                    color: colors.white,
+                                                    fontFamily: 'Outfit'
                                         }}
                                         onClick={() => setIsModalOpen(true)}
                                     >
@@ -1195,7 +1196,7 @@ function VendorManagerDemo() {
                     <div className='reason'>
                         <img className='reason-photo'src={WhyBidiPhoto2}></img>
                         <div className='reason-title'>Transparent Pricing</div>
-                        <div className='reason-box'>Our transparent pricing system ensures you always know exactly what you're paying for—no hidden fees, no surprises. Wedding vendors provide detailed proposals tailored to your specific needs, allowing you to compare services and prices with confidence.</div>
+                        <div className='reason-box'>Our transparent pricing system ensures you always know exactly what you're paying for—no hidden fees, no surprises. Our vendors provide detailed proposals tailored to your specific needs, allowing you to compare services and prices with confidence.</div>
                     </div>
                     <div className='reason'>
                         <img className='reason-photo'src={WhyBidiPhoto3}></img>
@@ -1212,10 +1213,10 @@ function VendorManagerDemo() {
     
     {/* FAQ Items */}
     {[
-        { question: "Is Bidi free to use?", answer: "Yes! Posting requests and receiving bids are completely free for couples." },
+        { question: "Is Bidi free to use?", answer: "Yes! Posting requests and receiving bids are completely free." },
         { question: "How quickly will I get bids?", answer: "Most users start receiving bids within 30 minutes." },
         { question: "Can I choose multiple vendors?", answer: "Absolutely! You can receive bids from multiple vendors and choose the one that best fits your needs." },
-        { question: "What types of services can I find on Bidi?", answer: "Bidi connects you with a variety of wedding vendors, including photographers, caterers, florists, and more." },
+        { question: "What types of services can I find on Bidi?", answer: "Bidi connects you with a variety of event vendors, including photographers, caterers, florists, and more." },
         { question: "How do I contact a vendor?", answer: "Once you receive bids, you can directly contact the vendors through our platform to discuss your needs." },
         { question: "What if I have more questions?", answer: "Feel free to reach out to our support team for any additional questions or concerns." },
     ].map((item, index) => (
@@ -1236,7 +1237,7 @@ function VendorManagerDemo() {
 
         <div ref={tryNowRef} className={`try-now-container fade-in-section ${tryNowVisible ? 'is-visible' : ''}`}>
           <div className='try-now-box'>
-            <div className='try-now-title'>Ready to Save Time and Money? <span className='try-now-highlight'>Join Bidi Today</span></div>
+            <div className='try-now-title'>Ready to Get Bids Instantly? <span className='try-now-highlight'>Join Bidi Today</span></div>
             <div className='try-now-subtitle'>Over 390 users are already finding their perfect wedding vendors. Don't miss out on stress-free hiring.</div>
             <Link to="/request-categories" style={{textDecoration:'none'}}>
             <button className='try-now-button'>Get Started Free</button>
@@ -1246,7 +1247,7 @@ function VendorManagerDemo() {
 
         <div ref={newsletterRef} className={`newsletter-section fade-in-section ${newsletterVisible ? 'is-visible' : ''}`}>
             <div style={{display:'flex', flexDirection:'column', gap:'20px', alignItems:'center'}}>
-            <div className='newsletter-title'>Are You A Wedding Vendor?</div>
+            <div className='newsletter-title'>Are You A Event Vendor?</div>
             <div className="newsletter-subtitle">Join Bidi to access hundreds of clients and grow your business—only pay for the bids you win!</div>
             </div>
  

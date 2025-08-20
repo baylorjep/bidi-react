@@ -230,7 +230,7 @@ function VendorHomepage() {
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 position: 'relative',
-                zIndex: 1000
+                zIndex: 200
             }}
             onClick={() => {
                 const aiSection = document.querySelector('.ai-autobid-section');
@@ -945,12 +945,12 @@ function VendorHomepage() {
                     <div className='try-now-title' style={{
                         fontSize: window.innerWidth <= 768 ? '1.8rem' : '2.2rem',
                         marginBottom: window.innerWidth <= 768 ? '1.5rem' : '1rem'
-                    }}>Ready to Grow Your Wedding Business? <span className='try-now-highlight'>Join Bidi Today</span></div>
+                    }}>Ready to Grow Your Business? <span className='try-now-highlight'>Join Bidi Today</span></div>
                     <div className='try-now-subtitle' style={{
                         fontSize: window.innerWidth <= 768 ? '1rem' : '1.2rem',
                         marginTop: window.innerWidth <= 768 ? '1.5rem' : '1rem',
                         marginBottom: window.innerWidth <= 768 ? '2rem' : '2rem'
-                    }}>Join hundreds of successful wedding vendors already growing their business with Bidi.</div>
+                    }}>Join hundreds of successful event vendors already growing their business with Bidi.</div>
                     <Link to="/signup" style={{
                         textDecoration:'none',
                         width: window.innerWidth <= 768 ? '100%' : 'auto',

@@ -72,7 +72,7 @@ function AboutAndContact() {
             <Helmet>
                 <title>About & Contact - Bidi</title>
                 <meta name="description" content="Meet the Bidi team and get in touch with us for any questions or support." />
-                <meta name="keywords" content="about us, contact, team, Bidi, wedding vendors" />
+                <meta name="keywords" content="about us, contact, team, Bidi, event vendors" />
             </Helmet>
 
             <div className="about-contact-container">
@@ -84,13 +84,13 @@ function AboutAndContact() {
                     
                     <div className="mission-content">
                         <p>
-                            At Bidi, we're revolutionizing the wedding planning experience by creating a marketplace that truly works for both couples and vendors.
+                            At Bidi, we're revolutionizing the event planning experience by creating a marketplace that truly works for both event organizers and vendors.
                         </p>
                     </div>
 
                     <div className="value-props-container">
                         <div className="value-prop-card">
-                            <div className="value-prop-title">For Wedding Vendors</div>
+                            <div className="value-prop-title">For Event Vendors</div>
                             <div className="value-prop-content">
                             <span className="highlight-text">We're the only marketplace where our success is directly tied to yours</span>. Unlike other platforms that charge monthly fees or per-lead costs, we only make money when you win business and get paid.
                                 <div className="experience-note">
@@ -100,11 +100,11 @@ function AboutAndContact() {
                         </div>
 
                         <div className="value-prop-card">
-                            <div className="value-prop-title">For Engaged Couples</div>
+                            <div className="value-prop-title">For Event Organizers</div>
                             <div className="value-prop-content">
-                                <span className='highlight-text'>We've been through wedding planning ourselves, and we know the frustrations:</span> ghosted messages, discovering pricing mismatches after days of conversation, and endless searching for quality vendors.
+                                <span className='highlight-text'>We've been through event planning ourselves, and we know the frustrations:</span> ghosted messages, discovering pricing mismatches after days of conversation, and endless searching for quality vendors.
                                 <div className="experience-note">
-                                    That's why we built Bidi - to give you instant access to available, transparent vendors who are ready to make your day special. No more wasted time on dead-end inquiries.
+                                    That's why we built Bidi - to give you instant access to available, transparent vendors who are ready to make your event special. No more wasted time on dead-end inquiries.
                                 </div>
                             </div>
                         </div>
@@ -112,7 +112,7 @@ function AboutAndContact() {
 
                     <div className="mission-content">
                         <ul>
-                            <li>Direct connections between couples and quality vendors</li>
+                            <li>Direct connections between event organizers and quality vendors</li>
                             <li>Transparent pricing and availability upfront</li>
                             <li>No monthly fees - vendors only pay when they get paid</li>
                             <li>Quick responses and no ghosting</li>
@@ -169,7 +169,7 @@ function AboutAndContact() {
                         <div className='about-us-text'>
                             Hey there! My name is Emma and I am a student at BYU studying ux/ui design. I was born in South Korea but grew up in Southern California. Some of my hobbies include online shopping, watching shows (currently, Tell Me Lies, and Love Is Blind are my favorites), cooking, taking naps, and spending time on TikTok.
                             <br /><br />
-                            I recently joined this team in the Sandbox program! It has been a rewarding experience to share thoughts and ideas pertaining to the goal of Bidi. I recently got married and consequently experienced firsthand how difficult it is to find venues, photographers, and all things wedding related. Bidi makes this easier by allowing the goods and services to be directed to you! Not the other way around.
+                            I recently joined this team in the Sandbox program! It has been a rewarding experience to share thoughts and ideas pertaining to the goal of Bidi. I recently got married and consequently experienced firsthand how difficult it is to find venues, photographers, and all things event-related. Bidi makes this easier by allowing the goods and services to be directed to you! Not the other way around.
                         </div>
                     </div>
 

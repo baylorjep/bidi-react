@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '../../supabaseClient';
 
 const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [showCompleted, setShowCompleted] = useState(false);
   const [aiBidderDismissed, setAiBidderDismissed] = useState(false);
   const [progress, setProgress] = useState({
@@ -235,7 +235,7 @@ const SetupProgressPopup = ({ userId, onNavigateToSection }) => {
             {getProgressPercentage()}% Complete
           </div>
 
-          <div style={{ padding: window.innerWidth <= 768 ? '0 16px 16px' : '0 20px 20px' }}>
+          <div style={{ padding: window.innerWidth <= 768 ? '0 16px 16px' : '0 20px 20px', maxHeight: '300px', overflowY: 'auto' }}>
             {/* Incomplete Steps - Show First */}
             {!progress.stripe && (
               <div 

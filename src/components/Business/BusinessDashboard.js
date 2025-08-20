@@ -884,7 +884,7 @@ const BusinessDashSidebar = () => {
               className={activeSection === "portfolio" ? "active" : ""}
             >
               <img src={profileIcon} alt="Portfolio" />
-              <span className="sidebar-link-text">Portfolio</span>
+              <span className="sidebar-link-text">Profile</span>
             </li>
             <li 
               onClick={() => handleSectionChange("training")}

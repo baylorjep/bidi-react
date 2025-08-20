@@ -188,6 +188,31 @@ function Navbar() {
           </Link>
         </div>
 
+        {/* Desktop Auth Buttons - Positioned left of menu */}
+        <div className="navbar-auth d-none d-lg-flex tw-gap-2" style={{ marginRight: '16px' }}>
+          {!user ? (
+            <>
+              <Link className="nav-cta-link" to="/signin">
+                <button className="btn btn-outline-primary">
+                  Log In
+                </button>
+              </Link>
+              <Link className="nav-cta-link" to="/createaccount">
+                <button className="btn btn-primary">
+                  Sign Up
+                </button>
+              </Link>
+            </>
+          ) : (
+            <button
+              className="btn btn-outline-secondary"
+              onClick={handleSignOut}
+            >
+              Log Out
+            </button>
+          )}
+        </div>
+
         <button
           className={`navbar-toggler ${user ? 'profile-toggler' : ''}`}
           type="button"

@@ -2222,21 +2222,14 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
                       <div className="settings-label">Bid Template</div>
                       <div className="settings-desc">Create a reusable bid template to save time when responding to requests.</div>
                     </div>
-                    <div className="settings-control" style={{ width: '100%' }}>
-                      <ReactQuill
-                        theme="snow"
-                        value={bidTemplate}
-                        onChange={content => {
-                          setBidTemplate(content);
-                        }}
-                        onBlur={handleBidTemplateSubmit}
-                        modules={modules}
-                        formats={formats}
-                        style={{ height: "120px", marginBottom: "10px", width: '100%' }}
-                      />
-                      {bidTemplateError && (
-                        <div className="alert alert-warning" role="alert">{bidTemplateError.split("\n").map((line, index) => (<div key={index}>{line}</div>))}</div>
-                      )}
+                    <div className="settings-control">
+                      <button
+                        className="btn-primary-business-settings"
+                        onClick={() => setShowBidTemplateModal(true)}
+                        style={{ minWidth: 120 }}
+                      >
+                        {bidTemplate ? 'Edit Template' : 'Create Template'}
+                      </button>
                     </div>
                   </div>
                   {/* Partnership Link */}
@@ -2292,7 +2285,19 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
                   <div className="settings-row">
                     <div>
                       <div className="settings-label">Payment Account</div>
-                      <div className="settings-desc">Connect your payment account to receive payouts from Bidi.</div>
+                      <div className="settings-desc">
+                        Connect your Stripe payment account to receive payments from bookings and client transactions.
+                        <div style={{ marginTop: '8px' }}>
+                          <a 
+                            href="https://stripe.com/docs/connect" 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            style={{ color: '#9633eb', textDecoration: 'underline', fontSize: '0.9rem' }}
+                          >
+                            Learn more about Stripe Connect →
+                          </a>
+                        </div>
+                      </div>
                     </div>
                     <div className="settings-control" style={{ gap: 16 }}>
                       {connectedAccountId ? (
@@ -2754,6 +2759,56 @@ const [isDesktop, setIsDesktop] = useState(window.innerWidth > 768);
         currentPlan={profileDetails?.membership_tier}
         onPlanChange={fetchSetupProgress}
       />
+      
+      {/* Bid Template Modal */}
+      <Modal
+        show={showBidTemplateModal}
+        onHide={() => setShowBidTemplateModal(false)}
+        size="lg"
+        centered
+      >
+        <Modal.Header closeButton>
+          <Modal.Title>Bid Template</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <div style={{ marginBottom: '15px' }}>
+            <p className="text-muted">
+              Create a reusable bid template to save time when responding to requests. 
+              This template will be automatically included in your bids.
+            </p>
+          </div>
+          <ReactQuill
+            theme="snow"
+            value={bidTemplate}
+            onChange={handleBidTemplateChange}
+            modules={modules}
+            formats={formats}
+            style={{ marginBottom: "10px", maxHeight:"50vh", overflowY:"auto" }}
+          />
+          {bidTemplateError && (
+            <div className="alert alert-warning mt-3" role="alert">
+              {bidTemplateError.split("\n").map((line, index) => (
+                <div key={index}>{line}</div>
+              ))}
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <button
+            className="btn btn-secondary"
+            onClick={() => setShowBidTemplateModal(false)}
+          >
+            Cancel
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleBidTemplateSubmit}
+          >
+            Save Template
+          </button>
+        </Modal.Footer>
+      </Modal>
+      
       {stripeError && (
         <div className="alert alert-danger mt-3">
           {stripeErrorMessage || "An error occurred."} {" "}
